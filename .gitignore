@@ -29,3 +29,47 @@ updates/*.zip
 .env
 *.key
 *.pem
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# Logs / temp
+*.log
+*.tmp
+*.bak
+Thumbs.db
+Desktop.ini
+
+# Runtime generated data
+data/
+runtime/runs/
+
+# Generated documents and dashboard outputs
+docs/generated/
+docs/dashboard/*.html
+docs/dashboard/*.json
+
+# Update / patch / backup packages
+updates/
+update/
+patch/
+backups/
+release_packages/
+deployments/
+
+# Build outputs
+dist/
+build/
