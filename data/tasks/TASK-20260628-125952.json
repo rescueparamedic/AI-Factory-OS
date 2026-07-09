@@ -1,0 +1,27 @@
+{
+  "task_id": "TASK-20260628-125952",
+  "title": "Smoke Test Task",
+  "description": "Sprint 9-3 CLI test",
+  "product_id": "blog_growth_analyzer",
+  "assigned_worker": "markdown_worker",
+  "status": "testing",
+  "created_at": "2026-06-28T12:59:52+00:00",
+  "updated_at": "2026-06-28T13:00:14+00:00",
+  "history": [
+    {
+      "status": "created",
+      "timestamp": "2026-06-28T12:59:52+00:00",
+      "note": "Task created by TaskEngine"
+    },
+    {
+      "status": "pending",
+      "timestamp": "2026-06-28T13:00:09+00:00",
+      "note": "Workflow moved created -> pending"
+    },
+    {
+      "status": "testing",
+      "timestamp": "2026-06-28T13:00:14+00:00",
+      "note": "Status manually changed to testing"
+    }
+  ]
+}

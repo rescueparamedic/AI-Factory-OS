@@ -1,0 +1,19 @@
+{
+  "patch_id": "PATCH-SPRINT-9-8",
+  "patch_version": "0.1.8",
+  "from_version": "0.1.7",
+  "sprint": "9-8",
+  "status": "mvp",
+  "created": "2026-06-28T13:46:40",
+  "description": "Enable updates folder auto patch discovery and pathless update install.",
+  "files": [
+    "main.py",
+    "README_PATCH_SPRINT_9_8.md",
+    "update/__init__.py",
+    "update/patch_manager.py",
+    "update/update_manager.py",
+    "os_core/kernel.py",
+    "updates/README.md",
+    "patch_manifest.json"
+  ]
+}

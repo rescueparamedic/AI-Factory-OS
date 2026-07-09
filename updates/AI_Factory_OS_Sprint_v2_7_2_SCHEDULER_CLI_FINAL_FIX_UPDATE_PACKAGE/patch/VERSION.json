@@ -1,0 +1,7 @@
+{
+  "version": "2.7.1",
+  "sprint": "v2.7.1",
+  "name": "Task Scheduler Worker Queue CLI Hotfix",
+  "status": "hotfix",
+  "fixes": ["Register scheduler command in cli/app.py", "Include scheduler_cli.py and scheduler_engine modules"]
+}

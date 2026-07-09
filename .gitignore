@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# AI Factory OS runtime data
+backups/
+data/audit/
+data/events/
+data/worker_results/
+data/update_history/
+data/reports/DOCTOR_REPORT_*.json
+data/reports/REPOSITORY_SNAPSHOT_*.json
+
+# Local updates packages
+updates/*.zip
+
+# Secrets
+.env
+*.key
+*.pem

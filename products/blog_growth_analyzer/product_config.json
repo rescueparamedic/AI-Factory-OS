@@ -1,0 +1,20 @@
+{
+  "product_id": "blog_growth_analyzer",
+  "product_name": "Blog Growth Analyzer",
+  "status": "development",
+  "version": "0.1.0",
+  "required_workers": [
+    "markdown_worker",
+    "task_json_worker",
+    "audit_log_worker",
+    "python_file_worker"
+  ],
+  "required_agents": [
+    "pm_agent",
+    "planning_agent",
+    "development_agent",
+    "test_agent"
+  ],
+  "permission_level": 2,
+  "owner_approval_required": true
+}

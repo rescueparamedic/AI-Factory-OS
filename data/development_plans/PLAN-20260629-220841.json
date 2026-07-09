@@ -1,0 +1,94 @@
+{
+  "plan_id": "PLAN-20260629-220841",
+  "created_at": "2026-06-29T22:08:41+09:00",
+  "status": "planned",
+  "product_id": "blog_growth_analyzer",
+  "request": "블로그 작성기에 Gemini 검수 기능 추가",
+  "normalized_request": "블로그 작성기에 Gemini 검수 기능 추가",
+  "priority": "medium",
+  "risk_level": "medium",
+  "difficulty": "high",
+  "estimated_total_time": "4.2 hours",
+  "regression_required": true,
+  "approval_required": false,
+  "requirements": [
+    "외부 API 또는 외부 서비스 연동 영향 검토",
+    "QA 테스트 및 회귀 검증 필요",
+    "사용자 요청 원문 반영: 블로그 작성기에 Gemini 검수 기능 추가"
+  ],
+  "expected_files": [
+    "products/blog_growth_analyzer/product_config.json",
+    "products/blog_growth_analyzer/docs/",
+    "integrations/ai_review_client.py",
+    "products/blog_growth_analyzer/review_config.json",
+    "docs/operations/ai_review_usage.md"
+  ],
+  "tasks": [
+    {
+      "task_id": "T01-REQ",
+      "title": "요구사항 분석",
+      "description": "요청 범위, 제외 범위, 성공 기준 정의",
+      "owner_agent": "planning_agent",
+      "estimated_effort": "low",
+      "status": "planned"
+    },
+    {
+      "task_id": "T02-DESIGN",
+      "title": "구현 설계",
+      "description": "수정 파일, 데이터 흐름, 입력/출력 정의",
+      "owner_agent": "planning_agent",
+      "estimated_effort": "medium",
+      "status": "planned"
+    },
+    {
+      "task_id": "T03-DEV",
+      "title": "기능 구현",
+      "description": "Python 코드 또는 Product 코드 수정",
+      "owner_agent": "development_agent",
+      "estimated_effort": "medium",
+      "status": "planned"
+    },
+    {
+      "task_id": "T04-QA",
+      "title": "기능 검증",
+      "description": "실행 테스트, 회귀 테스트, 실패 조건 확인",
+      "owner_agent": "test_agent",
+      "estimated_effort": "medium",
+      "status": "planned"
+    },
+    {
+      "task_id": "T05-DOC",
+      "title": "문서화",
+      "description": "CHANGELOG, RELEASE NOTE, 사용법 업데이트",
+      "owner_agent": "documentation_agent",
+      "estimated_effort": "low",
+      "status": "planned"
+    }
+  ],
+  "risks": [
+    {
+      "level": "medium",
+      "risk": "외부 API 비용, 제한량, 응답 실패 가능성",
+      "mitigation": "API Key는 설정파일/환경변수 사용, 실패 시 fallback 설계"
+    }
+  ],
+  "agent_assignments": {
+    "planning_agent": [
+      "T01-REQ",
+      "T02-DESIGN"
+    ],
+    "development_agent": [
+      "T03-DEV"
+    ],
+    "test_agent": [
+      "T04-QA"
+    ],
+    "documentation_agent": [
+      "T05-DOC"
+    ]
+  },
+  "next_stage": "development_ready",
+  "handoff_path": "C:\\AIFactory\\AI Factory OS\\data\\development_handoff\\PLAN-20260629-220841_handoff.json",
+  "plan_path": "C:\\AIFactory\\AI Factory OS\\data\\development_plans\\PLAN-20260629-220841.json",
+  "report_path": "C:\\AIFactory\\AI Factory OS\\docs\\plans\\PLAN-20260629-220841_planning_report.md"
+}

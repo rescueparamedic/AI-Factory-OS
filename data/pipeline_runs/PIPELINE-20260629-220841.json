@@ -1,0 +1,44 @@
+{
+  "pipeline_id": "PIPELINE-20260629-220841",
+  "created_at": "2026-06-29T22:08:41+09:00",
+  "status": "completed",
+  "product_id": "blog_growth_analyzer",
+  "request": "블로그 작성기에 Gemini 검수 기능 추가",
+  "plan_id": "PLAN-20260629-220841",
+  "dev_run_id": "DEV-20260629-220841",
+  "qa_id": "QA-20260629-220841",
+  "doc_id": "DOC-20260629-220841",
+  "approval_id": "APP-20260629-220841",
+  "qa_decision": "pass",
+  "qa_score": 100,
+  "steps": [
+    {
+      "name": "planning",
+      "status": "completed",
+      "id": "PLAN-20260629-220841"
+    },
+    {
+      "name": "development",
+      "status": "completed",
+      "id": "DEV-20260629-220841"
+    },
+    {
+      "name": "qa",
+      "status": "pass",
+      "id": "QA-20260629-220841"
+    },
+    {
+      "name": "documentation",
+      "status": "completed",
+      "id": "DOC-20260629-220841"
+    },
+    {
+      "name": "approval_queue",
+      "status": "waiting",
+      "id": "APP-20260629-220841"
+    }
+  ],
+  "next_stage": "owner_approval_required",
+  "pipeline_path": "C:\\AIFactory\\AI Factory OS\\data\\pipeline_runs\\PIPELINE-20260629-220841.json",
+  "report_path": "C:\\AIFactory\\AI Factory OS\\docs\\pipeline\\PIPELINE-20260629-220841_pipeline_report.md"
+}

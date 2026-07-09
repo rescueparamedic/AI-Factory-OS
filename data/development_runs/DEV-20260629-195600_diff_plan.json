@@ -1,0 +1,35 @@
+{
+  "run_id": "DEV-20260629-195600",
+  "plan_id": "PLAN-20260629-002530",
+  "product_id": "blog_growth_analyzer",
+  "mode": "dry_run",
+  "summary": "Draft artifacts generated. No project files were modified.",
+  "changes": [
+    {
+      "target_path": "products/blog_growth_analyzer/product_config.json",
+      "artifact_path": "C:\\AIFactory\\AI Factory OS\\data\\development_artifacts\\DEV-20260629-195600\\products__blog_growth_analyzer__product_config.json",
+      "action": "modify_candidate",
+      "status": "generated_draft"
+    },
+    {
+      "target_path": "integrations/ai_review_client.py",
+      "artifact_path": "C:\\AIFactory\\AI Factory OS\\data\\development_artifacts\\DEV-20260629-195600\\integrations__ai_review_client.py",
+      "action": "create_candidate",
+      "status": "generated_draft"
+    },
+    {
+      "target_path": "products/blog_growth_analyzer/review_config.json",
+      "artifact_path": "C:\\AIFactory\\AI Factory OS\\data\\development_artifacts\\DEV-20260629-195600\\products__blog_growth_analyzer__review_config.json",
+      "action": "create_candidate",
+      "status": "generated_draft"
+    },
+    {
+      "target_path": "docs/operations/ai_review_usage.md",
+      "artifact_path": "C:\\AIFactory\\AI Factory OS\\data\\development_artifacts\\DEV-20260629-195600\\docs__operations__ai_review_usage.md",
+      "action": "create_candidate",
+      "status": "generated_draft"
+    }
+  ],
+  "approval_required_before_apply": true,
+  "qa_required": true
+}

@@ -1,0 +1,39 @@
+{
+  "doc_id": "DOC-20260629-220841",
+  "created_at": "2026-06-29T22:08:41+09:00",
+  "status": "completed",
+  "qa_id": "QA-20260629-220841",
+  "dev_run_id": "DEV-20260629-220841",
+  "plan_id": "PLAN-20260629-220841",
+  "product_id": "blog_growth_analyzer",
+  "qa_decision": "pass",
+  "qa_score": 100,
+  "documents": [
+    {
+      "type": "development_report",
+      "path": "C:\\AIFactory\\AI Factory OS\\docs\\generated\\DOC-20260629-220841\\DEVELOPMENT_COMPLETION_REPORT.md"
+    },
+    {
+      "type": "qa_summary",
+      "path": "C:\\AIFactory\\AI Factory OS\\docs\\generated\\DOC-20260629-220841\\QA_SUMMARY.md"
+    },
+    {
+      "type": "changelog_draft",
+      "path": "C:\\AIFactory\\AI Factory OS\\docs\\generated\\DOC-20260629-220841\\CHANGELOG_DRAFT.md"
+    },
+    {
+      "type": "user_guide_draft",
+      "path": "C:\\AIFactory\\AI Factory OS\\docs\\generated\\DOC-20260629-220841\\USER_GUIDE_DRAFT.md"
+    },
+    {
+      "type": "release_notes_draft",
+      "path": "C:\\AIFactory\\AI Factory OS\\docs\\generated\\DOC-20260629-220841\\RELEASE_NOTES_DRAFT.md"
+    },
+    {
+      "type": "handoff",
+      "path": "C:\\AIFactory\\AI Factory OS\\docs\\generated\\DOC-20260629-220841\\HANDOFF.md"
+    }
+  ],
+  "next_stage": "approval_ready",
+  "doc_path": "C:\\AIFactory\\AI Factory OS\\data\\documentation_results\\DOC-20260629-220841.json"
+}

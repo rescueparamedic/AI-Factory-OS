@@ -1,0 +1,36 @@
+{
+  "run_id": "RUN-20260630-233146",
+  "created_at": "2026-06-30T23:31:46+09:00",
+  "status": "completed",
+  "worker_id": "python_worker",
+  "worker_name": "Python Worker",
+  "product_id": "blog_growth_analyzer",
+  "task": "테스트 코드 생성",
+  "mode": "local_runtime_simulation",
+  "artifact_path": "C:\\AIFactory\\AI Factory OS\\data\\runtime_artifacts\\RUN-20260630-233146_python_worker_artifact.md",
+  "report_path": "C:\\AIFactory\\AI Factory OS\\docs\\runtime\\RUN-20260630-233146_runtime_report.md",
+  "steps": [
+    {
+      "step": "receive_task",
+      "status": "completed",
+      "message": "Task received by runtime worker."
+    },
+    {
+      "step": "analyze_task",
+      "status": "completed",
+      "message": "Task analyzed and converted to artifact plan."
+    },
+    {
+      "step": "generate_artifact",
+      "status": "completed",
+      "message": "Artifact candidate generated."
+    },
+    {
+      "step": "save_result",
+      "status": "completed",
+      "message": "Runtime result saved."
+    }
+  ],
+  "next_stage": "runtime_result_review",
+  "run_path": "C:\\AIFactory\\AI Factory OS\\data\\runtime_runs\\RUN-20260630-233146.json"
+}

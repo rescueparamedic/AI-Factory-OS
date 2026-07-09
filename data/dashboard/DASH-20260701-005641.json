@@ -1,0 +1,368 @@
+{
+  "dashboard_id": "DASH-20260701-005641",
+  "created_at": "2026-07-01T00:56:41+09:00",
+  "version": {
+    "version": "2.3.0",
+    "sprint": "v2.3-dashboard-mvp",
+    "build": "20260701",
+    "status": "mvp"
+  },
+  "agents": [
+    {
+      "agent_id": "ceo_agent",
+      "role": "CEO Agent",
+      "status": "idle"
+    },
+    {
+      "agent_id": "pm_agent",
+      "role": "PM Agent",
+      "status": "idle"
+    },
+    {
+      "agent_id": "planning_agent",
+      "role": "Planning Agent",
+      "status": "idle"
+    },
+    {
+      "agent_id": "development_agent",
+      "role": "Development Agent",
+      "status": "idle"
+    },
+    {
+      "agent_id": "test_agent",
+      "role": "Test Agent",
+      "status": "idle"
+    },
+    {
+      "agent_id": "security_agent",
+      "role": "Security Agent",
+      "status": "idle"
+    },
+    {
+      "agent_id": "documentation_agent",
+      "role": "Documentation Agent",
+      "status": "idle"
+    },
+    {
+      "agent_id": "deploy_agent",
+      "role": "Deploy Agent",
+      "status": "idle"
+    },
+    {
+      "agent_id": "automation_agent",
+      "role": "Automation Agent",
+      "status": "idle"
+    }
+  ],
+  "teams": [
+    {
+      "team_id": "planning_team",
+      "role": "Planning Team",
+      "status": "idle"
+    },
+    {
+      "team_id": "development_team",
+      "role": "Development Team",
+      "status": "idle"
+    },
+    {
+      "team_id": "qa_team",
+      "role": "QA Team",
+      "status": "idle"
+    },
+    {
+      "team_id": "documentation_team",
+      "role": "Documentation Team",
+      "status": "idle"
+    },
+    {
+      "team_id": "security_team",
+      "role": "Security Team",
+      "status": "idle"
+    },
+    {
+      "team_id": "automation_team",
+      "role": "Automation Team",
+      "status": "idle"
+    }
+  ],
+  "runtime_workers": [
+    {
+      "worker_id": "python_worker",
+      "name": "Python Worker",
+      "capability": "Python 코드/설정/테스트 후보 생성",
+      "status": "available",
+      "preferred_provider": "openai"
+    },
+    {
+      "worker_id": "markdown_worker",
+      "name": "Markdown Worker",
+      "capability": "문서/보고서/README 생성",
+      "status": "available",
+      "preferred_provider": "openai"
+    },
+    {
+      "worker_id": "qa_worker",
+      "name": "QA Worker",
+      "capability": "결과 검토/체크리스트/품질 판단",
+      "status": "available",
+      "preferred_provider": "local"
+    },
+    {
+      "worker_id": "json_worker",
+      "name": "JSON Worker",
+      "capability": "JSON 설정/manifest/task 정의 생성",
+      "status": "available",
+      "preferred_provider": "local"
+    }
+  ],
+  "providers": [
+    {
+      "provider_id": "openai",
+      "name": "OpenAI",
+      "env_key": "OPENAI_API_KEY",
+      "status": "not_configured",
+      "mode": "disabled"
+    },
+    {
+      "provider_id": "gemini",
+      "name": "Gemini",
+      "env_key": "GEMINI_API_KEY",
+      "status": "not_configured",
+      "mode": "disabled"
+    }
+  ],
+  "latest_conversation": {
+    "conversation_id": "CHAT-20260701-001855",
+    "created_at": "2026-07-01T00:18:55+09:00",
+    "status": "completed",
+    "product_id": "blog_growth_analyzer",
+    "request": "블로그 작성기에 Gemini 검수 기능 추가",
+    "plan_id": "PLAN-20260701-001855",
+    "message_count": 18,
+    "messages": [
+      {
+        "time": "2026-07-01T00:18:55+09:00",
+        "agent": "CEO Agent",
+        "role": "decision_owner",
+        "status": "completed",
+        "message": "새 개발 요청을 접수했습니다. 요청: 블로그 작성기에 Gemini 검수 기능 추가"
+      },
+      {
+        "time": "2026-07-01T00:18:55+09:00",
+        "agent": "PM Agent",
+        "role": "project_manager",
+        "status": "completed",
+        "message": "제품 `blog_growth_analyzer` 기준으로 작업 흐름을 구성합니다. 우선 Planning Engine에 분석을 요청합니다."
+      },
+      {
+        "time": "2026-07-01T00:18:55+09:00",
+        "agent": "Planning Agent",
+        "role": "planner",
+        "status": "completed",
+        "message": "개발 계획 `PLAN-20260701-001855`을 생성했습니다. 난이도: high, 예상시간: , 회귀 영향: ."
+      },
+      {
+        "time": "2026-07-01T00:18:55+09:00",
+        "agent": "Architecture Agent",
+        "role": "architect",
+        "status": "completed",
+        "message": "예상 변경 파일을 확인했습니다: products/blog_growth_analyzer/product_config.json, products/blog_growth_analyzer/docs/, integrations/ai_review_client.py, products/blog_growth_analyzer/review_config.json, docs/operations/ai_review_usage.md."
+      },
+      {
+        "time": "2026-07-01T00:18:55+09:00",
+        "agent": "Risk Agent",
+        "role": "risk_manager",
+        "status": "completed",
+        "message": "리스크를 검토했습니다: medium: {'level': 'medium', 'risk': '외부 API 비용, 제한량, 응답 실패 가능성', 'mitigation': 'API Key는 설정파일/환경변수 사용, 실패 시 fallback 설계'}"
+      },
+      {
+        "time": "2026-07-01T00:18:55+09:00",
+        "agent": "Provider Agent",
+        "role": "provider_manager",
+        "status": "completed",
+        "message": "AI Provider 상태를 확인했습니다: OpenAI=not_configured, Gemini=not_configured. 현재는 API Key 미설정 시 Local Safe Mode로 진행합니다."
+      },
+      {
+        "time": "2026-07-01T00:18:55+09:00",
+        "agent": "Worker Manager",
+        "role": "worker_manager",
+        "status": "completed",
+        "message": "사용 가능한 Runtime Worker를 확인했습니다: python_worker, markdown_worker, qa_worker, json_worker."
+      },
+      {
+        "time": "2026-07-01T00:18:55+09:00",
+        "agent": "PM Agent",
+        "role": "task_router",
+        "status": "completed",
+        "message": "작업 배정 후보:  / 요구사항 분석 → , 중요도 ."
+      },
+      {
+        "time": "2026-07-01T00:18:55+09:00",
+        "agent": "PM Agent",
+        "role": "task_router",
+        "status": "completed",
+        "message": "작업 배정 후보:  / 구현 설계 → , 중요도 ."
+      },
+      {
+        "time": "2026-07-01T00:18:55+09:00",
+        "agent": "PM Agent",
+        "role": "task_router",
+        "status": "completed",
+        "message": "작업 배정 후보:  / 기능 구현 → , 중요도 ."
+      },
+      {
+        "time": "2026-07-01T00:18:55+09:00",
+        "agent": "PM Agent",
+        "role": "task_router",
+        "status": "completed",
+        "message": "작업 배정 후보:  / 기능 검증 → , 중요도 ."
+      },
+      {
+        "time": "2026-07-01T00:18:55+09:00",
+        "agent": "PM Agent",
+        "role": "task_router",
+        "status": "completed",
+        "message": "작업 배정 후보:  / 문서화 → , 중요도 ."
+      },
+      {
+        "time": "2026-07-01T00:18:55+09:00",
+        "agent": "Development Agent",
+        "role": "developer",
+        "status": "completed",
+        "message": "현재 단계에서는 안전한 개발 후보 산출물 생성으로 진행합니다. 실제 코드 수정은 승인 및 실제 AI Provider 연결 후 수행합니다."
+      },
+      {
+        "time": "2026-07-01T00:18:55+09:00",
+        "agent": "QA Agent",
+        "role": "qa",
+        "status": "completed",
+        "message": "QA 관점에서 외부 API, 회귀 영향, 실패 시 fallback 경로를 확인해야 합니다."
+      },
+      {
+        "time": "2026-07-01T00:18:55+09:00",
+        "agent": "Documentation Agent",
+        "role": "documentation",
+        "status": "completed",
+        "message": "개발 보고서, 사용자 가이드, 변경 로그 문서화가 필요합니다."
+      },
+      {
+        "time": "2026-07-01T00:18:55+09:00",
+        "agent": "Release Agent",
+        "role": "release",
+        "status": "completed",
+        "message": "승인 후 Release Package 생성 대상이 될 수 있습니다."
+      },
+      {
+        "time": "2026-07-01T00:18:55+09:00",
+        "agent": "Deployment Agent",
+        "role": "deployment",
+        "status": "completed",
+        "message": "Release 완료 후 staging deploy candidate 생성이 가능합니다."
+      },
+      {
+        "time": "2026-07-01T00:18:55+09:00",
+        "agent": "CEO Agent",
+        "role": "decision_owner",
+        "status": "completed",
+        "message": "초기 회의가 완료되었습니다. 다음 단계는 개발 실행 또는 승인 대기입니다."
+      }
+    ],
+    "conversation_path": "C:\\AIFactory\\AI Factory OS\\data\\conversations\\CHAT-20260701-001855.json",
+    "report_path": "C:\\AIFactory\\AI Factory OS\\docs\\conversations\\CHAT-20260701-001855_conversation_report.md",
+    "next_stage": "agent_conversation_review"
+  },
+  "latest_runtime": {
+    "run_id": "RUN-20260630-235028",
+    "created_at": "2026-06-30T23:50:28+09:00",
+    "status": "completed",
+    "worker_id": "python_worker",
+    "worker_name": "Python Worker",
+    "product_id": "blog_growth_analyzer",
+    "task": "테스트 코드 생성",
+    "mode": "local_safe_mode",
+    "provider": {
+      "provider_id": "local",
+      "name": "Local Safe Worker",
+      "mode": "local_safe_mode",
+      "status": "fallback"
+    },
+    "artifact_path": "C:\\AIFactory\\AI Factory OS\\data\\runtime_artifacts\\RUN-20260630-235028_python_worker_artifact.md",
+    "report_path": "C:\\AIFactory\\AI Factory OS\\docs\\runtime\\RUN-20260630-235028_runtime_report.md",
+    "steps": [
+      {
+        "step": "receive_task",
+        "status": "completed",
+        "message": "Task received by runtime worker."
+      },
+      {
+        "step": "select_provider",
+        "status": "completed",
+        "message": "Provider selected: Local Safe Worker / local_safe_mode."
+      },
+      {
+        "step": "analyze_task",
+        "status": "completed",
+        "message": "Task analyzed and converted to artifact plan."
+      },
+      {
+        "step": "generate_artifact",
+        "status": "completed",
+        "message": "Provider-aware artifact candidate generated."
+      },
+      {
+        "step": "save_result",
+        "status": "completed",
+        "message": "Runtime result saved."
+      }
+    ],
+    "next_stage": "runtime_result_review",
+    "run_path": "C:\\AIFactory\\AI Factory OS\\data\\runtime_runs\\RUN-20260630-235028.json"
+  },
+  "latest_pipeline": {
+    "pipeline_id": "PIPELINE-20260629-220841",
+    "created_at": "2026-06-29T22:08:41+09:00",
+    "status": "completed",
+    "product_id": "blog_growth_analyzer",
+    "request": "블로그 작성기에 Gemini 검수 기능 추가",
+    "plan_id": "PLAN-20260629-220841",
+    "dev_run_id": "DEV-20260629-220841",
+    "qa_id": "QA-20260629-220841",
+    "doc_id": "DOC-20260629-220841",
+    "approval_id": "APP-20260629-220841",
+    "qa_decision": "pass",
+    "qa_score": 100,
+    "steps": [
+      {
+        "name": "planning",
+        "status": "completed",
+        "id": "PLAN-20260629-220841"
+      },
+      {
+        "name": "development",
+        "status": "completed",
+        "id": "DEV-20260629-220841"
+      },
+      {
+        "name": "qa",
+        "status": "pass",
+        "id": "QA-20260629-220841"
+      },
+      {
+        "name": "documentation",
+        "status": "completed",
+        "id": "DOC-20260629-220841"
+      },
+      {
+        "name": "approval_queue",
+        "status": "waiting",
+        "id": "APP-20260629-220841"
+      }
+    ],
+    "next_stage": "owner_approval_required",
+    "pipeline_path": "C:\\AIFactory\\AI Factory OS\\data\\pipeline_runs\\PIPELINE-20260629-220841.json",
+    "report_path": "C:\\AIFactory\\AI Factory OS\\docs\\pipeline\\PIPELINE-20260629-220841_pipeline_report.md"
+  },
+  "latest_release": null,
+  "latest_deployment": null
+}

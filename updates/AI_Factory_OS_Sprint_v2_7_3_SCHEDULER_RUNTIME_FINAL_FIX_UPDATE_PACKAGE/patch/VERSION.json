@@ -1,0 +1,12 @@
+{
+  "version": "2.7.3",
+  "sprint": "v2.7.3",
+  "name": "Scheduler Runtime Final Fix",
+  "status": "verified_hotfix",
+  "fixes": [
+    "Register scheduler command",
+    "Initialize TaskScheduler in kernel",
+    "Include worker_runtime.real_ai_worker dependency",
+    "Verify CLI and dashboard before packaging"
+  ]
+}

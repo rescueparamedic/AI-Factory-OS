@@ -1,0 +1,15 @@
+{
+  "change_type": "product_config_update_candidate",
+  "plan_id": "PLAN-20260629-002530",
+  "requested_feature": "블로그 작성기에 Gemini 검수 기능 추가",
+  "required_workers_add": [
+    "audit_log_worker",
+    "python_file_worker"
+  ],
+  "required_agents_add": [
+    "development_agent",
+    "test_agent",
+    "documentation_agent"
+  ],
+  "approval_required": false
+}

@@ -1,0 +1,47 @@
+{
+  "task_id": "TASK-20260628-221019",
+  "title": "Sprint 9-3 OS Core Boot Task",
+  "description": "Create and process a real MVP task through AI Factory OS Core.",
+  "product_id": "blog_growth_analyzer",
+  "assigned_worker": "markdown_worker",
+  "status": "done",
+  "created_at": "2026-06-28T22:10:19+09:00",
+  "updated_at": "2026-06-28T22:10:19+09:00",
+  "history": [
+    {
+      "status": "created",
+      "timestamp": "2026-06-28T22:10:19+09:00",
+      "note": "Task created by TaskEngine"
+    },
+    {
+      "status": "pending",
+      "timestamp": "2026-06-28T22:10:19+09:00",
+      "note": "Workflow moved created -> pending"
+    },
+    {
+      "status": "in_progress",
+      "timestamp": "2026-06-28T22:10:19+09:00",
+      "note": "Workflow moved pending -> in_progress"
+    },
+    {
+      "status": "testing",
+      "timestamp": "2026-06-28T22:10:19+09:00",
+      "note": "Workflow moved in_progress -> testing"
+    },
+    {
+      "status": "security_review",
+      "timestamp": "2026-06-28T22:10:19+09:00",
+      "note": "Workflow moved testing -> security_review"
+    },
+    {
+      "status": "documentation",
+      "timestamp": "2026-06-28T22:10:19+09:00",
+      "note": "Workflow moved security_review -> documentation"
+    },
+    {
+      "status": "done",
+      "timestamp": "2026-06-28T22:10:19+09:00",
+      "note": "Workflow moved documentation -> done"
+    }
+  ]
+}
