@@ -1,49 +1,80 @@
+# -*- coding: utf-8 -*-
+"""AFDE CLI."""
 from __future__ import annotations
 
 import argparse
 import json
 from pathlib import Path
 
-from .task_runner import AFDETaskRunner
+from .environment_checker import EnvironmentChecker
 from .provider_manager import ProviderManager
-from .git_manager import GitManager
+from .real_ai_worker_bootstrap import RealAIWorkerBootstrap
+from .task_runner import TaskRunner
 
 
-def build_parser() -> argparse.ArgumentParser:
+def _print_json(data):
+    print(json.dumps(data, ensure_ascii=False, indent=2))
+
+
+def cmd_providers(args):
+    _print_json(ProviderManager().list_providers())
+
+
+def cmd_git_status(args):
+    # lightweight status helper; avoids hard dependency on previous GitManager implementation details
+    import subprocess
+    result = subprocess.run(["git", "status", "--short"], capture_output=True, text=True)
+    _print_json({"status": "success" if result.returncode == 0 else "failed", "output": result.stdout.strip(), "error": result.stderr.strip()})
+
+
+def cmd_run_mock(args):
+    runner = TaskRunner()
+    result = runner.run_mock(title=args.title, request=args.request)
+    _print_json(result)
+
+
+def cmd_env_check(args):
+    checker = EnvironmentChecker()
+    report = checker.run_all()
+    path = checker.save_report()
+    report["report_path"] = str(path)
+    _print_json(report)
+
+
+def cmd_bootstrap_worker(args):
+    result = RealAIWorkerBootstrap().run()
+    _print_json(result)
+
+
+def build_parser():
     parser = argparse.ArgumentParser(prog="afde", description="AI Factory Development Environment CLI")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    run = sub.add_parser("run-mock", help="Run local safe-mode AFDE mock pipeline")
-    run.add_argument("--title", required=True)
-    run.add_argument("--request", required=True)
+    p = sub.add_parser("providers", help="List AI provider status")
+    p.set_defaults(func=cmd_providers)
 
-    sub.add_parser("providers", help="Show provider configuration status")
-    sub.add_parser("git-status", help="Show git branch and short status")
+    p = sub.add_parser("git-status", help="Show git short status")
+    p.set_defaults(func=cmd_git_status)
+
+    p = sub.add_parser("run-mock", help="Run AFDE mock pipeline")
+    p.add_argument("--title", required=True)
+    p.add_argument("--request", required=True)
+    p.set_defaults(func=cmd_run_mock)
+
+    p = sub.add_parser("env-check", help="Check local development environment")
+    p.set_defaults(func=cmd_env_check)
+
+    p = sub.add_parser("bootstrap-worker", help="Create Real AI Worker bootstrap manifest")
+    p.set_defaults(func=cmd_bootstrap_worker)
+
     return parser
 
 
-def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
-    project_root = Path.cwd()
-
-    if args.command == "run-mock":
-        result = AFDETaskRunner(project_root).run_mock_pipeline(args.title, args.request)
-        print(json.dumps(result.__dict__, ensure_ascii=False, indent=2))
-        return 0
-
-    if args.command == "providers":
-        print(json.dumps(ProviderManager(project_root).as_dicts(), ensure_ascii=False, indent=2))
-        return 0
-
-    if args.command == "git-status":
-        git = GitManager(project_root)
-        status = git.status()
-        print(f"branch: {git.current_branch()}")
-        print(status.stdout or status.stderr)
-        return status.returncode
-
-    return 1
+def main(argv=None):
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    return args.func(args)
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()
