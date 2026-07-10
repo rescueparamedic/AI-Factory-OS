@@ -21,6 +21,17 @@
 - AFDE `approval-check` CLI command
 - 86 focused Guardian policy and integration tests
 
+## AFDE-2.4 Sprint Auto Runner
+
+### Added
+
+- Approval-guarded Sprint JSON loader and deterministic run state machine
+- AUTO_APPROVE execution, ASK_USER persistence/resume, and DENY blocking
+- Non-shell executor with timeout, output capture, and redaction
+- Atomic JSON state and JSONL lifecycle audit records
+- AFDE sprint validate, run, status, resume, cancel, JSON, and dry-run CLI
+- 64 focused Runner tests and demo Sprint definition
+
 ## Safety
 
 - No external AI API call is executed in this Sprint.
