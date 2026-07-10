@@ -17,7 +17,7 @@ def _print_json(data):
 
 
 def cmd_providers(args):
-    _print_json(ProviderManager().list_providers())
+    _print_json(ProviderManager().as_dicts())
 
 
 def cmd_git_status(args):
