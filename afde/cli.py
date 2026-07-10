@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import asdict
 import json
 from pathlib import Path
 
+from approval_guardian import ApprovalGuardian, ApprovalRequest
 from .environment_checker import EnvironmentChecker
 from .provider_manager import ProviderManager
 from .real_ai_worker_bootstrap import RealAIWorkerBootstrap
@@ -46,6 +48,19 @@ def cmd_bootstrap_worker(args):
     _print_json(result)
 
 
+def cmd_approval_check(args):
+    request = ApprovalRequest(
+        command=args.exec_command,
+        cwd=str(Path.cwd()),
+        actor=args.actor,
+        task_id=args.task_id,
+        branch=args.branch,
+        environment=args.environment,
+    )
+    result = ApprovalGuardian(Path.cwd()).evaluate(request)
+    _print_json(asdict(result))
+
+
 def build_parser():
     parser = argparse.ArgumentParser(prog="afde", description="AI Factory Development Environment CLI")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -66,6 +81,14 @@ def build_parser():
 
     p = sub.add_parser("bootstrap-worker", help="Create Real AI Worker bootstrap manifest")
     p.set_defaults(func=cmd_bootstrap_worker)
+
+    p = sub.add_parser("approval-check", help="Classify a command with Approval Guardian v2")
+    p.add_argument("--command", dest="exec_command", required=True)
+    p.add_argument("--actor", default="afde-cli")
+    p.add_argument("--task-id", default=None)
+    p.add_argument("--branch", default=None)
+    p.add_argument("--environment", default="dev")
+    p.set_defaults(func=cmd_approval_check)
 
     return parser
 
