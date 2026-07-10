@@ -94,3 +94,15 @@ class AFDETaskRunner:
 ## Note
 This is a local safe-mode AFDE execution result.
 """
+
+
+class TaskRunner(AFDETaskRunner):
+    """Stable public task-runner interface used by the AFDE CLI.
+
+    ``AFDETaskRunner`` remains available for callers using the original
+    dataclass-based API.  The CLI compatibility method returns a plain mapping
+    so its result can be serialized directly as JSON.
+    """
+
+    def run_mock(self, title: str, request: str) -> dict:
+        return asdict(self.run_mock_pipeline(title=title, request=request))
