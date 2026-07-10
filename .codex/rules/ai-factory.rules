@@ -1,0 +1,90 @@
+# Codex Safe Approval Policy v1
+# Narrow command prefixes only. When several rules match, the most restrictive
+# decision wins (forbidden > prompt > allow).
+
+# Safe repository inspection.
+prefix_rule(
+    pattern = ["git", "status"],
+    decision = "allow",
+    justification = "Read-only inspection of the Git working tree.",
+    match = ["git status", "git status --short --branch"],
+    not_match = ["git add .", "git commit -m test"],
+)
+prefix_rule(pattern = ["git", "diff"], decision = "allow", justification = "Read-only Git diff inspection.")
+prefix_rule(pattern = ["git", "log"], decision = "allow", justification = "Read-only Git history inspection.")
+prefix_rule(pattern = ["git", "branch"], decision = "allow", justification = "Read-only branch listing is allowed; branch mutations still require approval through their explicit command forms.")
+prefix_rule(pattern = ["git", "rev-parse"], decision = "allow", justification = "Read-only Git reference resolution.")
+prefix_rule(pattern = ["git", "remote"], decision = "allow", justification = "Read-only remote configuration inspection.")
+
+# Focused validation and file inspection.
+prefix_rule(
+    pattern = ["python", "-m", "pytest"],
+    decision = "allow",
+    justification = "Run the repository test suite without broadly allowing Python.",
+    match = ["python -m pytest", "python -m pytest -q"],
+    not_match = ["python script.py", "python -c 'print(1)'"],
+)
+prefix_rule(
+    pattern = ["python", "-m", "afde.cli"],
+    decision = "allow",
+    justification = "Run the project AFDE CLI without broadly allowing Python.",
+    match = ["python -m afde.cli env-check", "python -m afde.cli providers"],
+    not_match = ["python -m other_module"],
+)
+prefix_rule(pattern = ["rg"], decision = "allow", justification = "Read-only repository text search.")
+prefix_rule(pattern = ["Get-ChildItem"], decision = "allow", justification = "Read-only PowerShell directory listing.")
+prefix_rule(pattern = ["Get-Content"], decision = "allow", justification = "Read-only PowerShell file inspection.")
+
+# Git operations that mutate local state, contact remotes, or publish changes.
+prefix_rule(pattern = ["git", "fetch"], decision = "prompt", justification = "Fetching updates remote-tracking state and contacts a remote.")
+prefix_rule(pattern = ["git", "switch"], decision = "prompt", justification = "Switching branches changes the working tree and Git state.")
+prefix_rule(pattern = ["git", "checkout"], decision = "prompt", justification = "Checkout can change branches, the index, or working-tree files.")
+prefix_rule(pattern = ["git", "add"], decision = "prompt", justification = "Staging changes mutates the Git index.")
+prefix_rule(pattern = ["git", "commit"], decision = "prompt", justification = "Creating a commit changes repository history.")
+prefix_rule(pattern = ["git", "push"], decision = "prompt", justification = "Pushing writes repository state to a remote.")
+prefix_rule(pattern = ["git", "pull"], decision = "prompt", justification = "Pulling contacts a remote and can change local history and files.")
+prefix_rule(pattern = ["git", "merge"], decision = "prompt", justification = "Merging changes local history and may change files.")
+prefix_rule(pattern = ["git", "rebase"], decision = "prompt", justification = "Rebasing rewrites local commit history.")
+prefix_rule(pattern = ["gh", "pr", "create"], decision = "prompt", justification = "Creating a pull request writes remote GitHub state.")
+prefix_rule(pattern = ["gh", "pr", "merge"], decision = "prompt", justification = "Merging a pull request writes remote GitHub state and branch history.")
+prefix_rule(pattern = ["Remove-Item"], decision = "prompt", justification = "Removing files is destructive and requires explicit user approval.")
+
+# Destructive Git operations are always blocked. These intentionally overlap
+# broader prompt rules; Codex applies the most restrictive matching decision.
+prefix_rule(
+    pattern = ["git", "reset", "--hard"],
+    decision = "forbidden",
+    justification = "Hard reset can irreversibly discard tracked work.",
+    match = ["git reset --hard", "git reset --hard HEAD"],
+    not_match = ["git reset --soft HEAD"],
+)
+prefix_rule(
+    pattern = ["git", "clean"],
+    decision = "forbidden",
+    justification = "Git clean can irreversibly delete untracked files and directories.",
+    match = ["git clean -fd", "git clean -n"],
+)
+prefix_rule(
+    pattern = ["git", "push", "--force"],
+    decision = "forbidden",
+    justification = "Force push can overwrite remote history.",
+    match = ["git push --force origin test"],
+)
+prefix_rule(
+    pattern = ["git", "push", "-f"],
+    decision = "forbidden",
+    justification = "Force push can overwrite remote history.",
+    match = ["git push -f origin test"],
+)
+prefix_rule(
+    pattern = ["git", "checkout", "--", "."],
+    decision = "forbidden",
+    justification = "Discarding all working-tree changes is destructive.",
+    match = ["git checkout -- ."],
+)
+prefix_rule(
+    pattern = ["git", "restore", "."],
+    decision = "forbidden",
+    justification = "Restoring the entire working tree can discard unrelated work.",
+    match = ["git restore ."],
+)
