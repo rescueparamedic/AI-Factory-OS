@@ -1,5 +1,13 @@
 # AI Factory OS Project Status
 
+## AFDE-2.4
+
+- Sprint Auto Runner implemented on a feature branch.
+- Every Runner command is evaluated by Approval Guardian v2.
+- ASK_USER state is resumable only with matching definition and context.
+- Direct pushes to protected branches remain forbidden and merge remains a
+  user-controlled operation.
+
 ## AFDE-2.3
 
 - Approval Guardian v2 implemented on a feature branch.
