@@ -1,5 +1,9 @@
 # AI Factory OS Project Status
 
+## AFDE-2.5
+
+- Executable five-worker mock Demo operates without external API keys.
+
 ## AFDE-2.4
 
 - Sprint Auto Runner implemented on a feature branch.
