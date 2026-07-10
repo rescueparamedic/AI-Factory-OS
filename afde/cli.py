@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 
 from approval_guardian import ApprovalGuardian, ApprovalRequest
+from sprint_auto_runner import SprintAutoRunner
 from .environment_checker import EnvironmentChecker
 from .provider_manager import ProviderManager
 from .real_ai_worker_bootstrap import RealAIWorkerBootstrap
@@ -61,6 +62,85 @@ def cmd_approval_check(args):
     _print_json(asdict(result))
 
 
+def _runner_summary(run):
+    current = None
+    if 0 <= run.current_step_index < len(run.step_results):
+        current = asdict(run.step_results[run.current_step_index])
+    return {
+        "run_id": run.run_id,
+        "sprint_id": run.sprint_id,
+        "status": run.status,
+        "branch": run.branch,
+        "current_step_index": run.current_step_index,
+        "current_step": current,
+        "last_error": run.last_error,
+        "pending_approval": run.pending_approval,
+        "completed_at": run.completed_at,
+    }
+
+
+def _print_runner(data, json_output=False):
+    if json_output:
+        _print_json(data)
+        return
+    print("\n=== Sprint Auto Runner ===")
+    for key in ("run_id", "sprint_id", "status", "branch", "current_step_index", "last_error"):
+        if key in data:
+            print(f"{key:20}: {data.get(key, '')}")
+    if data.get("pending_approval"):
+        pending = data["pending_approval"]
+        print("\nApproval required")
+        for key in ("step_id", "redacted_command", "rule_id", "reason"):
+            print(f"{key:20}: {pending.get(key, '')}")
+
+
+def cmd_sprint_validate(args):
+    definition = SprintAutoRunner(Path.cwd()).validate(args.file)
+    result = {
+        "status": "valid",
+        "sprint_id": definition.sprint_id,
+        "title": definition.title,
+        "version": definition.version,
+        "steps": len(definition.steps),
+        "fingerprint": definition.fingerprint,
+    }
+    _print_runner(result, args.json)
+
+
+def cmd_sprint_run(args):
+    runner = SprintAutoRunner(Path.cwd())
+    if args.dry_run:
+        result = runner.dry_run(args.file)
+        _print_json(result) if args.json else _print_runner({"status": "dry_run", **result})
+        if not args.json:
+            for step in result["steps"]:
+                print(f"- {step['step_id']} | {step['decision']} | {step['rule_id']} | {step['reason']}")
+        return
+    _print_runner(_runner_summary(runner.start(args.file)), args.json)
+
+
+def cmd_sprint_status(args):
+    _print_runner(_runner_summary(SprintAutoRunner(Path.cwd()).status(args.run_id)), args.json)
+
+
+def cmd_sprint_resume(args):
+    run = SprintAutoRunner(Path.cwd()).resume(
+        args.run_id,
+        {
+            "step_id": args.approve_step,
+            "decision": "approved",
+            "approved_by": args.approved_by,
+            "reason": args.reason,
+        },
+    )
+    _print_runner(_runner_summary(run), args.json)
+
+
+def cmd_sprint_cancel(args):
+    run = SprintAutoRunner(Path.cwd()).cancel(args.run_id, actor=args.actor)
+    _print_runner(_runner_summary(run), args.json)
+
+
 def build_parser():
     parser = argparse.ArgumentParser(prog="afde", description="AI Factory Development Environment CLI")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -89,6 +169,36 @@ def build_parser():
     p.add_argument("--branch", default=None)
     p.add_argument("--environment", default="dev")
     p.set_defaults(func=cmd_approval_check)
+
+    p = sub.add_parser("sprint-validate", help="Validate a Sprint Auto Runner JSON definition")
+    p.add_argument("--file", required=True)
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(func=cmd_sprint_validate)
+
+    p = sub.add_parser("sprint-run", help="Run an approval-guarded Sprint definition")
+    p.add_argument("--file", required=True)
+    p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(func=cmd_sprint_run)
+
+    p = sub.add_parser("sprint-status", help="Show persisted Sprint run state")
+    p.add_argument("--run-id", required=True)
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(func=cmd_sprint_status)
+
+    p = sub.add_parser("sprint-resume", help="Resume the currently waiting Sprint step")
+    p.add_argument("--run-id", required=True)
+    p.add_argument("--approve-step", required=True)
+    p.add_argument("--approved-by", default="user")
+    p.add_argument("--reason", default="Approved by user")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(func=cmd_sprint_resume)
+
+    p = sub.add_parser("sprint-cancel", help="Cancel a non-terminal Sprint run")
+    p.add_argument("--run-id", required=True)
+    p.add_argument("--actor", default="user")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(func=cmd_sprint_cancel)
 
     return parser
 

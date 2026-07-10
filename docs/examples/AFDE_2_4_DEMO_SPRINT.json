@@ -1,0 +1,27 @@
+{
+  "sprint_id": "AFDE-2.4-DEMO",
+  "title": "Sprint Auto Runner Demo",
+  "version": "1.0",
+  "steps": [
+    {
+      "step_id": "STEP-001",
+      "name": "Repository status",
+      "command": "git status --short --branch",
+      "cwd": ".",
+      "environment": "local",
+      "timeout_seconds": 60,
+      "continue_on_failure": false,
+      "expected_exit_codes": [0]
+    },
+    {
+      "step_id": "STEP-002",
+      "name": "Test suite",
+      "command": "python -m pytest -q",
+      "cwd": ".",
+      "environment": "local",
+      "timeout_seconds": 600,
+      "continue_on_failure": false,
+      "expected_exit_codes": [0]
+    }
+  ]
+}
