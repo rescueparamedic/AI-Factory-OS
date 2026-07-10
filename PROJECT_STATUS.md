@@ -1,5 +1,13 @@
 # AI Factory OS Project Status
 
+## AFDE-2.3
+
+- Approval Guardian v2 implemented on a feature branch.
+- Command decisions use `AUTO_APPROVE`, `ASK_USER`, and `DENY` with fail-closed
+  and deny-overrides behavior.
+- Existing release approval workflows remain backward compatible.
+- Central enforcement across every worker executor remains planned work.
+
 ## 현재 상태
 
 | 항목 | 내용 |
