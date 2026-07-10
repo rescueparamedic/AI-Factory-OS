@@ -26,3 +26,9 @@
 - Cross-platform shell parsing needs a structured-command replacement.
 - GitHub PR creation is not yet a first-class structured adapter.
 - Approval UI/dashboard integration remains future work.
+
+## Real AI Worker Runtime
+
+- Real LLM evaluation, parallel workers, centralized interception, SQLite,
+  web/WebSocket UI, locks, cost tracking, sandboxing, and multi-step revision
+  remain future work.

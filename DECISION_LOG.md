@@ -21,3 +21,8 @@
 - Explicitly denied direct push to `main`, `master`, and `develop` in the Runner.
 - Kept merge as a user-approved operation and excluded automatic merge.
 - Chose additive integration instead of replacing all legacy executors.
+
+## 2026-07-11 — Real AI Worker Runtime MVP
+
+- Prioritized an executable deterministic mock Demo.
+- Reused Runner/Guardian and prohibited silent real-provider fallback.

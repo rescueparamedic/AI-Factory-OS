@@ -9,6 +9,7 @@ from pathlib import Path
 
 from approval_guardian import ApprovalGuardian, ApprovalRequest
 from sprint_auto_runner import SprintAutoRunner
+from real_worker_runtime import RealWorkerRuntime
 from .environment_checker import EnvironmentChecker
 from .provider_manager import ProviderManager
 from .real_ai_worker_bootstrap import RealAIWorkerBootstrap
@@ -140,6 +141,20 @@ def cmd_sprint_cancel(args):
     run = SprintAutoRunner(Path.cwd()).cancel(args.run_id, actor=args.actor)
     _print_runner(_runner_summary(run), args.json)
 
+def cmd_factory_demo(args):
+    session=RealWorkerRuntime(Path.cwd()).run(args.request,args.provider,not args.no_live,args.include_approval_demo,args.max_revisions)
+    data=session.to_dict()
+    if args.json: _print_json(data)
+    else:
+        print("\n=== Demo Complete ===")
+        print(f"Session ID : {session.session_id}\nStatus     : {session.status}\nMessages   : {len(session.messages)}\nProgress   : {session.progress}%")
+        print("Artifacts:")
+        for item in session.artifacts: print(f"- {item['type']}: {item['path']}")
+
+def cmd_runtime_status(args): _print_json(RealWorkerRuntime(Path.cwd()).status(args.session_id))
+def cmd_runtime_report(args): print(RealWorkerRuntime(Path.cwd()).report(args.session_id))
+def cmd_runtime_cancel(args): _print_json(RealWorkerRuntime(Path.cwd()).cancel(args.session_id))
+
 
 def build_parser():
     parser = argparse.ArgumentParser(prog="afde", description="AI Factory Development Environment CLI")
@@ -199,6 +214,12 @@ def build_parser():
     p.add_argument("--actor", default="user")
     p.add_argument("--json", action="store_true")
     p.set_defaults(func=cmd_sprint_cancel)
+
+    p=sub.add_parser("factory-demo",help="Run the Real AI Worker Runtime demo")
+    p.add_argument("--request",required=True); p.add_argument("--provider",default="mock",choices=["mock","openai","gemini"]); p.add_argument("--json",action="store_true"); p.add_argument("--no-live",action="store_true"); p.add_argument("--include-approval-demo",action="store_true"); p.add_argument("--max-revisions",type=int,default=1,choices=range(0,4)); p.set_defaults(func=cmd_factory_demo)
+    p=sub.add_parser("runtime-status"); p.add_argument("--session-id",required=True); p.set_defaults(func=cmd_runtime_status)
+    p=sub.add_parser("runtime-report"); p.add_argument("--session-id",required=True); p.set_defaults(func=cmd_runtime_report)
+    p=sub.add_parser("runtime-cancel"); p.add_argument("--session-id",required=True); p.set_defaults(func=cmd_runtime_cancel)
 
     return parser
 

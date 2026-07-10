@@ -32,6 +32,11 @@
 - AFDE sprint validate, run, status, resume, cancel, JSON, and dry-run CLI
 - 64 focused Runner tests and demo Sprint definition
 
+## AFDE-2.5 Real AI Worker Runtime
+
+- Added five-worker Demo, dashboard, mock provider, messages/events/artifacts,
+  Runner/Guardian validation, revision loop, runtime CLI, and 53 focused tests.
+
 ## Safety
 
 - No external AI API call is executed in this Sprint.
