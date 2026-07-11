@@ -1,5 +1,13 @@
 # AI Factory OS Sprint v2.7.3 적용 방법
 
+## Real Worker Demo
+
+```powershell
+python -m afde.cli factory-demo --request "Analyze a small feature and produce a plan and test result" --provider mock
+```
+
+Mock mode requires no API key. See `docs/guides/REAL_WORKER_DEMO_GUIDE.md`.
+
 ## 1. ZIP 저장 위치
 다운로드한 ZIP 파일을 아래 폴더에 저장합니다.
 

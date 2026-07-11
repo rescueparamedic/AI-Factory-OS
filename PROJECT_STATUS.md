@@ -1,5 +1,25 @@
 # AI Factory OS Project Status
 
+## AFDE-2.5
+
+- Executable five-worker mock Demo operates without external API keys.
+
+## AFDE-2.4
+
+- Sprint Auto Runner implemented on a feature branch.
+- Every Runner command is evaluated by Approval Guardian v2.
+- ASK_USER state is resumable only with matching definition and context.
+- Direct pushes to protected branches remain forbidden and merge remains a
+  user-controlled operation.
+
+## AFDE-2.3
+
+- Approval Guardian v2 implemented on a feature branch.
+- Command decisions use `AUTO_APPROVE`, `ASK_USER`, and `DENY` with fail-closed
+  and deny-overrides behavior.
+- Existing release approval workflows remain backward compatible.
+- Central enforcement across every worker executor remains planned work.
+
 ## 현재 상태
 
 | 항목 | 내용 |
