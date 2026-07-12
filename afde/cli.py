@@ -10,6 +10,9 @@ from pathlib import Path
 from approval_guardian import ApprovalGuardian, ApprovalRequest
 from sprint_auto_runner import SprintAutoRunner
 from real_worker_runtime import RealWorkerRuntime
+from real_worker_runtime.openai_probe import OpenAIResponsesProbe
+from real_worker_runtime.raw_openai_probe import RawOpenAIResponsesProbe
+from real_worker_runtime.http_boundary_probe import HTTPBoundaryDiagnostic
 from .environment_checker import EnvironmentChecker
 from .provider_manager import ProviderManager
 from .real_ai_worker_bootstrap import RealAIWorkerBootstrap
@@ -142,7 +145,7 @@ def cmd_sprint_cancel(args):
     _print_runner(_runner_summary(run), args.json)
 
 def cmd_factory_demo(args):
-    session=RealWorkerRuntime(Path.cwd()).run(args.request,args.provider,not args.no_live,args.include_approval_demo,args.max_revisions)
+    session=RealWorkerRuntime(Path.cwd()).run(args.request,args.provider,not args.no_live,args.include_approval_demo,args.max_revisions,args.model,args.allow_live_api,enable_controlled_execution=args.enable_controlled_execution)
     data=session.to_dict()
     if args.json: _print_json(data)
     else:
@@ -150,6 +153,19 @@ def cmd_factory_demo(args):
         print(f"Session ID : {session.session_id}\nStatus     : {session.status}\nMessages   : {len(session.messages)}\nProgress   : {session.progress}%")
         print("Artifacts:")
         for item in session.artifacts: print(f"- {item['type']}: {item['path']}")
+
+def cmd_openai_probe(args):
+    probe=OpenAIResponsesProbe(model=args.model,allow_live_api=args.allow_live_api)
+    result=probe.run_many() if args.probe=="all" else probe.run(args.probe)
+    _print_json(result)
+
+def cmd_openai_raw_probe(args):
+    result=RawOpenAIResponsesProbe(model=args.model,allow_live_api=args.allow_live_api,timeout_seconds=args.timeout).run()
+    _print_json(result)
+
+def cmd_openai_http_boundary(args):
+    result=HTTPBoundaryDiagnostic(model=args.model,include_post=args.include_post,include_curl_post=args.include_curl_post,include_curl_error_details=args.include_curl_error_details,allow_live_api=args.allow_live_api,timeout_seconds=args.timeout).run()
+    _print_json(result)
 
 def cmd_runtime_status(args): _print_json(RealWorkerRuntime(Path.cwd()).status(args.session_id))
 def cmd_runtime_report(args): print(RealWorkerRuntime(Path.cwd()).report(args.session_id))
@@ -216,7 +232,13 @@ def build_parser():
     p.set_defaults(func=cmd_sprint_cancel)
 
     p=sub.add_parser("factory-demo",help="Run the Real AI Worker Runtime demo")
-    p.add_argument("--request",required=True); p.add_argument("--provider",default="mock",choices=["mock","openai","gemini"]); p.add_argument("--json",action="store_true"); p.add_argument("--no-live",action="store_true"); p.add_argument("--include-approval-demo",action="store_true"); p.add_argument("--max-revisions",type=int,default=1,choices=range(0,4)); p.set_defaults(func=cmd_factory_demo)
+    p.add_argument("--request",required=True); p.add_argument("--provider",default="mock",choices=["mock","openai","gemini"]); p.add_argument("--model"); p.add_argument("--allow-live-api",action="store_true",help="Explicitly allow paid external API calls"); p.add_argument("--enable-controlled-execution",action="store_true",help="Enable bounded approved local execution proposals"); p.add_argument("--json",action="store_true"); p.add_argument("--no-live",action="store_true"); p.add_argument("--include-approval-demo",action="store_true"); p.add_argument("--max-revisions",type=int,default=1,choices=range(0,4)); p.set_defaults(func=cmd_factory_demo)
+    p=sub.add_parser("openai-probe",help="Run a minimal opt-in OpenAI Responses API probe")
+    p.add_argument("--probe",required=True,choices=["A","B","C","all"]); p.add_argument("--model"); p.add_argument("--allow-live-api",action="store_true",help="Explicitly allow one or more paid probe calls"); p.set_defaults(func=cmd_openai_probe)
+    p=sub.add_parser("openai-raw-probe",help="Run an SDK-free opt-in raw HTTPS Responses probe")
+    p.add_argument("--model",required=True); p.add_argument("--timeout",type=float,default=60.0); p.add_argument("--allow-live-api",action="store_true",help="Explicitly allow one paid raw HTTPS call"); p.set_defaults(func=cmd_openai_raw_probe)
+    p=sub.add_parser("openai-http-boundary",help="Diagnose DNS, TLS, HEAD clients, and optional one-time POST")
+    p.add_argument("--model",default="gpt-4.1-mini"); p.add_argument("--timeout",type=float,default=15.0); p.add_argument("--include-post",action="store_true"); p.add_argument("--include-curl-post",action="store_true",help="Include one minimal curl.exe POST (also requires --allow-live-api)"); p.add_argument("--include-curl-error-details",action="store_true",help="Allowlist JSON error fields from the curl POST response"); p.add_argument("--allow-live-api",action="store_true",help="Required with either POST option"); p.set_defaults(func=cmd_openai_http_boundary)
     p=sub.add_parser("runtime-status"); p.add_argument("--session-id",required=True); p.set_defaults(func=cmd_runtime_status)
     p=sub.add_parser("runtime-report"); p.add_argument("--session-id",required=True); p.set_defaults(func=cmd_runtime_report)
     p=sub.add_parser("runtime-cancel"); p.add_argument("--session-id",required=True); p.set_defaults(func=cmd_runtime_cancel)
