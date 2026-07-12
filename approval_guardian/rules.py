@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 import re
 
 from .command_parser import ParsedCommand, contains_obfuscation
@@ -116,6 +117,10 @@ def _ask_rule(tokens: tuple[str, ...], text: str, context: EvaluationContext) ->
 
 
 def _safe_rule(tokens: tuple[str, ...], context: EvaluationContext) -> RuleMatch | None:
+    if _safe_controlled_file_write(tokens, context):
+        return _match(ALLOW, "low", "AGV2-S004", "New allowlisted text file in the controlled execution sandbox.")
+    if _safe_controlled_python(tokens, context):
+        return _match(ALLOW, "low", "AGV2-S004", "Workspace-contained controlled execution script is safe.")
     if _is_read_only(tokens):
         return _match(ALLOW, "low", "AGV2-S001", "Read-only repository inspection is safe.")
     if _is_test(tokens):
@@ -125,6 +130,36 @@ def _safe_rule(tokens: tuple[str, ...], context: EvaluationContext) -> RuleMatch
     if _safe_git_mutation(tokens, context):
         return _match(ALLOW, "low", "AGV2-S003", "Verified feature-branch Git workflow is safe.")
     return None
+
+
+def _safe_controlled_file_write(tokens: tuple[str, ...], context: EvaluationContext) -> bool:
+    if len(tokens) != 2 or tokens[0] != "afde-controlled-file-write":
+        return False
+    candidate = Path(tokens[1])
+    if candidate.is_absolute() or candidate.suffix.lower() not in {".py", ".md", ".txt", ".json", ".yaml", ".yml"}:
+        return False
+    target = (context.repository_root / candidate).resolve()
+    sandbox = (context.repository_root / "controlled_execution").resolve()
+    return path_is_inside_repository(str(target), context) and _path_inside(target, sandbox) and not target.exists()
+
+
+def _safe_controlled_python(tokens: tuple[str, ...], context: EvaluationContext) -> bool:
+    if len(tokens) != 2 or tokens[0] != "python" or not tokens[1].lower().endswith(".py"):
+        return False
+    candidate = Path(tokens[1])
+    if candidate.is_absolute():
+        return False
+    target = (context.repository_root / candidate).resolve()
+    sandbox = (context.repository_root / "controlled_execution").resolve()
+    return target.is_file() and _path_inside(target, sandbox)
+
+
+def _path_inside(path: Path, root: Path) -> bool:
+    try:
+        path.relative_to(root)
+        return True
+    except ValueError:
+        return False
 
 
 def _safe_git_mutation(tokens: tuple[str, ...], context: EvaluationContext) -> bool:

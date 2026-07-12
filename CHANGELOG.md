@@ -1,5 +1,13 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-2.6 Real AI Provider
+
+- Added an opt-in OpenAI Responses API provider with environment-only credentials.
+- Added model, timeout, retry, usage, request ID, and structured error handling.
+- Preserved deterministic mock execution and offline test behavior.
+- Connected OpenAI to the five-worker runtime, revision loop, events, artifacts,
+  and the `factory-demo` CLI.
+
 ## Added
 
 - AFDE Environment Checker

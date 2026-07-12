@@ -31,7 +31,8 @@ class ProviderManager:
         result: list[ProviderStatus] = []
         for provider, env_name in self.PROVIDERS.items():
             settings_key = f"{provider}_api_key"
-            configured = bool(os.environ.get(env_name) or settings.get(settings_key))
+            # OpenAI credentials are intentionally environment-only.
+            configured = bool(os.environ.get(env_name)) if provider == "openai" else bool(os.environ.get(env_name) or settings.get(settings_key))
             result.append(ProviderStatus(provider=provider, configured=configured, mode="external" if configured else "mock"))
         result.append(ProviderStatus(provider="mock", configured=True, mode="local_safe"))
         return result

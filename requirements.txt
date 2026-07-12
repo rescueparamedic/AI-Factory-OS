@@ -1,1 +1,2 @@
-# Sprint 9-3 MVP uses Python standard library only.
+# OpenAI is imported lazily so mock-only use remains available without the SDK.
+openai>=1.0,<3

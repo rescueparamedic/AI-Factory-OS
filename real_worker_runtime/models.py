@@ -31,4 +31,6 @@ class RuntimeEvent:
 @dataclass
 class RuntimeSession:
     session_id: str; sprint_id: str; request: str; provider: str; status: str; created_at: str; updated_at: str; workers: dict[str,str]; progress: int=0; current_activity: str=""; messages: list[dict]=field(default_factory=list); results: list[dict]=field(default_factory=list); artifacts: list[dict]=field(default_factory=list); runner_run_id: str=""; error: str=""
+    execution_verification: dict[str,Any]=field(default_factory=lambda: {"status":"NOT_VERIFIED","verified_changed_files":[],"verified_test_executions":[]})
+    truth_contract_findings: list[dict[str,Any]]=field(default_factory=list)
     def to_dict(self): return asdict(self)
