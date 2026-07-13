@@ -17,8 +17,9 @@ from .errors import RuntimeSessionError
 from .event_stream import EventStream
 from .execution_truth import apply_execution_truth_contract, claimed_qa_failures
 from .message_bus import MessageBus
-from .models import RuntimeSession
+from .models import RuntimeSession, WorkerState
 from .provider_bridge import ProviderBridge
+from .runtime_task import RuntimeTask
 from .worker_context import WorkerContext
 from .worker_registry import WorkerRegistry
 from .workers import BaseWorker
@@ -73,8 +74,16 @@ class RealWorkerRuntime:
         session.pending_approval = _approval_summary(rejected)
         session.updated_at = _now()
         artifact_store = ArtifactStore(self.root, session.session_id)
+        events = EventStream(artifact_store)
+        if session.runtime_tasks:
+            context = WorkerContext(
+                request=session.request,
+                runtime_task=RuntimeTask.from_value(session.runtime_tasks[-1]),
+            )
+            _fail_task(session, context, artifact_store, events, record["source_worker"],
+                       "controlled action approval rejected")
         artifact_store.json("session.json", session.to_dict())
-        EventStream(artifact_store).emit("APPROVAL_REJECTED", record["source_worker"], approval_id)
+        events.emit("APPROVAL_REJECTED", record["source_worker"], approval_id)
         return rejected
 
     def approval_approve(self, approval_id: str, openai_client=None):
@@ -88,10 +97,15 @@ class RealWorkerRuntime:
         settings = continuation["settings"]
         selected = ProviderBridge(self.root, settings.get("model"), settings.get("allow_live_api", False), openai_client)
         selected.select(session.provider)
+        context = WorkerContext.from_value(continuation["context"])
         approved = approval_store.approve(approval_id)
         artifact_store = ArtifactStore(self.root, session.session_id)
         events = EventStream(artifact_store)
-        events.emit("APPROVAL_GRANTED", request.source_worker, approval_id)
+        task = context.runtime_task
+        events.emit(
+            "APPROVAL_GRANTED", request.source_worker, approval_id,
+            **_task_event_fields(task),
+        )
         observed = ControlledExecutor(self.root).execute_approved(request, approved)
         consumed = approval_store.consume(approved)
         events.emit("APPROVAL_CONSUMED", request.source_worker, approval_id)
@@ -100,15 +114,19 @@ class RealWorkerRuntime:
         if observed.get("status") == "SUCCEEDED" and observed.get("changed"):
             evidence["verified_changed_files"].append(observed["relative_path"])
         _merge_execution_evidence(session, evidence)
-        context = WorkerContext.from_value(continuation["context"])
         self._replace_worker_truth_output(session, context, request.source_worker, evidence)
         if observed.get("status") != "SUCCEEDED":
+            _fail_task(session, context, artifact_store, events, request.source_worker,
+                       "approved controlled execution failed", observed)
             session.status = "failed"
             session.error = f"Approved execution failed safely: {observed.get('status')}"
             session.updated_at = _now()
             artifact_store.json("session.json", session.to_dict())
             events.emit("APPROVED_EXECUTION_FAILED", request.source_worker, observed.get("status", "failed"))
             return session
+        if task is not None:
+            task.transition(WorkerState.RESUMED, "approved action executed", observed)
+            _sync_runtime_task(session, context, artifact_store)
         session.workers[request.source_worker] = "completed"
         session.status = "running"
         session.current_activity = "Approved action executed; runtime resuming"
@@ -136,11 +154,23 @@ class RealWorkerRuntime:
             session.progress = index * 20 + 10
             context.task_metadata["current_worker_id"] = definition.worker_id
             context.update_runtime_evidence(session.execution_verification)
+            task = context.runtime_task
+            if definition.worker_id == "development_worker" and task is not None:
+                task.transition(WorkerState.RUNNING, "developer worker started")
+                _sync_runtime_task(session, context, store)
+                events.emit(
+                    "TASK_STARTED", definition.worker_id, "developer worker started",
+                    **_task_event_fields(task),
+                )
+            elif definition.worker_id == "qa_worker" and task is not None:
+                task.transition(WorkerState.QA, "QA worker started")
+                _sync_runtime_task(session, context, store)
             dashboard.render(session)
             events.emit("WORKER_STARTED", definition.worker_id)
             result = BaseWorker(definition, selected).execute(context)
             pending_request = None
             pending_observation = None
+            evidence = {"verified_changed_files": [], "verified_test_executions": [], "execution_evidence": []}
             if result.status == "completed":
                 evidence, pending_request, pending_observation = _execute_proposals(
                     controlled, definition.worker_id, result.output, self.root
@@ -151,7 +181,16 @@ class RealWorkerRuntime:
             session.results.append(asdict(result))
             context.record_worker_output(definition.worker_id, result.output)
             context.update_runtime_evidence(session.execution_verification)
+            if definition.worker_id == "planning_worker" and result.status == "completed":
+                _create_runtime_task(session, context, result.output, store, events)
+            elif context.runtime_task is not None and definition.worker_id in {"development_worker", "qa_worker"}:
+                context.runtime_task.record_output(definition.worker_id, result.output)
+                for item in evidence.get("execution_evidence", []):
+                    context.runtime_task.record_evidence(item)
+                _sync_runtime_task(session, context, store)
             if result.status != "completed":
+                _fail_task(session, context, store, events, definition.worker_id,
+                           "worker execution failed")
                 session.status = "failed"
                 session.error = result.error
                 events.emit("PROVIDER_ERROR", definition.worker_id, result.error)
@@ -166,7 +205,13 @@ class RealWorkerRuntime:
                     pending_request, pending_observation or {}, store, events,
                 )
             if definition.worker_id == "qa_worker" and claimed_qa_failures(result.output):
+                events.emit(
+                    "QA_COMPLETED", definition.worker_id, "QA requested revision",
+                    **_task_event_fields(context.runtime_task),
+                )
                 if revisions >= settings.get("max_revisions", 1):
+                    _fail_task(session, context, store, events, definition.worker_id,
+                               "QA failed after maximum revisions")
                     session.status = "failed"
                     session.error = "QA failed after maximum revisions"
                     break
@@ -175,6 +220,12 @@ class RealWorkerRuntime:
                 events.emit("REVISION_STARTED", "development_worker", f"revision {revisions}")
                 if not self._run_revision(session, context, selected, controlled, bus, events):
                     break
+            elif definition.worker_id == "qa_worker":
+                events.emit(
+                    "QA_COMPLETED", definition.worker_id, "QA completed",
+                    **_task_event_fields(context.runtime_task),
+                )
+                _complete_task(session, context, store, events)
             session.progress = (index + 1) * 20
             session.current_activity = result.summary
             dashboard.render(session)
@@ -182,11 +233,24 @@ class RealWorkerRuntime:
 
     def _run_revision(self, session, context, selected, controlled, bus, events):
         for retry_id in ("development_worker", "qa_worker"):
+            task = context.runtime_task
+            if task is not None:
+                target = WorkerState.RUNNING if retry_id == "development_worker" else WorkerState.QA
+                task.transition(target, f"{retry_id} revision started")
+                _sync_runtime_task(session, context, events.store)
+                if retry_id == "development_worker":
+                    events.emit(
+                        "TASK_STARTED", retry_id, "development revision started",
+                        **_task_event_fields(task),
+                    )
             retry_definition = next(item for item in WorkerRegistry().list() if item.worker_id == retry_id)
             retry = BaseWorker(retry_definition, selected).execute(context)
+            evidence = {"verified_changed_files": [], "verified_test_executions": [], "execution_evidence": []}
             if retry.status == "completed":
                 evidence, pending, _ = _execute_proposals(controlled, retry_id, retry.output, self.root)
                 if pending is not None:
+                    _fail_task(session, context, events.store, events, retry_id,
+                               "approval pause during revision is unsupported")
                     session.status = "failed"
                     session.error = "Approval pause during revision is not supported"
                     return False
@@ -196,11 +260,30 @@ class RealWorkerRuntime:
             session.results.append(asdict(retry))
             context.record_worker_output(retry_id, retry.output)
             context.update_runtime_evidence(session.execution_verification)
+            if context.runtime_task is not None:
+                context.runtime_task.record_output(retry_id, retry.output)
+                for item in evidence.get("execution_evidence", []):
+                    context.runtime_task.record_evidence(item)
+                _sync_runtime_task(session, context, events.store)
             bus.publish(retry_id, "runtime", "WORKER_OUTPUT", retry.summary, retry.output)
+            if retry.status != "completed":
+                _fail_task(session, context, events.store, events, retry_id,
+                           "revision worker failed")
+                session.status = "failed"
+                session.error = retry.error
+                return False
+            if retry_id == "qa_worker":
+                events.emit(
+                    "QA_COMPLETED", retry_id, "revision QA completed",
+                    **_task_event_fields(context.runtime_task),
+                )
         if claimed_qa_failures(context["outputs"]["qa_worker"]):
+            _fail_task(session, context, events.store, events, "qa_worker",
+                       "QA revision failed")
             session.status = "failed"
             session.error = "QA revision failed"
             return False
+        _complete_task(session, context, events.store, events)
         return True
 
     def _pause_for_approval(
@@ -215,6 +298,10 @@ class RealWorkerRuntime:
         session.current_activity = "Human approval required for controlled existing-file edit"
         session.pending_approval = _approval_summary(record)
         session.updated_at = _now()
+        task = context.runtime_task
+        if task is not None:
+            task.transition(WorkerState.WAITING_APPROVAL, "controlled action requires approval", observation)
+            _sync_runtime_task(session, context, store)
         store.json("continuation.json", {
             "session_id": session.session_id,
             "approval_request_id": record["approval_request_id"],
@@ -228,6 +315,10 @@ class RealWorkerRuntime:
         _write_partial_artifacts(store, context, session)
         store.json("session.json", session.to_dict())
         events.emit("APPROVAL_PENDING", request.source_worker, record["approval_request_id"])
+        events.emit(
+            "APPROVAL_REQUESTED", request.source_worker, record["approval_request_id"],
+            **_task_event_fields(task),
+        )
         events.emit("RUNTIME_WAITING_APPROVAL", request.source_worker, request.relative_path or "command")
         return session
 
@@ -252,6 +343,7 @@ class RealWorkerRuntime:
         session.execution_verification["findings"] = [item["classification"] for item in session.truth_contract_findings]
         session.progress = 100 if session.status == "completed" else session.progress
         session.updated_at = _now()
+        _sync_runtime_task(session, context, store)
         _write_partial_artifacts(store, context, session)
         report = _truthful_report(session, context)
         if not any(item["type"] == "final_report" for item in session.artifacts):
@@ -269,6 +361,8 @@ class RealWorkerRuntime:
         normalized, findings = apply_execution_truth_contract(worker_id, original, evidence)
         context.record_worker_output(worker_id, normalized)
         context.update_runtime_evidence(session.execution_verification)
+        if context.runtime_task is not None:
+            context.runtime_task.record_output(worker_id, normalized)
         session.truth_contract_findings = [
             item for item in session.truth_contract_findings
             if not (worker_id == "development_worker" and item.get("classification") == "UNVERIFIED_FILE_CHANGE_CLAIM")
@@ -365,6 +459,77 @@ def _execute_proposals(executor, worker_id, output, root):
             if observed.get("status") in {"SUCCEEDED", "FAILED"}:
                 evidence["verified_test_executions"].append(observed)
     return evidence, None, None
+
+
+def _create_runtime_task(session, context, planner_output, store, events):
+    raw_priority = planner_output.get("priority", 0)
+    priority = raw_priority if isinstance(raw_priority, int) and not isinstance(raw_priority, bool) else 0
+    raw_dependencies = planner_output.get("dependencies", [])
+    dependencies = [item for item in raw_dependencies if isinstance(item, str)] \
+        if isinstance(raw_dependencies, list) else []
+    task = RuntimeTask.create(
+        "development_worker",
+        priority=priority,
+        dependencies=dependencies,
+        inputs={"request": context.request, "planner_output": planner_output},
+    )
+    context.runtime_task = task
+    events.emit(
+        "TASK_CREATED", task.worker, "planner output accepted",
+        **_task_event_fields(task),
+    )
+    task.transition(WorkerState.READY, "planner output converted to runtime task")
+    _sync_runtime_task(session, context, store)
+
+
+def _complete_task(session, context, store, events):
+    task = context.runtime_task
+    if task is None or task.state in {WorkerState.COMPLETED, WorkerState.FAILED}:
+        return
+    task.transition(WorkerState.COMPLETED, "runtime-observed QA completed")
+    _sync_runtime_task(session, context, store)
+    events.emit(
+        "TASK_COMPLETED", task.worker, "runtime task completed",
+        **_task_event_fields(task),
+    )
+
+
+def _fail_task(session, context, store, events, worker_id, reason, evidence=None):
+    task = context.runtime_task
+    if task is None or task.state in {WorkerState.COMPLETED, WorkerState.FAILED}:
+        return
+    task.transition(WorkerState.FAILED, reason, evidence)
+    _sync_runtime_task(session, context, store)
+    events.emit(
+        "TASK_FAILED", worker_id, reason,
+        **_task_event_fields(task),
+    )
+
+
+def _sync_runtime_task(session, context, store):
+    task = context.runtime_task
+    if task is None:
+        return
+    snapshot = task.to_dict()
+    session.runtime_tasks = [
+        snapshot if item.get("id") == task.id else item
+        for item in session.runtime_tasks
+    ]
+    if not any(item.get("id") == task.id for item in session.runtime_tasks):
+        session.runtime_tasks.append(snapshot)
+    path = store.json("runtime_task.json", snapshot)
+    if not any(item["type"] == "runtime_task.json" for item in session.artifacts):
+        session.artifacts.append({"type": "runtime_task.json", "path": str(path)})
+
+
+def _task_event_fields(task):
+    if task is None:
+        return {}
+    return {
+        "task_id": task.id,
+        "state": task.state.value,
+        "payload": {"priority": task.priority, "dependencies": list(task.dependencies)},
+    }
 
 
 def _current_hash(root, relative_path):

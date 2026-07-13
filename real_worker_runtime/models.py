@@ -6,7 +6,9 @@ from typing import Any
 from uuid import uuid4
 
 class WorkerState(str, Enum):
-    IDLE="idle"; QUEUED="queued"; RUNNING="running"; WAITING="waiting"; WAITING_APPROVAL="waiting_approval"; COMPLETED="completed"; FAILED="failed"; BLOCKED="blocked"; CANCELLED="cancelled"
+    IDLE="idle"; QUEUED="queued"; WAITING="waiting"; BLOCKED="blocked"; CANCELLED="cancelled"
+    PLANNING="planning"; READY="ready"; RUNNING="running"; WAITING_APPROVAL="waiting_approval"
+    RESUMED="resumed"; QA="qa"; COMPLETED="completed"; FAILED="failed"
 class RuntimeState(str, Enum):
     CREATED="created"; RUNNING="running"; WAITING_APPROVAL="waiting_approval"; BLOCKED="blocked"; FAILED="failed"; COMPLETED="completed"; CANCELLED="cancelled"
 
@@ -27,11 +29,12 @@ class RuntimeArtifact:
     artifact_type: str; path: str
 @dataclass
 class RuntimeEvent:
-    event: str; timestamp: str; worker_id: str=""; detail: str=""
+    event: str; timestamp: str; worker_id: str=""; detail: str=""; task_id: str=""; state: str=""; payload: dict[str,Any]=field(default_factory=dict)
 @dataclass
 class RuntimeSession:
     session_id: str; sprint_id: str; request: str; provider: str; status: str; created_at: str; updated_at: str; workers: dict[str,str]; progress: int=0; current_activity: str=""; messages: list[dict]=field(default_factory=list); results: list[dict]=field(default_factory=list); artifacts: list[dict]=field(default_factory=list); runner_run_id: str=""; error: str=""
     execution_verification: dict[str,Any]=field(default_factory=lambda: {"status":"NOT_VERIFIED","verified_changed_files":[],"verified_test_executions":[]})
     truth_contract_findings: list[dict[str,Any]]=field(default_factory=list)
     pending_approval: dict[str,Any]|None=None
+    runtime_tasks: list[dict[str,Any]]=field(default_factory=list)
     def to_dict(self): return asdict(self)

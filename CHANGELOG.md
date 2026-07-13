@@ -1,5 +1,17 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-2.9 Runtime Task and Worker State Engine
+
+- Added a typed `RuntimeTask` carrying worker ownership, priority,
+  dependencies, inputs, outputs, runtime evidence, and transition history.
+- Extended `WorkerState` with the validated Planning-to-QA lifecycle while
+  preserving existing worker and session state values.
+- Connected normalized Planner output to a persisted task passed to the
+  Developer through the AFDE-2.8 `WorkerContext`.
+- Added task-scoped runtime events without replacing AFDE-2.7 approval events
+  or changing approval, Guardian, controlled-execution, or Execution Truth
+  semantics.
+
 ## AFDE-2.8 PR-1 Worker Context
 
 - Expanded the runtime-owned `WorkerContext` with planner output, task
