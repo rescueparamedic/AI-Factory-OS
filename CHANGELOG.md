@@ -1,5 +1,15 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-2.8 PR-1 Worker Context
+
+- Expanded the runtime-owned `WorkerContext` with planner output, task
+  metadata, runtime evidence, and prior worker artifacts.
+- Passed one typed context through the Planner-to-Developer boundary while
+  retaining the provider-facing mapping contract.
+- Added JSON-safe context persistence and restoration across the existing
+  AFDE-2.7 approval/resume path.
+- Added focused creation, propagation, legacy-mapping, and resume coverage.
+
 ## AFDE-2.7 Human Approval Resume and Controlled Existing-File Edit
 
 - Added persisted, exact, single-use approval records for existing-file edits.

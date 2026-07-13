@@ -1,5 +1,14 @@
 # AI Factory OS Project Status
 
+## AFDE-2.8 PR-1
+
+- Worker Context is implemented on
+  `feature/afde-2.8-worker-context`.
+- Planner output, task metadata, runtime evidence, and prior worker artifacts
+  now move through one runtime-owned context to the Developer.
+- Legacy mapping access and approval continuation restoration preserve the
+  AFDE-2.7 provider, Guardian, controlled-execution, and Execution Truth paths.
+
 ## AFDE-2.7
 
 - Human approval pause/resume is implemented on its feature branch.
