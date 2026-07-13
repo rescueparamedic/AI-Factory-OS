@@ -19,6 +19,7 @@ from .execution_truth import apply_execution_truth_contract, claimed_qa_failures
 from .message_bus import MessageBus
 from .models import RuntimeSession
 from .provider_bridge import ProviderBridge
+from .worker_context import WorkerContext
 from .worker_registry import WorkerRegistry
 from .workers import BaseWorker
 
@@ -47,7 +48,16 @@ class RealWorkerRuntime:
             "include_approval_demo": include_approval_demo, "max_revisions": max_revisions,
             "live": live,
         }
-        return self._continue(session, {"request": request, "outputs": {}}, selected, settings, 0, 0)
+        context = WorkerContext(
+            request=request,
+            task_metadata={
+                "session_id": sid,
+                "sprint_id": sprint,
+                "provider": provider,
+            },
+            runtime_evidence=session.execution_verification,
+        )
+        return self._continue(session, context, selected, settings, 0, 0)
 
     def approval_show(self, approval_id: str) -> dict:
         return RuntimeApprovalStore(self.root).load(approval_id)
@@ -90,7 +100,7 @@ class RealWorkerRuntime:
         if observed.get("status") == "SUCCEEDED" and observed.get("changed"):
             evidence["verified_changed_files"].append(observed["relative_path"])
         _merge_execution_evidence(session, evidence)
-        context = continuation["context"]
+        context = WorkerContext.from_value(continuation["context"])
         self._replace_worker_truth_output(session, context, request.source_worker, evidence)
         if observed.get("status") != "SUCCEEDED":
             session.status = "failed"
@@ -109,6 +119,7 @@ class RealWorkerRuntime:
         )
 
     def _continue(self, session, context, selected, settings, start_index, revisions):
+        context = WorkerContext.from_value(context)
         store = ArtifactStore(self.root, session.session_id)
         events = EventStream(store)
         bus = MessageBus(store, session)
@@ -123,6 +134,8 @@ class RealWorkerRuntime:
             session.workers[definition.worker_id] = "running"
             session.current_activity = f"{definition.role} is working..."
             session.progress = index * 20 + 10
+            context.task_metadata["current_worker_id"] = definition.worker_id
+            context.update_runtime_evidence(session.execution_verification)
             dashboard.render(session)
             events.emit("WORKER_STARTED", definition.worker_id)
             result = BaseWorker(definition, selected).execute(context)
@@ -136,7 +149,8 @@ class RealWorkerRuntime:
                 session.truth_contract_findings.extend(findings)
                 _merge_execution_evidence(session, evidence)
             session.results.append(asdict(result))
-            context["outputs"][definition.worker_id] = result.output
+            context.record_worker_output(definition.worker_id, result.output)
+            context.update_runtime_evidence(session.execution_verification)
             if result.status != "completed":
                 session.status = "failed"
                 session.error = result.error
@@ -180,7 +194,8 @@ class RealWorkerRuntime:
                 session.truth_contract_findings.extend(findings)
                 _merge_execution_evidence(session, evidence)
             session.results.append(asdict(retry))
-            context["outputs"][retry_id] = retry.output
+            context.record_worker_output(retry_id, retry.output)
+            context.update_runtime_evidence(session.execution_verification)
             bus.publish(retry_id, "runtime", "WORKER_OUTPUT", retry.summary, retry.output)
         if claimed_qa_failures(context["outputs"]["qa_worker"]):
             session.status = "failed"
@@ -207,7 +222,7 @@ class RealWorkerRuntime:
             "action_fingerprint": action_fingerprint(request),
             "next_worker_index": next_index,
             "revisions": revisions,
-            "context": context,
+            "context": context.to_dict(),
             "settings": settings,
         })
         _write_partial_artifacts(store, context, session)
@@ -252,7 +267,8 @@ class RealWorkerRuntime:
     def _replace_worker_truth_output(self, session, context, worker_id, evidence):
         original = context["outputs"].get(worker_id, {})
         normalized, findings = apply_execution_truth_contract(worker_id, original, evidence)
-        context["outputs"][worker_id] = normalized
+        context.record_worker_output(worker_id, normalized)
+        context.update_runtime_evidence(session.execution_verification)
         session.truth_contract_findings = [
             item for item in session.truth_contract_findings
             if not (worker_id == "development_worker" and item.get("classification") == "UNVERIFIED_FILE_CHANGE_CLAIM")
