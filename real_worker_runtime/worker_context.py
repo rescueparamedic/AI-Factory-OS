@@ -4,6 +4,8 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
+from .runtime_task import RuntimeTask
+
 
 @dataclass
 class WorkerContext:
@@ -19,6 +21,7 @@ class WorkerContext:
     task_metadata: dict[str, Any] = field(default_factory=dict)
     runtime_evidence: dict[str, Any] = field(default_factory=dict)
     prior_worker_artifacts: dict[str, dict[str, Any]] = field(default_factory=dict)
+    runtime_task: RuntimeTask | None = None
     outputs: dict[str, Any] = field(default_factory=dict)
     revision: int = 0
 
@@ -34,6 +37,7 @@ class WorkerContext:
             task_metadata=deepcopy(value.get("task_metadata", {})),
             runtime_evidence=deepcopy(value.get("runtime_evidence", {})),
             prior_worker_artifacts=deepcopy(value.get("prior_worker_artifacts", {})),
+            runtime_task=RuntimeTask.from_value(value.get("runtime_task")),
             outputs=deepcopy(value.get("outputs", {})),
             revision=int(value.get("revision", 0)),
         )
@@ -54,6 +58,7 @@ class WorkerContext:
             "task_metadata": deepcopy(self.task_metadata),
             "runtime_evidence": deepcopy(self.runtime_evidence),
             "prior_worker_artifacts": deepcopy(self.prior_worker_artifacts),
+            "runtime_task": self.runtime_task.to_dict() if self.runtime_task else None,
             "outputs": deepcopy(self.outputs),
             "revision": self.revision,
         }

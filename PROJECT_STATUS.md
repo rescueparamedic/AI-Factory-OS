@@ -1,5 +1,16 @@
 # AI Factory OS Project Status
 
+## AFDE-2.9
+
+- Runtime Task and Worker State Engine is implemented on
+  `feature/afde-2.9-runtime-task-state`.
+- Planner output creates one persisted Developer task with validated state
+  transitions, task history, runtime-owned evidence, and task-scoped events.
+- Approval pause/resume uses `WAITING_APPROVAL` and `RESUMED` task states while
+  retaining the exact AFDE-2.7 approval records, bindings, and single-use
+  execution path.
+- AFDE-2.8 Worker Context remains the sole Planner-to-Developer context layer.
+
 ## AFDE-2.8 PR-1
 
 - Worker Context is implemented on
