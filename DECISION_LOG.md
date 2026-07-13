@@ -1,5 +1,13 @@
 # Decision Log
 
+## 2026-07-12 — AFDE-2.7 Human Approval Resume
+
+- Reused atomic Runtime JSON for approval and continuation records.
+- Bound approval to session, execution request, normalized payload, target,
+  pre-image hash, and a canonical single-use fingerprint.
+- Kept existing-file replacement as `ASK_USER`; `AGV2-S004` is unchanged.
+- Required runtime-owned edits/evidence and fail-closed pre-image mismatch.
+
 ## 2026-07-11 — Approval Guardian v2
 
 - Adopted three decisions: `AUTO_APPROVE`, `ASK_USER`, and `DENY`.

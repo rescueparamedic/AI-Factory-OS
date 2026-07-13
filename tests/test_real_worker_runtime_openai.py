@@ -7,10 +7,16 @@ from real_worker_runtime import RealWorkerRuntime
 class WorkerResponses:
     def create(self, **kwargs):
         instruction = kwargs["instructions"]
-        if "QA worker" in instruction:
-            body = '{"tests_run": [], "passed": 1, "failed": 0, "issues": [], "recommendation": "PASS"}'
+        if "PM." in instruction:
+            body = '{"request_summary":"demo","goal":"demo","constraints":[],"definition_of_done":[],"risk_notes":[]}'
+        elif "planning worker" in instruction:
+            body = '{"tasks":[],"dependencies":[],"assigned_workers":[],"acceptance_criteria":[]}'
+        elif "development worker" in instruction:
+            body = '{"implementation_summary":"no change","proposed_files":[],"proposed_test_commands":[],"claimed_artifacts":[],"proposed_file_writes":[]}'
+        elif "QA worker" in instruction:
+            body = '{"claimed_test_commands":[],"claimed_passed":0,"claimed_failed":0,"issues":[],"recommendation":"PASS","requested_test_executions":[]}'
         else:
-            body = '{"result": "completed"}'
+            body = '{"runtime_report":"demo","artifact_index":"demo","user_summary":"demo"}'
         return SimpleNamespace(output_text=body, id="resp_test", model=kwargs["model"])
 
 

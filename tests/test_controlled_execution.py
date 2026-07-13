@@ -1,5 +1,6 @@
 from pathlib import Path
 from types import SimpleNamespace
+from hashlib import sha256
 import json
 import subprocess
 
@@ -30,6 +31,16 @@ def test_safe_new_file_creates_observed_evidence_and_guardian_audit(tmp_path):
     audits = list((tmp_path / "data" / "audit").glob("AUD-AGV2-*.json"))
     assert audits
     assert json.loads(audits[0].read_text())["decision"] == "auto_approve"
+
+
+def test_file_write_preserves_exact_lf_payload_bytes_and_hash(tmp_path):
+    payload = "first\nsecond\n"
+    result = ControlledExecutor(tmp_path).execute(file_request(content=payload))
+    expected = payload.encode("utf-8")
+    target = tmp_path / "controlled_execution" / "hello.py"
+    assert target.read_bytes() == expected
+    assert result["approved_payload_sha256"] == sha256(expected).hexdigest()
+    assert result["after_sha256"] == sha256(expected).hexdigest()
 
 
 def test_observed_file_evidence_is_the_only_verified_source(tmp_path):

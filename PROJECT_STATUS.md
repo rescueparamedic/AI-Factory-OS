@@ -1,5 +1,15 @@
 # AI Factory OS Project Status
 
+## AFDE-2.7
+
+- Human approval pause/resume is implemented on its feature branch.
+- Existing-file writes persist exact `ASK_USER` state and remain unchanged until
+  one bound approval is consumed.
+- The Product Owner-gated live lifecycle completed with an exact LF payload,
+  one runtime-observed bounded fixture test, and Execution Truth `VERIFIED`.
+- The invalid provider payload from the earlier fail-closed attempt remains
+  unapproved evidence; runtime data is excluded from the source commit set.
+
 ## AFDE-2.5
 
 - Executable five-worker mock Demo operates without external API keys.

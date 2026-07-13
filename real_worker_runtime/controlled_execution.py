@@ -39,10 +39,11 @@ class ExecutionRequest:
     relative_path: str | None = None
     content: str | None = None
     argv: tuple[str, ...] = ()
+    expected_preimage_sha256: str | None = None
 
     @classmethod
-    def file_write(cls, relative_path: str, content: str, source_worker: str, purpose: str) -> "ExecutionRequest":
-        return cls(f"EXE-{uuid4().hex}", ActionType.FILE_WRITE, source_worker, _sanitize(purpose)[:255], relative_path, content)
+    def file_write(cls, relative_path: str, content: str, source_worker: str, purpose: str, expected_preimage_sha256: str | None = None) -> "ExecutionRequest":
+        return cls(f"EXE-{uuid4().hex}", ActionType.FILE_WRITE, source_worker, _sanitize(purpose)[:255], relative_path, content, expected_preimage_sha256=expected_preimage_sha256)
 
     @classmethod
     def command_run(cls, argv: list[str], source_worker: str, purpose: str) -> "ExecutionRequest":
@@ -157,18 +158,49 @@ class ControlledExecutor:
         evidence["approval_decision"] = guardian.decision.value
         return self._persist_raw(evidence)
 
+    def execute_approved(self, request: ExecutionRequest, approval_record: dict[str, Any]) -> dict[str, Any]:
+        from .approval_resume import APPROVED, action_fingerprint, request_from_record
+        if approval_record.get("status") != APPROVED:
+            raise ValueError("an exact persisted APPROVED record is required")
+        bound_request = request_from_record(approval_record)
+        if bound_request != request or approval_record.get("action_fingerprint") != action_fingerprint(request):
+            raise ValueError("approved execution request binding mismatch")
+        policy = self.policy.classify(request)
+        if policy.decision != "ASK_USER" or policy.classification != "EXISTING_FILE_REPLACEMENT":
+            return self._persist(request, policy, None, "DENIED")
+        guardian = self.guardian.evaluate(ApprovalRequest(
+            command=policy.safe_representation, cwd=str(self.root), actor="approved-runtime-resume",
+            task_id=request.request_id, environment="local",
+        ))
+        if guardian.decision is not ApprovalDecision.ASK_USER:
+            return self._persist(request, policy, guardian, "DENIED")
+        evidence = self._write_file(request, policy)
+        evidence["approval_decision"] = "human_approved"
+        evidence["guardian_rule_id"] = guardian.rule_id
+        evidence["guardian_reason"] = guardian.reason
+        return self._persist_raw(evidence)
+
     def _write_file(self, request: ExecutionRequest, policy: PolicyResult) -> dict[str, Any]:
         target = Path(policy.resolved_target or "")
         before_exists = target.exists()
         before_hash = _file_hash(target) if before_exists else None
+        if before_exists and request.expected_preimage_sha256 != before_hash:
+            return self._base(request, policy, "PREIMAGE_MISMATCH") | {
+                "relative_path": target.relative_to(self.root).as_posix(),
+                "before_exists": True, "before_sha256": before_hash,
+                "expected_preimage_sha256": request.expected_preimage_sha256,
+                "after_exists": True, "after_sha256": before_hash, "changed": False,
+            }
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(request.content or "", encoding="utf-8")
+        approved_bytes = (request.content or "").encode("utf-8")
+        target.write_bytes(approved_bytes)
         after_hash = _file_hash(target)
         changed = not before_exists or before_hash != after_hash
         return self._base(request, policy, "SUCCEEDED" if changed else "NO_CHANGE") | {
             "relative_path": target.relative_to(self.root).as_posix(),
             "before_exists": before_exists, "before_sha256": before_hash,
             "after_exists": target.is_file(), "after_sha256": after_hash, "changed": changed,
+            "approved_payload_sha256": sha256(approved_bytes).hexdigest(),
         }
 
     def _run_command(self, request: ExecutionRequest, policy: PolicyResult) -> dict[str, Any]:
@@ -198,6 +230,9 @@ class ControlledExecutor:
     def _persist(self, request: ExecutionRequest, policy: PolicyResult, guardian: Any, status: str) -> dict[str, Any]:
         evidence = self._base(request, policy, status)
         evidence["approval_decision"] = guardian.decision.value if guardian else policy.decision.lower()
+        evidence["policy_reason"] = policy.reason
+        evidence["guardian_rule_id"] = guardian.rule_id if guardian else None
+        evidence["guardian_reason"] = guardian.reason if guardian else None
         return self._persist_raw(evidence)
 
     def _persist_raw(self, evidence: dict[str, Any]) -> dict[str, Any]:

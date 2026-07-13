@@ -13,7 +13,7 @@ from real_worker_runtime.errors import (
     ProviderResponseError,
     ProviderTimeoutError,
 )
-from real_worker_runtime.openai_provider import OpenAIConfig, OpenAIProvider
+from real_worker_runtime.openai_provider import OpenAIConfig, OpenAIProvider, build_worker_request
 from real_worker_runtime.provider_bridge import ProviderBridge
 
 
@@ -92,6 +92,24 @@ def test_request_uses_responses_structured_output():
     assert call["text"]["format"]["strict"] is True
     assert call["text"]["format"]["schema"]["additionalProperties"] is False
     assert "OPENAI_API_KEY" not in str(call)
+
+
+def test_qa_prompt_requires_bounded_fixture_validation_after_verified_write():
+    request = build_worker_request("qa_worker", "validate", {"outputs": {
+        "development_worker": {
+            "verified_changed_files": ["tests/fixtures/afde_2_7_approval_target.txt"],
+        }
+    }}, "test-model")
+    assert '["python","-m","pytest","tests/test_afde_2_7_fixture.py","-q"]' in request["instructions"]
+
+
+def test_development_schema_requires_explicit_file_write_action_and_exact_content_instruction():
+    request = build_worker_request("development_worker", "write", {"outputs": {}}, "test-model")
+    item = request["text"]["format"]["schema"]["properties"]["proposed_file_writes"]["items"]
+    assert item["properties"]["action_type"]["enum"] == ["FILE_WRITE"]
+    assert item["required"] == ["action_type", "relative_path", "content", "purpose"]
+    assert "complete literal intended file content" in request["instructions"]
+    assert "placeholder" in request["instructions"]
 
 
 @pytest.mark.parametrize(

@@ -153,6 +153,9 @@ def cmd_factory_demo(args):
         print(f"Session ID : {session.session_id}\nStatus     : {session.status}\nMessages   : {len(session.messages)}\nProgress   : {session.progress}%")
         print("Artifacts:")
         for item in session.artifacts: print(f"- {item['type']}: {item['path']}")
+        if session.pending_approval and session.status == "waiting_approval":
+            print(f"Approval required: {session.pending_approval['approval_request_id']}")
+            print(f"Action: {session.pending_approval['action_type']} {session.pending_approval['target']}")
 
 def cmd_openai_probe(args):
     probe=OpenAIResponsesProbe(model=args.model,allow_live_api=args.allow_live_api)
@@ -166,6 +169,10 @@ def cmd_openai_raw_probe(args):
 def cmd_openai_http_boundary(args):
     result=HTTPBoundaryDiagnostic(model=args.model,include_post=args.include_post,include_curl_post=args.include_curl_post,include_curl_error_details=args.include_curl_error_details,allow_live_api=args.allow_live_api,timeout_seconds=args.timeout).run()
     _print_json(result)
+
+def cmd_approval_show(args): _print_json(RealWorkerRuntime(Path.cwd()).approval_show(args.id))
+def cmd_approval_approve(args): _print_json(RealWorkerRuntime(Path.cwd()).approval_approve(args.id).to_dict())
+def cmd_approval_reject(args): _print_json(RealWorkerRuntime(Path.cwd()).approval_reject(args.id))
 
 def cmd_runtime_status(args): _print_json(RealWorkerRuntime(Path.cwd()).status(args.session_id))
 def cmd_runtime_report(args): print(RealWorkerRuntime(Path.cwd()).report(args.session_id))
@@ -239,6 +246,9 @@ def build_parser():
     p.add_argument("--model",required=True); p.add_argument("--timeout",type=float,default=60.0); p.add_argument("--allow-live-api",action="store_true",help="Explicitly allow one paid raw HTTPS call"); p.set_defaults(func=cmd_openai_raw_probe)
     p=sub.add_parser("openai-http-boundary",help="Diagnose DNS, TLS, HEAD clients, and optional one-time POST")
     p.add_argument("--model",default="gpt-4.1-mini"); p.add_argument("--timeout",type=float,default=15.0); p.add_argument("--include-post",action="store_true"); p.add_argument("--include-curl-post",action="store_true",help="Include one minimal curl.exe POST (also requires --allow-live-api)"); p.add_argument("--include-curl-error-details",action="store_true",help="Allowlist JSON error fields from the curl POST response"); p.add_argument("--allow-live-api",action="store_true",help="Required with either POST option"); p.set_defaults(func=cmd_openai_http_boundary)
+    p=sub.add_parser("approval-show",help="Show one exact pending runtime approval"); p.add_argument("--id",required=True); p.set_defaults(func=cmd_approval_show)
+    p=sub.add_parser("approval-approve",help="Approve and resume one exact pending runtime action"); p.add_argument("--id",required=True); p.set_defaults(func=cmd_approval_approve)
+    p=sub.add_parser("approval-reject",help="Reject one exact pending runtime action"); p.add_argument("--id",required=True); p.set_defaults(func=cmd_approval_reject)
     p=sub.add_parser("runtime-status"); p.add_argument("--session-id",required=True); p.set_defaults(func=cmd_runtime_status)
     p=sub.add_parser("runtime-report"); p.add_argument("--session-id",required=True); p.set_defaults(func=cmd_runtime_report)
     p=sub.add_parser("runtime-cancel"); p.add_argument("--session-id",required=True); p.set_defaults(func=cmd_runtime_cancel)
