@@ -13,3 +13,4 @@ class ProviderBadRequestError(ProviderResponseError):
         super().__init__(json.dumps(diagnostics, ensure_ascii=False, sort_keys=True))
 class RuntimeSessionError(RuntimeErrorBase): pass
 class InvalidTaskTransition(RuntimeErrorBase, ValueError): pass
+class InvalidPipelineTransition(RuntimeErrorBase, ValueError): pass

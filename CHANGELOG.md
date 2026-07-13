@@ -1,5 +1,18 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-3.0 Sprint 1 Multi-Agent Development Pipeline Foundation
+
+- Added an additive `RuntimePipeline` connecting Planner, Developer, QA,
+  Documentation, and the existing conditional approval boundary.
+- Added validated `PLANNED`, `ASSIGNED`, `DEVELOPING`, `QA_PENDING`,
+  `DOCUMENTING`, `APPROVAL_PENDING`, and `DONE` pipeline states.
+- Extended `RuntimeTask` with current ownership and append-only handoff
+  metadata while retaining its AFDE-2.9 worker lifecycle.
+- Added task assignment, start, completion, forwarding, rejection, and
+  approval events to the existing runtime event stream.
+- Preserved the AFDE-2.7 controlled-action approval position before QA rather
+  than moving or duplicating the security boundary.
+
 ## AFDE-2.9 Runtime Task and Worker State Engine
 
 - Added a typed `RuntimeTask` carrying worker ownership, priority,

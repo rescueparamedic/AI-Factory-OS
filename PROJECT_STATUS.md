@@ -1,5 +1,16 @@
 # AI Factory OS Project Status
 
+## AFDE-3.0 Sprint 1
+
+- Multi-Agent Development Pipeline Foundation is implemented on
+  `feature/afde-3.0-sprint-1-runtime-pipeline`.
+- Planner-created tasks now carry explicit ownership and handoff metadata
+  through Developer, QA, Documentation, and Runtime completion.
+- Controlled actions enter the existing AFDE-2.7 approval boundary and resume
+  into QA without changing approval records, binding, or consumption.
+- Pipeline lifecycle and events are additive to the AFDE-2.9 task state engine
+  and AFDE-2.8 Worker Context.
+
 ## AFDE-2.9
 
 - Runtime Task and Worker State Engine is implemented on

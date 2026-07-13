@@ -37,4 +37,5 @@ class RuntimeSession:
     truth_contract_findings: list[dict[str,Any]]=field(default_factory=list)
     pending_approval: dict[str,Any]|None=None
     runtime_tasks: list[dict[str,Any]]=field(default_factory=list)
+    runtime_pipelines: list[dict[str,Any]]=field(default_factory=list)
     def to_dict(self): return asdict(self)
