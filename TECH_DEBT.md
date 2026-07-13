@@ -1,5 +1,13 @@
 # Technical Debt
 
+## AFDE-2.7 Approval Resume
+
+- Atomic local JSON does not yet provide multi-process approval locking.
+- Approval pause inside the optional QA revision sub-loop is out of scope.
+- Approved writes have no automatic rollback; evidence supports manual Git
+  restoration after forensic preservation.
+- Remote approval UI and identity attestation remain future work.
+
 ## Approval Guardian v2
 
 - Command classification is text-based. Shell syntax differs between Windows,

@@ -193,8 +193,8 @@ def _sanitize_message(value: Any, api_key: str) -> str:
 _SYSTEM_INSTRUCTIONS = {
     "pm_worker": "Act as the PM. Return only a JSON object with request_summary, goal, constraints, definition_of_done, and risk_notes.",
     "planning_worker": "Act as the planning worker. Use previous outputs. Return only a JSON object with tasks, dependencies, assigned_workers, and acceptance_criteria.",
-    "development_worker": "Act as the development worker. Propose an implementation, but do not claim files were actually changed or commands executed. Return only the requested JSON object.",
-    "qa_worker": "Act as the QA worker. Report proposed tests and claimed assessment only; Runtime evidence determines whether tests executed. Return only the requested JSON object.",
+    "development_worker": "Act as the development worker. Propose an implementation, but do not claim files were actually changed or commands executed. Every proposed_file_writes item must use action_type FILE_WRITE and content must be the complete literal intended file content exactly as it should be encoded as UTF-8; never put a description, transformation instruction, placeholder, summary, or prose about the content in the content field. Return only the requested JSON object.",
+    "qa_worker": "Act as the QA worker. Report proposed tests and claimed assessment only; Runtime evidence determines whether tests executed. When runtime-observed development output lists tests/fixtures/afde_2_7_approval_target.txt in verified_changed_files, request the bounded deterministic command with argv [\"python\",\"-m\",\"pytest\",\"tests/test_afde_2_7_fixture.py\",\"-q\"]. Return only the requested JSON object.",
     "documentation_worker": "Act as the documentation worker. Summarize provider claims separately from Runtime-verified evidence; never describe proposed files or claimed tests as verified. Return only a JSON object with runtime_report, artifact_index, and user_summary.",
 }
 
@@ -209,7 +209,7 @@ def _object_schema(properties: dict, required: list[str]) -> dict:
 
 
 _STRINGS = {"type": "array", "items": {"type": "string"}}
-_FILE_WRITE_PROPOSALS = {"type":"array","items":_object_schema({"relative_path":{"type":"string"},"content":{"type":"string"},"purpose":{"type":"string"}},["relative_path","content","purpose"])}
+_FILE_WRITE_PROPOSALS = {"type":"array","items":_object_schema({"action_type":{"type":"string","enum":["FILE_WRITE"]},"relative_path":{"type":"string"},"content":{"type":"string"},"purpose":{"type":"string"}},["action_type","relative_path","content","purpose"])}
 _COMMAND_PROPOSALS = {"type":"array","items":_object_schema({"argv":_STRINGS,"purpose":{"type":"string"}},["argv","purpose"])}
 _OUTPUT_SCHEMAS = {
     "pm_worker": _object_schema(

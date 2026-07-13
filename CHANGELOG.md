@@ -1,5 +1,16 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-2.7 Human Approval Resume and Controlled Existing-File Edit
+
+- Added persisted, exact, single-use approval records for existing-file edits.
+- Added `waiting_approval` pause and cross-process runtime continuation.
+- Added approval show, approve/resume, and reject CLI commands.
+- Added pre-image protection, replay rejection, and runtime approval evidence.
+- Preserved AFDE-2.6 new-file and bounded-command behavior.
+- Completed the explicitly authorized live lifecycle with one exact existing-file
+  write, one runtime-observed bounded pytest execution, and Execution Truth
+  `VERIFIED`; the dedicated fixture was restored to its LF baseline afterward.
+
 ## AFDE-2.6 Real AI Provider
 
 - Added an opt-in OpenAI Responses API provider with environment-only credentials.
@@ -47,5 +58,5 @@
 
 ## Safety
 
-- No external AI API call is executed in this Sprint.
-- Provider keys are checked only for readiness.
+- External AI calls remain opt-in. AFDE-2.7 used only the explicitly authorized
+  controlled live validation and persisted no provider credential values.

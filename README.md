@@ -158,6 +158,30 @@ python main.py scheduler list --limit 5
 python main.py dashboard live-build
 ```
 
+## AFDE-2.7 approval pause and resume
+
+An existing-file `FILE_WRITE` is never auto-approved. Runtime persists the exact
+typed request, expected pre-image SHA-256, normalized payload, Guardian decision,
+session, and single-use fingerprint before entering `waiting_approval`. The
+target remains unchanged and later workers do not run.
+
+```powershell
+python -m afde.cli approval-show --id APR-...
+python -m afde.cli approval-approve --id APR-...
+python -m afde.cli approval-reject --id APR-...
+```
+
+Approval validates the saved session and continuation, checks the current
+pre-image, executes only the bound request, consumes once, and resumes at the
+next worker. Unknown, changed, rejected, consumed, stale, and replayed approvals
+fail closed. `PREIMAGE_MISMATCH` writes nothing.
+
+The tracked `tests/fixtures/afde_2_7_approval_target.txt` is reserved for the
+separately authorized live test. Stop at `waiting_approval` for Product Owner
+approval. Do not stage a live-modified fixture. Rollback is manual after evidence
+preservation; no automatic rollback, wildcard approval, delete, rename, shell,
+network, or package capability is added.
+
 ## 7. 정상 기대 결과
 
 - `python main.py -h` 결과에 `scheduler` 표시

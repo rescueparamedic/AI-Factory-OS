@@ -13,6 +13,7 @@ def apply_execution_truth_contract(
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Separate provider claims from evidence observed by the Runtime itself."""
     normalized = deepcopy(output)
+    normalized.pop("truth_contract_findings", None)
     evidence = runtime_evidence or {}
     findings: list[dict[str, Any]] = []
 
