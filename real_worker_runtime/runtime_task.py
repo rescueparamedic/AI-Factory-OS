@@ -55,6 +55,8 @@ class RuntimeTask:
     handoff_metadata: dict[str, Any] = field(default_factory=dict)
     orchestration_metadata: dict[str, Any] = field(default_factory=dict)
     role_executions: list[dict[str, Any]] = field(default_factory=list)
+    result_handoffs: list[dict[str, Any]] = field(default_factory=list)
+    qa_revision_decisions: list[dict[str, Any]] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         self.state = _state(self.state)
@@ -106,6 +108,8 @@ class RuntimeTask:
             handoff_metadata=deepcopy(value.get("handoff_metadata", {})),
             orchestration_metadata=deepcopy(value.get("orchestration_metadata", {})),
             role_executions=deepcopy(value.get("role_executions", [])),
+            result_handoffs=deepcopy(value.get("result_handoffs", [])),
+            qa_revision_decisions=deepcopy(value.get("qa_revision_decisions", [])),
         )
 
     def transition(
@@ -173,4 +177,6 @@ class RuntimeTask:
             "handoff_metadata": deepcopy(self.handoff_metadata),
             "orchestration_metadata": deepcopy(self.orchestration_metadata),
             "role_executions": deepcopy(self.role_executions),
+            "result_handoffs": deepcopy(self.result_handoffs),
+            "qa_revision_decisions": deepcopy(self.qa_revision_decisions),
         }

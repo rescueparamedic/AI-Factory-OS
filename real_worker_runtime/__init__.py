@@ -4,6 +4,10 @@ from .role_execution import (
     QAExecutionResult, RoleExecutionRequest, RoleExecutionResult,
     RoleExecutionState, RoleExecutor, RuntimeRole,
 )
+from .result_handoff import (
+    AgentResultHandoff, QARevisionDecision, QARevisionOutcome,
+    ResultHandoffLedger, ResultHandoffState,
+)
 from .runtime_pipeline import PipelineState, RuntimePipeline
 from .runtime_orchestrator import (
     OrchestrationAction, OrchestrationDecision, RuntimeOrchestrator,
@@ -12,9 +16,11 @@ from .runtime_task import RuntimeTask
 from .worker_context import WorkerContext
 
 __all__ = [
-    "DeveloperExecutionResult", "DocumentationExecutionResult",
+    "AgentResultHandoff", "DeveloperExecutionResult", "DocumentationExecutionResult",
     "OrchestrationAction", "OrchestrationDecision", "PipelineState",
-    "PlannerExecutionResult", "QAExecutionResult", "RealWorkerRuntime",
+    "PlannerExecutionResult", "QAExecutionResult", "QARevisionDecision",
+    "QARevisionOutcome", "RealWorkerRuntime", "ResultHandoffLedger",
+    "ResultHandoffState",
     "RoleExecutionRequest", "RoleExecutionResult", "RoleExecutionState",
     "RoleExecutor", "RuntimeOrchestrator", "RuntimePipeline", "RuntimeRole",
     "RuntimeTask", "WorkerContext",

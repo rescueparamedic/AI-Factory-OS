@@ -13,6 +13,10 @@ from .models import WorkerState
 from .role_execution import (
     RoleExecutionRequest, RoleExecutionResult, RoleExecutionState, RuntimeRole,
 )
+from .result_handoff import (
+    AgentResultHandoff, QARevisionDecision, QARevisionOutcome,
+    ResultHandoffLedger,
+)
 from .runtime_pipeline import PipelineState
 from .worker_context import WorkerContext
 from .worker_registry import WorkerRegistry
@@ -60,6 +64,7 @@ class RuntimeOrchestrator:
         self.registry = registry or WorkerRegistry()
         self._validate_coherence()
         self._initialize_metadata()
+        self.handoff_ledger = ResultHandoffLedger(self.context)
 
     @property
     def revision_count(self) -> int:
@@ -119,11 +124,28 @@ class RuntimeOrchestrator:
                 raise RoleExecutionError("role execution does not match current pipeline ownership")
         elif role is not RuntimeRole.PLANNER:
             raise RoleExecutionError("only Planner may execute before task persistence")
+        input_handoff = self.handoff_ledger.deliver(role)
         return RoleExecutionRequest(
             task_id=identity, role=role, worker_id=worker_id,
             runtime_request=self.context.request, revision=self.revision_count,
             task_state=task.state.value if task else WorkerState.PLANNING.value,
             pipeline_state=(pipeline.state.value if pipeline else PipelineState.PLANNED.value),
+            input_handoff_id=input_handoff.handoff_id if input_handoff else "",
+            input_result_reference=(input_handoff.result_reference if input_handoff else ""),
+        )
+
+    def create_result_handoff(
+        self, result: RoleExecutionResult, consumer_role: RuntimeRole, *,
+        validation_metadata: dict[str, Any] | None = None,
+        revision_reason: str = "",
+    ) -> AgentResultHandoff:
+        if result.handoff_target != consumer_role.worker_id:
+            raise InvalidRoleResult("result handoff does not match requested role target")
+        return self.handoff_ledger.create(
+            result, consumer_role,
+            validation_metadata=validation_metadata,
+            revision_count=self.revision_count,
+            revision_reason=revision_reason,
         )
 
     def execute_role(self, executor, definition, *, task_id: str | None = None):
@@ -197,9 +219,16 @@ class RuntimeOrchestrator:
         self._record(decision)
         return decision
 
-    def request_revision(self) -> OrchestrationDecision:
+    def request_revision(
+        self, reason: str = "QA requested development revision",
+        qa_result_reference: str = "",
+    ) -> OrchestrationDecision:
         current = self.revision_count
         if current >= self.max_revisions:
+            self._record_qa_decision(
+                QARevisionOutcome.LIMIT_EXCEEDED, reason, current,
+                qa_result_reference,
+            )
             self._record_error("revision_limit_exceeded", {
                 "revision_count": current,
                 "max_revisions": self.max_revisions,
@@ -213,14 +242,32 @@ class RuntimeOrchestrator:
         if task is not None:
             task.orchestration_metadata["revision_count"] = revision
             task.orchestration_metadata["max_revisions"] = self.max_revisions
+        self._record_qa_decision(
+            QARevisionOutcome.REVISION_REQUESTED, reason, revision,
+            qa_result_reference,
+        )
         decision = OrchestrationDecision(
             OrchestrationAction.REVISE,
             "qa_worker", "development_worker", PipelineState.DEVELOPING,
-            "QA requested development revision",
+            reason,
             {"revision_count": revision, "max_revisions": self.max_revisions},
         )
         self._record(decision)
         return decision
+
+    def accept_qa(
+        self, reason: str = "QA accepted development result",
+        qa_result_reference: str = "",
+    ) -> QARevisionDecision:
+        return self._record_qa_decision(
+            QARevisionOutcome.ACCEPTED, reason, self.revision_count,
+            qa_result_reference,
+        )
+
+    @property
+    def latest_qa_revision_decision(self) -> dict[str, Any] | None:
+        task = self.context.runtime_task
+        return task.qa_revision_decisions[-1] if task and task.qa_revision_decisions else None
 
     def approval_required(self, source_worker: str) -> OrchestrationDecision:
         decision = OrchestrationDecision(
@@ -336,6 +383,20 @@ class RuntimeOrchestrator:
             "metadata": deepcopy(metadata),
             "timestamp": _now(),
         })
+
+    def _record_qa_decision(
+        self, outcome: QARevisionOutcome, reason: str, revision_count: int,
+        qa_result_reference: str,
+    ) -> QARevisionDecision:
+        task = self.context.runtime_task
+        if task is None:
+            raise RoleExecutionError("QA revision decision requires a runtime task")
+        decision = QARevisionDecision.create(
+            task.id, outcome, reason, revision_count, self.max_revisions,
+            qa_result_reference,
+        )
+        self.handoff_ledger.record_qa_decision(decision)
+        return decision
 
 
 def _now() -> str:
