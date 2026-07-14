@@ -38,4 +38,5 @@ class RuntimeSession:
     pending_approval: dict[str,Any]|None=None
     runtime_tasks: list[dict[str,Any]]=field(default_factory=list)
     runtime_pipelines: list[dict[str,Any]]=field(default_factory=list)
+    execution_summary: dict[str,Any]|None=None
     def to_dict(self): return asdict(self)

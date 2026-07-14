@@ -24,6 +24,7 @@ from .models import RuntimeSession, WorkerResult, WorkerState
 from .provider_bridge import ProviderBridge
 from .runtime_pipeline import PipelineState, RuntimePipeline
 from .runtime_orchestrator import RuntimeOrchestrator
+from .runtime_lifecycle import RuntimeLifecycleStatus, safe_message
 from .role_execution import (
     RoleExecutionRequest, RoleExecutionResult, RoleExecutionState,
     RoleExecutor, RuntimeRole,
@@ -114,8 +115,19 @@ class RealWorkerRuntime:
                 )
                 _sync_runtime_task(session, context, artifact_store)
                 _emit_role_event(events, "ROLE_EXECUTION_FAILED", role_result)
-            _fail_task(session, context, artifact_store, events, record["source_worker"],
-                       "controlled action approval rejected")
+            _fail_task(
+                session, context, artifact_store, events, record["source_worker"],
+                "controlled action approval rejected",
+                failure_code="approval_rejected", exception_type="ApprovalRejected",
+                lifecycle_target=RuntimeLifecycleStatus.BLOCKED,
+            )
+            task = context.runtime_task
+            _finalize_lifecycle_summary(
+                session, context,
+                int(task.orchestration_metadata.get("max_revisions", 1)) if task else 1,
+                "approval", session.pending_approval,
+            )
+            _sync_runtime_task(session, context, artifact_store)
         artifact_store.json("session.json", session.to_dict())
         events.emit("APPROVAL_REJECTED", record["source_worker"], approval_id)
         return rejected
@@ -140,6 +152,16 @@ class RealWorkerRuntime:
             "APPROVAL_GRANTED", request.source_worker, approval_id,
             **_task_event_fields(task),
         )
+        if task is not None and task.lifecycle_status is RuntimeLifecycleStatus.WAITING_APPROVAL:
+            task.transition_lifecycle(
+                RuntimeLifecycleStatus.RUNNING, stage="approval",
+                role=RuntimeRole.from_worker(request.source_worker).value,
+                reason_code="approval_resumed",
+                message="approved controlled action resumed runtime",
+                revision_index=int(context.revision),
+            )
+            _emit_lifecycle_transition(events, task)
+            _sync_runtime_task(session, context, artifact_store)
         if context.runtime_pipeline is not None:
             context.runtime_pipeline.mark_approved()
             _sync_runtime_pipeline(session, context, artifact_store)
@@ -281,8 +303,8 @@ class RealWorkerRuntime:
                     role_result = orchestrator.invoke_role(
                         role_executor, role_request, definition,
                     )
-                except (InvalidRoleResult, RoleExecutionError) as exc:
-                    role_result = _failed_role_result(role_request, str(exc))
+                except Exception as exc:
+                    role_result = _failed_role_result(role_request, exc)
                 if role is RuntimeRole.PLANNER and context.runtime_task is None:
                     _initialize_runtime_task(
                         session, context, provisional_task_id, store, events,
@@ -315,7 +337,7 @@ class RealWorkerRuntime:
                         role_result, role_request,
                     )
                 except (InvalidRoleResult, RoleExecutionError) as exc:
-                    role_result = _failed_role_result(role_request, str(exc))
+                    role_result = _failed_role_result(role_request, exc)
                     orchestrator.record_role_result(role_result, role_request)
                     result = role_result.to_worker_result()
                 _sync_runtime_task(session, context, store)
@@ -405,7 +427,8 @@ class RealWorkerRuntime:
                         **_task_event_fields(context.runtime_task),
                     )
                     _fail_task(session, context, store, events, definition.worker_id,
-                               str(exc))
+                               str(exc), failure_code="qa_revision_exhausted",
+                               exception_type=type(exc).__name__)
                     session.status = "failed"
                     session.error = str(exc)
                     break
@@ -527,8 +550,8 @@ class RealWorkerRuntime:
                     role_result = orchestrator.invoke_role(
                         role_executor, role_request, retry_definition,
                     )
-                except (InvalidRoleResult, RoleExecutionError) as exc:
-                    role_result = _failed_role_result(role_request, str(exc))
+                except Exception as exc:
+                    role_result = _failed_role_result(role_request, exc)
                 retry = role_result.to_worker_result()
                 evidence = {
                     "verified_changed_files": [], "verified_test_executions": [],
@@ -556,7 +579,7 @@ class RealWorkerRuntime:
                         role_result, role_request,
                     )
                 except (InvalidRoleResult, RoleExecutionError) as exc:
-                    role_result = _failed_role_result(role_request, str(exc))
+                    role_result = _failed_role_result(role_request, exc)
                     orchestrator.record_role_result(role_result, role_request)
                     retry = role_result.to_worker_result()
                 _sync_runtime_task(session, context, events.store)
@@ -669,7 +692,11 @@ class RealWorkerRuntime:
                     "ORCHESTRATION_ERROR", "qa_worker", str(exc),
                     **_task_event_fields(context.runtime_task),
                 )
-                _fail_task(session, context, events.store, events, "qa_worker", str(exc))
+                _fail_task(
+                    session, context, events.store, events, "qa_worker", str(exc),
+                    failure_code="qa_revision_exhausted",
+                    exception_type=type(exc).__name__,
+                )
                 session.status = "failed"
                 session.error = str(exc)
                 return False
@@ -711,6 +738,15 @@ class RealWorkerRuntime:
         task = context.runtime_task
         if task is not None:
             task.transition(WorkerState.WAITING_APPROVAL, "controlled action requires approval", observation)
+            task.transition_lifecycle(
+                RuntimeLifecycleStatus.WAITING_APPROVAL, stage="approval",
+                role=RuntimeRole.from_worker(request.source_worker).value,
+                reason_code="approval_required",
+                message="controlled action requires Product Owner approval",
+                revision_index=int(context.revision),
+                metadata={"approval_request_id": record["approval_request_id"]},
+            )
+            _emit_lifecycle_transition(events, task)
             _sync_runtime_task(session, context, store)
         if context.runtime_pipeline is not None:
             orchestrator = RuntimeOrchestrator(
@@ -724,6 +760,12 @@ class RealWorkerRuntime:
                 "controlled action requires Product Owner approval",
                 {"approval_request_id": record["approval_request_id"]},
             )
+        _write_partial_artifacts(store, context, session)
+        _finalize_lifecycle_summary(
+            session, context, int(settings.get("max_revisions", 1)),
+            request.source_worker, session.pending_approval,
+        )
+        _sync_runtime_task(session, context, store)
         store.json("continuation.json", {
             "session_id": session.session_id,
             "approval_request_id": record["approval_request_id"],
@@ -734,7 +776,6 @@ class RealWorkerRuntime:
             "context": context.to_dict(),
             "settings": settings,
         })
-        _write_partial_artifacts(store, context, session)
         store.json("session.json", session.to_dict())
         events.emit("APPROVAL_PENDING", request.source_worker, record["approval_request_id"])
         events.emit(
@@ -760,11 +801,33 @@ class RealWorkerRuntime:
                 events.emit("APPROVAL_DEMO", detail=f"{command}: {decision.decision.value}")
         if session.status == "running":
             session.status = "completed"
+        task = context.runtime_task
+        if task is not None and task.lifecycle_status not in {
+            RuntimeLifecycleStatus.COMPLETED, RuntimeLifecycleStatus.FAILED,
+            RuntimeLifecycleStatus.BLOCKED, RuntimeLifecycleStatus.WAITING_APPROVAL,
+        }:
+            target = (
+                RuntimeLifecycleStatus.COMPLETED
+                if session.status == "completed" else RuntimeLifecycleStatus.FAILED
+            )
+            task.transition_lifecycle(
+                target, stage="runtime", reason_code=(
+                    "runtime_completed" if target is RuntimeLifecycleStatus.COMPLETED
+                    else "runtime_finalization_failed"
+                ), message=f"runtime finalized with status {session.status}",
+                revision_index=int(context.revision),
+            )
+            _emit_lifecycle_transition(events, task)
         if session.execution_verification["verified_changed_files"] and session.execution_verification["verified_test_executions"]:
             session.execution_verification["status"] = "VERIFIED"
         session.execution_verification["findings"] = [item["classification"] for item in session.truth_contract_findings]
         session.progress = 100 if session.status == "completed" else session.progress
         session.updated_at = _now()
+        _finalize_lifecycle_summary(
+            session, context, int(settings.get("max_revisions", 1)),
+            context.runtime_pipeline.current_worker if context.runtime_pipeline else "runtime",
+            session.pending_approval,
+        )
         _sync_runtime_task(session, context, store)
         _sync_runtime_pipeline(session, context, store)
         _write_partial_artifacts(store, context, session)
@@ -891,6 +954,11 @@ def _initialize_runtime_task(session, context, task_id, store, events):
     )
     context.runtime_task = task
     context.runtime_pipeline = RuntimePipeline(task.id)
+    task.transition_lifecycle(
+        RuntimeLifecycleStatus.RUNNING, stage="planner", role="planner",
+        reason_code="runtime_started", message="Planner role started runtime lifecycle",
+    )
+    _emit_lifecycle_transition(events, task)
     events.emit(
         "TASK_CREATED", task.worker, "Planner role execution initialized task",
         **_task_event_fields(task),
@@ -944,7 +1012,11 @@ def _complete_task(session, context, store, events):
     )
 
 
-def _fail_task(session, context, store, events, worker_id, reason, evidence=None):
+def _fail_task(
+    session, context, store, events, worker_id, reason, evidence=None, *,
+    failure_code="role_execution_failed", exception_type="RoleExecutionError",
+    lifecycle_target=RuntimeLifecycleStatus.FAILED,
+):
     task = context.runtime_task
     if task is None:
         return
@@ -955,6 +1027,39 @@ def _fail_task(session, context, store, events, worker_id, reason, evidence=None
             "TASK_FAILED", worker_id, reason,
             **_task_event_fields(task),
         )
+    role = RuntimeRole.from_worker(worker_id)
+    role_name = role.value if role else "runtime"
+    latest_role_failure = (
+        bool(task.failures)
+        and task.failures[-1].get("role") == role_name
+        and task.role_lifecycle
+        and task.role_lifecycle[-1].get("status") == RoleExecutionState.FAILED.value
+    )
+    if not latest_role_failure or failure_code != "role_execution_failed":
+        task.record_failure(
+            failure_code=failure_code, stage=role_name, role=role_name,
+            message=reason, exception_type=exception_type,
+            cause_reference=(
+                f"runtime_task:role_executions[{len(task.role_executions) - 1}]"
+                if task.role_executions else "runtime"
+            ), revision_index=int(context.revision),
+        )
+    if task.lifecycle_status not in {
+        RuntimeLifecycleStatus.COMPLETED, RuntimeLifecycleStatus.FAILED,
+        RuntimeLifecycleStatus.BLOCKED,
+    }:
+        lifecycle_stage = (
+            "approval"
+            if lifecycle_target is RuntimeLifecycleStatus.BLOCKED else role_name
+        )
+        task.transition_lifecycle(
+            lifecycle_target, stage=lifecycle_stage, role=role_name,
+            reason_code=failure_code, message=reason,
+            attempt=sum(item.get("role") == role_name for item in task.role_lifecycle),
+            revision_index=int(context.revision),
+        )
+        _emit_lifecycle_transition(events, task)
+        _sync_runtime_task(session, context, store)
     if context.runtime_pipeline is not None:
         context.runtime_pipeline.mark_rejected()
         _sync_runtime_pipeline(session, context, store)
@@ -1079,13 +1184,23 @@ def _emit_orchestration_decision(events, context, decision):
     )
 
 
-def _failed_role_result(request: RoleExecutionRequest, error: str) -> RoleExecutionResult:
+def _failed_role_result(
+    request: RoleExecutionRequest, error: Exception | str,
+) -> RoleExecutionResult:
     now = _now()
+    exception_type = type(error).__name__ if isinstance(error, Exception) else "RoleExecutionError"
+    message = safe_message(error)
+    failure_code = (
+        "invalid_role_result" if isinstance(error, InvalidRoleResult)
+        else "role_execution_exception"
+    )
     return RoleExecutionResult(
         task_id=request.task_id, role=request.role, worker_id=request.worker_id,
         state=RoleExecutionState.FAILED, output={}, evidence_references=[],
         handoff_target="", started_at=now, completed_at=now,
-        summary=f"{request.role.value} role execution failed", error=error,
+        summary=f"{request.role.value} role execution failed", error=message,
+        failure_code=failure_code, exception_type=exception_type,
+        cause_reference=f"exception:{exception_type}",
     )
 
 
@@ -1204,6 +1319,38 @@ def _emit_qa_decision_event(events, name, decision):
             "qa_result_reference": decision["qa_result_reference"],
         },
     )
+
+
+def _emit_lifecycle_transition(events, task):
+    transition = task.lifecycle_transitions[-1]
+    events.emit(
+        "RUNTIME_LIFECYCLE_TRANSITION", transition.get("role", ""),
+        transition["safe_message"], task_id=task.id,
+        state=transition["to_status"], payload={
+            "sequence": transition["sequence"],
+            "from_status": transition["from_status"],
+            "to_status": transition["to_status"],
+            "stage": transition["stage"],
+            "attempt": transition["attempt"],
+            "revision_index": transition["revision_index"],
+            "reason_code": transition["reason_code"],
+        },
+    )
+
+
+def _finalize_lifecycle_summary(
+    session, context, maximum_revisions, current_stage, approval=None,
+):
+    task = context.runtime_task
+    if task is None:
+        return None
+    summary = task.build_execution_summary(
+        current_stage=current_stage,
+        maximum_revisions=maximum_revisions,
+        approval=approval,
+    )
+    session.execution_summary = summary
+    return summary
 
 
 def _task_event_fields(task):

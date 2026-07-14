@@ -13,6 +13,10 @@ from .runtime_orchestrator import (
     OrchestrationAction, OrchestrationDecision, RuntimeOrchestrator,
 )
 from .runtime_task import RuntimeTask
+from .runtime_lifecycle import (
+    RoleLifecycleRecord, RoleLifecycleStatus, RuntimeExecutionSummary,
+    RuntimeFailure, RuntimeLifecycleStatus, RuntimeTransition,
+)
 from .worker_context import WorkerContext
 
 __all__ = [
@@ -23,5 +27,7 @@ __all__ = [
     "ResultHandoffState",
     "RoleExecutionRequest", "RoleExecutionResult", "RoleExecutionState",
     "RoleExecutor", "RuntimeOrchestrator", "RuntimePipeline", "RuntimeRole",
-    "RuntimeTask", "WorkerContext",
+    "RuntimeTask", "WorkerContext", "RoleLifecycleRecord",
+    "RoleLifecycleStatus", "RuntimeExecutionSummary", "RuntimeFailure",
+    "RuntimeLifecycleStatus", "RuntimeTransition",
 ]

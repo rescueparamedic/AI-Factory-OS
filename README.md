@@ -1,5 +1,15 @@
 # AI Factory OS Sprint v2.7.3 적용 방법
 
+## AFDE-3.0 runtime lifecycle evidence
+
+Each persisted `RuntimeTask` now includes additive `lifecycle_status`,
+`lifecycle_transitions`, `role_lifecycle`, `failures`, and
+`execution_summary` fields. Completed, failed, blocked, and approval-paused
+runs therefore expose the exact stage, role attempts, revision count, result
+references, and safe failure or approval details without changing existing CLI
+commands. This evidence is local and provider-neutral; it does not enable live
+API access, deployment, release, or automatic approval.
+
 ## Real Worker Demo
 
 ```powershell

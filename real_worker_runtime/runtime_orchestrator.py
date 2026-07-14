@@ -324,6 +324,27 @@ class RuntimeOrchestrator:
             if task is None or task.id != result.task_id:
                 raise InvalidRoleResult("role result cannot be persisted to another task")
             task.record_role_execution(result.to_dict())
+            result_reference = f"runtime_task:role_executions[{len(task.role_executions) - 1}]"
+            failure_reference = ""
+            if result.state is RoleExecutionState.FAILED:
+                failure = task.record_failure(
+                    failure_code=result.failure_code or "role_execution_failed",
+                    stage=result.role.value, role=result.role.value,
+                    message=result.error or result.summary,
+                    exception_type=result.exception_type or "RoleExecutionError",
+                    retryable=result.retryable,
+                    cause_reference=result.cause_reference or result_reference,
+                    revision_index=request.revision,
+                )
+                failure_reference = (
+                    f"runtime_task:failures[{len(task.failures) - 1}]"
+                )
+            task.record_role_lifecycle(
+                role=result.role.value, revision_index=request.revision,
+                started_at=result.started_at, completed_at=result.completed_at,
+                status=result.state.value, result_reference=result_reference,
+                failure_reference=failure_reference,
+            )
         return result
 
     @staticmethod

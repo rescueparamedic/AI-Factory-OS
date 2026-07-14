@@ -1,5 +1,19 @@
 # AI Factory OS Project Status
 
+## AFDE-3.0 Sprint 5
+
+- Runtime lifecycle finalization and structured failure propagation are
+  implemented from the verified Sprint 4 merge baseline
+  `7546487699b79495fd4f8ad1b39bd06dd638e895`.
+- `RuntimeTask` remains the lifecycle state owner and now persists validated
+  terminal/pause state, ordered transitions, per-role attempts, normalized
+  failures, and a derived final execution summary.
+- Successful, revision, revision-exhaustion, required-role failure, invalid
+  result, approval wait/resume, and approval rejection paths now finalize
+  deterministically without replacing role results or result handoffs.
+- AFDE-2.7 approval and Guardian semantics, controlled execution, Execution
+  Truth, provider behavior, and Sprint 1-4 public contracts remain preserved.
+
 ## AFDE-3.0 Sprint 4
 
 - Multi-Agent Result Handoff and QA Revision Loop is implemented on
