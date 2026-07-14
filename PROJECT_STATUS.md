@@ -1,5 +1,21 @@
 # AI Factory OS Project Status
 
+## AFDE-3.0 Sprint 2
+
+- The first real Multi-Agent Runtime Orchestrator is implemented on
+  `feature/afde-3.0-sprint-2-runtime-orchestrator`.
+- `RuntimeOrchestrator` now owns deterministic Planner, Developer, QA,
+  Documentation, approval-boundary, and bounded revision routing through the
+  existing `RuntimePipeline` and registered workers.
+- Revision count, decisions, limits, and safe limit errors persist with the
+  existing `RuntimeTask`; `WorkerContext` remains the canonical serialized
+  handoff and approval-continuation context.
+- Actual orchestration decisions are append-only event evidence alongside the
+  existing task, pipeline, approval, provider, controlled-execution, and
+  Execution Truth events.
+- QA revision-controlled actions can pause and resume through the unchanged
+  AFDE-2.7 approval boundary before returning to QA.
+
 ## AFDE-3.0 Sprint 1
 
 - Multi-Agent Development Pipeline Foundation is implemented on

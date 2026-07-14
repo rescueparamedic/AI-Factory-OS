@@ -12,5 +12,7 @@ class ProviderBadRequestError(ProviderResponseError):
         self.diagnostics = diagnostics
         super().__init__(json.dumps(diagnostics, ensure_ascii=False, sort_keys=True))
 class RuntimeSessionError(RuntimeErrorBase): pass
+class OrchestrationError(RuntimeSessionError): pass
+class RevisionLimitExceeded(OrchestrationError): pass
 class InvalidTaskTransition(RuntimeErrorBase, ValueError): pass
 class InvalidPipelineTransition(RuntimeErrorBase, ValueError): pass
