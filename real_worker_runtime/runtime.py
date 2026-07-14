@@ -13,14 +13,21 @@ from .approval_resume import RuntimeApprovalStore, action_fingerprint, request_f
 from .artifact_store import ArtifactStore
 from .controlled_execution import ActionType, ControlledExecutor, ExecutionRequest
 from .dashboard import TerminalDashboard
-from .errors import RevisionLimitExceeded, RuntimeSessionError
+from .errors import (
+    InvalidRoleResult, RevisionLimitExceeded, RoleExecutionError,
+    RuntimeSessionError,
+)
 from .event_stream import EventStream
 from .execution_truth import apply_execution_truth_contract, claimed_qa_failures
 from .message_bus import MessageBus
-from .models import RuntimeSession, WorkerState
+from .models import RuntimeSession, WorkerResult, WorkerState
 from .provider_bridge import ProviderBridge
 from .runtime_pipeline import PipelineState, RuntimePipeline
 from .runtime_orchestrator import RuntimeOrchestrator
+from .role_execution import (
+    RoleExecutionRequest, RoleExecutionResult, RoleExecutionState,
+    RoleExecutor, RuntimeRole,
+)
 from .runtime_task import RuntimeTask
 from .worker_context import WorkerContext
 from .worker_registry import WorkerRegistry
@@ -28,8 +35,9 @@ from .workers import BaseWorker
 
 
 class RealWorkerRuntime:
-    def __init__(self, root="."):
+    def __init__(self, root=".", role_executor_factory=None):
         self.root = Path(root).resolve()
+        self.role_executor_factory = role_executor_factory
 
     def run(
         self, request, provider="mock", live=True, include_approval_demo=False,
@@ -62,6 +70,14 @@ class RealWorkerRuntime:
         )
         return self._continue(session, context, selected, settings, 0, 0)
 
+    def _role_executor(self, selected):
+        if self.role_executor_factory is None:
+            return RoleExecutor(selected)
+        executor = self.role_executor_factory(selected)
+        if not hasattr(executor, "execute"):
+            raise RoleExecutionError("role executor factory returned an invalid executor")
+        return executor
+
     def approval_show(self, approval_id: str) -> dict:
         return RuntimeApprovalStore(self.root).load(approval_id)
 
@@ -78,13 +94,26 @@ class RealWorkerRuntime:
         artifact_store = ArtifactStore(self.root, session.session_id)
         events = EventStream(artifact_store)
         if session.runtime_tasks:
+            task = RuntimeTask.from_value(session.runtime_tasks[-1])
             context = WorkerContext(
                 request=session.request,
-                runtime_task=RuntimeTask.from_value(session.runtime_tasks[-1]),
+                runtime_task=task,
                 runtime_pipeline=RuntimePipeline.from_value(
                     session.runtime_pipelines[-1] if session.runtime_pipelines else None
                 ),
+                revision=int(task.orchestration_metadata.get("revision_count", 0)),
             )
+            if task.role_executions:
+                orchestrator = RuntimeOrchestrator(
+                    context,
+                    max_revisions=int(task.orchestration_metadata.get("max_revisions", 1)),
+                )
+                role_result = orchestrator.record_approval_role_outcome(
+                    record["source_worker"], completed=False,
+                    error="controlled action approval rejected",
+                )
+                _sync_runtime_task(session, context, artifact_store)
+                _emit_role_event(events, "ROLE_EXECUTION_FAILED", role_result)
             _fail_task(session, context, artifact_store, events, record["source_worker"],
                        "controlled action approval rejected")
         artifact_store.json("session.json", session.to_dict())
@@ -129,6 +158,19 @@ class RealWorkerRuntime:
         _merge_execution_evidence(session, evidence)
         self._replace_worker_truth_output(session, context, request.source_worker, evidence)
         if observed.get("status") != "SUCCEEDED":
+            if task is not None and task.role_executions:
+                orchestrator = RuntimeOrchestrator(
+                    context, max_revisions=int(settings.get("max_revisions", 1)),
+                )
+                role_result = orchestrator.record_approval_role_outcome(
+                    request.source_worker, completed=False,
+                    output=context.outputs.get(request.source_worker, {}),
+                    error=f"approved controlled execution failed: {observed.get('status')}",
+                    evidence_references=["runtime_task:execution_evidence"],
+                )
+                _sync_runtime_task(session, context, artifact_store)
+                _emit_role_event(events, "ROLE_RESULT_RECORDED", role_result)
+                _emit_role_event(events, "ROLE_EXECUTION_FAILED", role_result)
             _fail_task(session, context, artifact_store, events, request.source_worker,
                        "approved controlled execution failed", observed)
             session.status = "failed"
@@ -137,6 +179,22 @@ class RealWorkerRuntime:
             artifact_store.json("session.json", session.to_dict())
             events.emit("APPROVED_EXECUTION_FAILED", request.source_worker, observed.get("status", "failed"))
             return session
+        if task is not None and task.role_executions:
+            orchestrator = RuntimeOrchestrator(
+                context, max_revisions=int(settings.get("max_revisions", 1)),
+            )
+            role_result = orchestrator.record_approval_role_outcome(
+                request.source_worker, completed=True,
+                output=context.outputs.get(request.source_worker, {}),
+                evidence_references=[
+                    "approval_record:consumed",
+                    "runtime_task:execution_evidence",
+                ],
+            )
+            _sync_runtime_task(session, context, artifact_store)
+            _emit_role_event(events, "ROLE_RESULT_RECORDED", role_result)
+            _emit_role_event(events, "ROLE_EXECUTION_COMPLETED", role_result)
+            _emit_role_event(events, "ROLE_HANDOFF_REQUESTED", role_result)
         if task is not None:
             task.transition(WorkerState.RESUMED, "approved action executed", observed)
             _sync_runtime_task(session, context, artifact_store)
@@ -169,6 +227,7 @@ class RealWorkerRuntime:
         bus = MessageBus(store, session)
         dashboard = TerminalDashboard(settings.get("live", False))
         controlled = ControlledExecutor(self.root) if settings.get("enable_controlled_execution") else None
+        role_executor = self._role_executor(selected)
         orchestrator = RuntimeOrchestrator(
             context, max_revisions=int(settings.get("max_revisions", 1)),
         )
@@ -197,7 +256,34 @@ class RealWorkerRuntime:
             _start_pipeline_worker(session, context, store, events, definition.worker_id)
             dashboard.render(session)
             events.emit("WORKER_STARTED", definition.worker_id)
-            result = BaseWorker(definition, selected).execute(context)
+            role = RuntimeRole.from_worker(definition.worker_id)
+            role_request = None
+            role_result = None
+            if role is not None:
+                provisional_task_id = (
+                    context.runtime_task.id if context.runtime_task is not None
+                    else f"TASK-{uuid4().hex}"
+                )
+                role_request = orchestrator.build_role_request(
+                    definition.worker_id, task_id=provisional_task_id,
+                )
+                _emit_role_request_event(events, "ROLE_EXECUTION_STARTED", role_request)
+                try:
+                    role_result = orchestrator.invoke_role(
+                        role_executor, role_request, definition,
+                    )
+                except (InvalidRoleResult, RoleExecutionError) as exc:
+                    role_result = _failed_role_result(role_request, str(exc))
+                if role is RuntimeRole.PLANNER and context.runtime_task is None:
+                    _initialize_runtime_task(
+                        session, context, provisional_task_id, store, events,
+                    )
+                    orchestrator = RuntimeOrchestrator(
+                        context, max_revisions=int(settings.get("max_revisions", 1)),
+                    )
+                result = role_result.to_worker_result()
+            else:
+                result = BaseWorker(definition, selected).execute(context)
             pending_request = None
             pending_observation = None
             evidence = {"verified_changed_files": [], "verified_test_executions": [], "execution_evidence": []}
@@ -208,11 +294,39 @@ class RealWorkerRuntime:
                 result.output, findings = apply_execution_truth_contract(definition.worker_id, result.output, evidence)
                 session.truth_contract_findings.extend(findings)
                 _merge_execution_evidence(session, evidence)
+            if role_result is not None and role_request is not None:
+                role_result.output = dict(result.output)
+                role_result.evidence_references = _role_evidence_references(
+                    role_result, evidence,
+                )
+                if pending_request is not None:
+                    _set_role_waiting_approval(role_result)
+                try:
+                    role_result = orchestrator.record_role_result(
+                        role_result, role_request,
+                    )
+                except (InvalidRoleResult, RoleExecutionError) as exc:
+                    role_result = _failed_role_result(role_request, str(exc))
+                    orchestrator.record_role_result(role_result, role_request)
+                    result = role_result.to_worker_result()
+                _sync_runtime_task(session, context, store)
+                _emit_role_event(events, "ROLE_RESULT_RECORDED", role_result)
+                _emit_role_event(
+                    events,
+                    "ROLE_EXECUTION_FAILED"
+                    if role_result.state is RoleExecutionState.FAILED
+                    else "ROLE_EXECUTION_COMPLETED",
+                    role_result,
+                )
+                if role_result.handoff_target:
+                    _emit_role_event(events, "ROLE_HANDOFF_REQUESTED", role_result)
             session.results.append(asdict(result))
             context.record_worker_output(definition.worker_id, result.output)
             context.update_runtime_evidence(session.execution_verification)
             if definition.worker_id == "planning_worker" and result.status == "completed":
-                _create_runtime_task(session, context, result.output, store, events)
+                _complete_planning_task(
+                    session, context, result.output, store, events,
+                )
                 orchestrator = RuntimeOrchestrator(
                     context, max_revisions=int(settings.get("max_revisions", 1)),
                 )
@@ -275,7 +389,7 @@ class RealWorkerRuntime:
                 )
                 outcome = self._run_revision(
                     session, context, selected, controlled, bus, events, orchestrator,
-                    settings,
+                    settings, role_executor,
                 )
                 if outcome is not True:
                     if outcome is not False:
@@ -293,8 +407,8 @@ class RealWorkerRuntime:
                     decision.target_state, definition.worker_id, decision.target_worker,
                     "QA completed; forwarding to Documentation",
                 )
-                _complete_task(session, context, store, events)
             elif definition.worker_id == "documentation_worker":
+                _complete_task(session, context, store, events)
                 decision = orchestrator.handoff_after(definition.worker_id)
                 _emit_orchestration_decision(events, context, decision)
                 _forward_pipeline(
@@ -309,7 +423,7 @@ class RealWorkerRuntime:
 
     def _run_revision(
         self, session, context, selected, controlled, bus, events, orchestrator,
-        settings,
+        settings, role_executor,
     ):
         while True:
             for retry_definition in orchestrator.revision_workers():
@@ -340,7 +454,17 @@ class RealWorkerRuntime:
                             **_task_event_fields(task),
                         )
                 _start_pipeline_worker(session, context, events.store, events, retry_id)
-                retry = BaseWorker(retry_definition, selected).execute(context)
+                role_request = orchestrator.build_role_request(retry_id)
+                _emit_role_request_event(
+                    events, "ROLE_EXECUTION_STARTED", role_request,
+                )
+                try:
+                    role_result = orchestrator.invoke_role(
+                        role_executor, role_request, retry_definition,
+                    )
+                except (InvalidRoleResult, RoleExecutionError) as exc:
+                    role_result = _failed_role_result(role_request, str(exc))
+                retry = role_result.to_worker_result()
                 evidence = {
                     "verified_changed_files": [], "verified_test_executions": [],
                     "execution_evidence": [],
@@ -356,6 +480,31 @@ class RealWorkerRuntime:
                     )
                     session.truth_contract_findings.extend(findings)
                     _merge_execution_evidence(session, evidence)
+                role_result.output = dict(retry.output)
+                role_result.evidence_references = _role_evidence_references(
+                    role_result, evidence,
+                )
+                if pending is not None:
+                    _set_role_waiting_approval(role_result)
+                try:
+                    role_result = orchestrator.record_role_result(
+                        role_result, role_request,
+                    )
+                except (InvalidRoleResult, RoleExecutionError) as exc:
+                    role_result = _failed_role_result(role_request, str(exc))
+                    orchestrator.record_role_result(role_result, role_request)
+                    retry = role_result.to_worker_result()
+                _sync_runtime_task(session, context, events.store)
+                _emit_role_event(events, "ROLE_RESULT_RECORDED", role_result)
+                _emit_role_event(
+                    events,
+                    "ROLE_EXECUTION_FAILED"
+                    if role_result.state is RoleExecutionState.FAILED
+                    else "ROLE_EXECUTION_COMPLETED",
+                    role_result,
+                )
+                if role_result.handoff_target:
+                    _emit_role_event(events, "ROLE_HANDOFF_REQUESTED", role_result)
                 session.results.append(asdict(retry))
                 context.record_worker_output(retry_id, retry.output)
                 context.update_runtime_evidence(session.execution_verification)
@@ -406,7 +555,6 @@ class RealWorkerRuntime:
             if not claimed_qa_failures(context["outputs"]["qa_worker"]):
                 decision = orchestrator.handoff_after("qa_worker")
                 _emit_orchestration_decision(events, context, decision)
-                _complete_task(session, context, events.store, events)
                 _forward_pipeline(
                     session, context, events.store, events,
                     decision.target_state, "qa_worker", decision.target_worker,
@@ -621,25 +769,33 @@ def _execute_proposals(executor, worker_id, output, root):
     return evidence, None, None
 
 
-def _create_runtime_task(session, context, planner_output, store, events):
+def _initialize_runtime_task(session, context, task_id, store, events):
+    task = RuntimeTask(
+        id=task_id, worker="development_worker",
+        inputs={"request": context.request}, owner="planning_worker",
+    )
+    context.runtime_task = task
+    context.runtime_pipeline = RuntimePipeline(task.id)
+    events.emit(
+        "TASK_CREATED", task.worker, "Planner role execution initialized task",
+        **_task_event_fields(task),
+    )
+    _sync_runtime_task(session, context, store)
+    _sync_runtime_pipeline(session, context, store)
+
+
+def _complete_planning_task(session, context, planner_output, store, events):
     raw_priority = planner_output.get("priority", 0)
     priority = raw_priority if isinstance(raw_priority, int) and not isinstance(raw_priority, bool) else 0
     raw_dependencies = planner_output.get("dependencies", [])
     dependencies = [item for item in raw_dependencies if isinstance(item, str)] \
         if isinstance(raw_dependencies, list) else []
-    task = RuntimeTask.create(
-        "development_worker",
-        priority=priority,
-        dependencies=dependencies,
-        inputs={"request": context.request, "planner_output": planner_output},
-        owner="planning_worker",
-    )
-    context.runtime_task = task
-    context.runtime_pipeline = RuntimePipeline(task.id)
-    events.emit(
-        "TASK_CREATED", task.worker, "planner output accepted",
-        **_task_event_fields(task),
-    )
+    task = context.runtime_task
+    if task is None or context.runtime_pipeline is None:
+        raise RuntimeSessionError("Planner role completed without an initialized task")
+    task.priority = priority
+    task.dependencies = dependencies
+    task.inputs["planner_output"] = dict(planner_output)
     task.transition(WorkerState.READY, "planner output converted to runtime task")
     context.runtime_pipeline.transition(
         PipelineState.ASSIGNED, "development_worker",
@@ -665,7 +821,7 @@ def _complete_task(session, context, store, events):
     task = context.runtime_task
     if task is None or task.state in {WorkerState.COMPLETED, WorkerState.FAILED}:
         return
-    task.transition(WorkerState.COMPLETED, "runtime-observed QA completed")
+    task.transition(WorkerState.COMPLETED, "documentation role completed after QA pass")
     _sync_runtime_task(session, context, store)
     events.emit(
         "TASK_COMPLETED", task.worker, "runtime task completed",
@@ -804,6 +960,63 @@ def _emit_orchestration_decision(events, context, decision):
             "target_worker": decision.target_worker,
             "target_state": decision.target_state.value,
             **dict(decision.metadata),
+        },
+    )
+
+
+def _failed_role_result(request: RoleExecutionRequest, error: str) -> RoleExecutionResult:
+    now = _now()
+    return RoleExecutionResult(
+        task_id=request.task_id, role=request.role, worker_id=request.worker_id,
+        state=RoleExecutionState.FAILED, output={}, evidence_references=[],
+        handoff_target="", started_at=now, completed_at=now,
+        summary=f"{request.role.value} role execution failed", error=error,
+    )
+
+
+def _set_role_waiting_approval(result: RoleExecutionResult) -> None:
+    result.state = RoleExecutionState.WAITING_APPROVAL
+    result.handoff_target = "approval_guardian"
+    result.summary = "Developer role is waiting for controlled-action approval"
+    result.history.append({
+        "state": result.state.value,
+        "timestamp": _now(),
+        "handoff_target": result.handoff_target,
+        "error": "",
+    })
+
+
+def _role_evidence_references(result, evidence):
+    references = list(result.evidence_references)
+    for key in (
+        "verified_changed_files", "verified_test_executions", "execution_evidence",
+    ):
+        if evidence.get(key):
+            references.append(f"runtime_evidence:{key}")
+    return list(dict.fromkeys(references))
+
+
+def _emit_role_request_event(events, name, request):
+    events.emit(
+        name, request.worker_id, f"{request.role.value} role execution started",
+        task_id=request.task_id, state=request.task_state,
+        payload={
+            "role": request.role.value,
+            "revision": request.revision,
+            "pipeline_state": request.pipeline_state,
+        },
+    )
+
+
+def _emit_role_event(events, name, result):
+    events.emit(
+        name, result.worker_id, result.summary,
+        task_id=result.task_id, state=result.state.value,
+        payload={
+            "role": result.role.value,
+            "handoff_target": result.handoff_target,
+            "evidence_references": list(result.evidence_references),
+            "error": result.error,
         },
     )
 

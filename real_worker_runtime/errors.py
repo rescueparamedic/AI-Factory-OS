@@ -14,5 +14,7 @@ class ProviderBadRequestError(ProviderResponseError):
 class RuntimeSessionError(RuntimeErrorBase): pass
 class OrchestrationError(RuntimeSessionError): pass
 class RevisionLimitExceeded(OrchestrationError): pass
+class RoleExecutionError(OrchestrationError): pass
+class InvalidRoleResult(RoleExecutionError): pass
 class InvalidTaskTransition(RuntimeErrorBase, ValueError): pass
 class InvalidPipelineTransition(RuntimeErrorBase, ValueError): pass

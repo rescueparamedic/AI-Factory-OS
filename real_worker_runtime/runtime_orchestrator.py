@@ -7,6 +7,12 @@ from enum import Enum
 from typing import Any
 
 from .errors import OrchestrationError, RevisionLimitExceeded
+from .errors import InvalidRoleResult, RoleExecutionError
+from .execution_truth import claimed_qa_failures
+from .models import WorkerState
+from .role_execution import (
+    RoleExecutionRequest, RoleExecutionResult, RoleExecutionState, RuntimeRole,
+)
 from .runtime_pipeline import PipelineState
 from .worker_context import WorkerContext
 from .worker_registry import WorkerRegistry
@@ -87,6 +93,93 @@ class RuntimeOrchestrator:
             for worker_id in ("development_worker", "qa_worker")
         )
 
+    @property
+    def current_owner(self) -> str:
+        task = self.context.runtime_task
+        pipeline = self.context.runtime_pipeline
+        if task is not None:
+            return task.owner
+        return pipeline.current_worker if pipeline is not None else "planning_worker"
+
+    def build_role_request(
+        self, worker_id: str, *, task_id: str | None = None,
+    ) -> RoleExecutionRequest:
+        role = RuntimeRole.from_worker(worker_id)
+        if role is None:
+            raise RoleExecutionError(f"worker does not own a runtime role: {worker_id}")
+        task = self.context.runtime_task
+        pipeline = self.context.runtime_pipeline
+        identity = task.id if task is not None else task_id
+        if not identity:
+            raise RoleExecutionError("role execution requires a task identity")
+        if task is not None:
+            if task.state in {WorkerState.COMPLETED, WorkerState.FAILED}:
+                raise RoleExecutionError("cannot execute a role after terminal task state")
+            if task.owner != worker_id or pipeline.current_worker != worker_id:
+                raise RoleExecutionError("role execution does not match current pipeline ownership")
+        elif role is not RuntimeRole.PLANNER:
+            raise RoleExecutionError("only Planner may execute before task persistence")
+        return RoleExecutionRequest(
+            task_id=identity, role=role, worker_id=worker_id,
+            runtime_request=self.context.request, revision=self.revision_count,
+            task_state=task.state.value if task else WorkerState.PLANNING.value,
+            pipeline_state=(pipeline.state.value if pipeline else PipelineState.PLANNED.value),
+        )
+
+    def execute_role(self, executor, definition, *, task_id: str | None = None):
+        request = self.build_role_request(definition.worker_id, task_id=task_id)
+        return request, self.invoke_role(executor, request, definition)
+
+    def invoke_role(self, executor, request: RoleExecutionRequest, definition):
+        result = executor.execute(request, self.context, definition)
+        return self._validate_role_result(result, request, persist=False)
+
+    def record_role_result(
+        self, result, request: RoleExecutionRequest,
+    ) -> RoleExecutionResult:
+        normalized = self._validate_role_result(result, request, persist=True)
+        return normalized
+
+    def record_approval_role_outcome(
+        self, worker_id: str, *, completed: bool,
+        output: dict[str, Any] | None = None, error: str = "",
+        evidence_references: list[str] | None = None,
+    ) -> RoleExecutionResult:
+        task = self.context.runtime_task
+        if task is None:
+            raise RoleExecutionError("approval role outcome requires a runtime task")
+        waiting = next((
+            RoleExecutionResult.from_value(item)
+            for item in reversed(task.role_executions)
+            if item.get("worker_id") == worker_id
+            and item.get("state") == RoleExecutionState.WAITING_APPROVAL.value
+        ), None)
+        if waiting is None:
+            raise RoleExecutionError("approval continuation has no waiting role result")
+        now = _now()
+        state = RoleExecutionState.COMPLETED if completed else RoleExecutionState.FAILED
+        result = type(waiting)(
+            task_id=waiting.task_id, role=waiting.role, worker_id=waiting.worker_id,
+            state=state, output=deepcopy(output if output is not None else waiting.output),
+            evidence_references=list(evidence_references or waiting.evidence_references),
+            handoff_target="qa_worker" if completed else "",
+            started_at=waiting.started_at, completed_at=now,
+            summary=("approved role execution completed" if completed else "role approval rejected"),
+            error=error,
+            history=deepcopy(waiting.history) + [{
+                "state": state.value, "timestamp": now,
+                "handoff_target": "qa_worker" if completed else "",
+                "error": error,
+            }],
+        )
+        request = RoleExecutionRequest(
+            task_id=task.id, role=waiting.role, worker_id=worker_id,
+            runtime_request=self.context.request, revision=self.revision_count,
+            task_state=task.state.value,
+            pipeline_state=self.context.runtime_pipeline.state.value,
+        )
+        return self.record_role_result(result, request)
+
     def handoff_after(self, worker_id: str) -> OrchestrationDecision:
         try:
             target_worker, target_state = self._ROUTES[worker_id]
@@ -161,6 +254,52 @@ class RuntimeOrchestrator:
         metadata["max_revisions"] = self.max_revisions
         metadata.setdefault("decisions", [])
         self.context.revision = int(metadata["revision_count"])
+
+    def _validate_role_result(
+        self, value, request: RoleExecutionRequest, *, persist: bool,
+    ) -> RoleExecutionResult:
+        result = RoleExecutionResult.from_value(value)
+        if result.task_id != request.task_id:
+            raise InvalidRoleResult("role result task identity mismatch")
+        if result.role is not request.role:
+            raise InvalidRoleResult("role result role identity mismatch")
+        if result.worker_id != request.worker_id:
+            raise InvalidRoleResult("role result worker identity mismatch")
+        if not isinstance(result.output, dict):
+            raise InvalidRoleResult("role result output must be structured")
+        allowed = self._allowed_handoffs(result)
+        if result.handoff_target not in allowed:
+            raise InvalidRoleResult(
+                f"invalid {result.role.value} handoff target: {result.handoff_target}"
+            )
+        task = self.context.runtime_task
+        if persist:
+            if task is None or task.id != result.task_id:
+                raise InvalidRoleResult("role result cannot be persisted to another task")
+            task.record_role_execution(result.to_dict())
+        return result
+
+    @staticmethod
+    def _allowed_handoffs(result: RoleExecutionResult) -> set[str]:
+        if result.state is RoleExecutionState.FAILED:
+            return {""}
+        if result.state is RoleExecutionState.WAITING_APPROVAL:
+            return {"approval_guardian"} if result.role is RuntimeRole.DEVELOPER else set()
+        if result.role is RuntimeRole.PLANNER:
+            return {"development_worker"}
+        if result.role is RuntimeRole.DEVELOPER:
+            return {"qa_worker"}
+        if result.role is RuntimeRole.QA:
+            raw_failed = result.output.get(
+                "claimed_failed", result.output.get("failed", 0),
+            )
+            expected = (
+                "development_worker"
+                if claimed_qa_failures(result.output) or raw_failed
+                else "documentation_worker"
+            )
+            return {expected}
+        return {"runtime"}
 
     def _validate_coherence(self) -> None:
         task = self.context.runtime_task
