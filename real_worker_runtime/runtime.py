@@ -13,13 +13,14 @@ from .approval_resume import RuntimeApprovalStore, action_fingerprint, request_f
 from .artifact_store import ArtifactStore
 from .controlled_execution import ActionType, ControlledExecutor, ExecutionRequest
 from .dashboard import TerminalDashboard
-from .errors import RuntimeSessionError
+from .errors import RevisionLimitExceeded, RuntimeSessionError
 from .event_stream import EventStream
 from .execution_truth import apply_execution_truth_contract, claimed_qa_failures
 from .message_bus import MessageBus
 from .models import RuntimeSession, WorkerState
 from .provider_bridge import ProviderBridge
 from .runtime_pipeline import PipelineState, RuntimePipeline
+from .runtime_orchestrator import RuntimeOrchestrator
 from .runtime_task import RuntimeTask
 from .worker_context import WorkerContext
 from .worker_registry import WorkerRegistry
@@ -140,9 +141,14 @@ class RealWorkerRuntime:
             task.transition(WorkerState.RESUMED, "approved action executed", observed)
             _sync_runtime_task(session, context, artifact_store)
         if context.runtime_pipeline is not None:
+            orchestrator = RuntimeOrchestrator(
+                context, max_revisions=int(settings.get("max_revisions", 1)),
+            )
+            decision = orchestrator.approval_resumed(request.source_worker)
+            _emit_orchestration_decision(events, context, decision)
             _forward_pipeline(
                 session, context, artifact_store, events,
-                PipelineState.QA_PENDING, request.source_worker, "qa_worker",
+                decision.target_state, "approval_guardian", decision.target_worker,
                 "approved controlled action completed; forwarding to QA",
             )
         session.workers[request.source_worker] = "completed"
@@ -156,14 +162,19 @@ class RealWorkerRuntime:
 
     def _continue(self, session, context, selected, settings, start_index, revisions):
         context = WorkerContext.from_value(context)
+        if int(context.revision) != int(revisions):
+            raise RuntimeSessionError("runtime continuation revision state mismatch")
         store = ArtifactStore(self.root, session.session_id)
         events = EventStream(store)
         bus = MessageBus(store, session)
         dashboard = TerminalDashboard(settings.get("live", False))
         controlled = ControlledExecutor(self.root) if settings.get("enable_controlled_execution") else None
-        definitions = WorkerRegistry().list()
-        for index in range(start_index, len(definitions)):
-            definition = definitions[index]
+        orchestrator = RuntimeOrchestrator(
+            context, max_revisions=int(settings.get("max_revisions", 1)),
+        )
+        for index, definition in enumerate(
+            orchestrator.worker_definitions(start_index), start=start_index,
+        ):
             for worker_id in session.workers:
                 if session.workers[worker_id] == "queued":
                     session.workers[worker_id] = "waiting"
@@ -202,6 +213,11 @@ class RealWorkerRuntime:
             context.update_runtime_evidence(session.execution_verification)
             if definition.worker_id == "planning_worker" and result.status == "completed":
                 _create_runtime_task(session, context, result.output, store, events)
+                orchestrator = RuntimeOrchestrator(
+                    context, max_revisions=int(settings.get("max_revisions", 1)),
+                )
+                decision = orchestrator.handoff_after(definition.worker_id)
+                _emit_orchestration_decision(events, context, decision)
             elif context.runtime_task is not None and definition.worker_id in {"development_worker", "qa_worker"}:
                 context.runtime_task.record_output(definition.worker_id, result.output)
                 for item in evidence.get("execution_evidence", []):
@@ -225,9 +241,11 @@ class RealWorkerRuntime:
                     pending_request, pending_observation or {}, store, events,
                 )
             if definition.worker_id == "development_worker":
+                decision = orchestrator.handoff_after(definition.worker_id)
+                _emit_orchestration_decision(events, context, decision)
                 _forward_pipeline(
                     session, context, store, events,
-                    PipelineState.QA_PENDING, definition.worker_id, "qa_worker",
+                    decision.target_state, definition.worker_id, decision.target_worker,
                     "development completed; forwarding to QA",
                 )
             if definition.worker_id == "qa_worker" and claimed_qa_failures(result.output):
@@ -235,32 +253,53 @@ class RealWorkerRuntime:
                     "QA_COMPLETED", definition.worker_id, "QA requested revision",
                     **_task_event_fields(context.runtime_task),
                 )
-                if revisions >= settings.get("max_revisions", 1):
+                try:
+                    decision = orchestrator.request_revision()
+                except RevisionLimitExceeded as exc:
+                    _sync_runtime_task(session, context, store)
+                    events.emit(
+                        "ORCHESTRATION_ERROR", definition.worker_id, str(exc),
+                        **_task_event_fields(context.runtime_task),
+                    )
                     _fail_task(session, context, store, events, definition.worker_id,
-                               "QA failed after maximum revisions")
+                               str(exc))
                     session.status = "failed"
-                    session.error = "QA failed after maximum revisions"
+                    session.error = str(exc)
                     break
-                revisions += 1
-                context["revision"] = revisions
-                events.emit("REVISION_STARTED", "development_worker", f"revision {revisions}")
-                if not self._run_revision(session, context, selected, controlled, bus, events):
+                revisions = orchestrator.revision_count
+                _sync_runtime_task(session, context, store)
+                _emit_orchestration_decision(events, context, decision)
+                events.emit(
+                    "REVISION_STARTED", "development_worker", f"revision {revisions}",
+                    **_task_event_fields(context.runtime_task),
+                )
+                outcome = self._run_revision(
+                    session, context, selected, controlled, bus, events, orchestrator,
+                    settings,
+                )
+                if outcome is not True:
+                    if outcome is not False:
+                        return outcome
                     break
             elif definition.worker_id == "qa_worker":
                 events.emit(
                     "QA_COMPLETED", definition.worker_id, "QA completed",
                     **_task_event_fields(context.runtime_task),
                 )
+                decision = orchestrator.handoff_after(definition.worker_id)
+                _emit_orchestration_decision(events, context, decision)
                 _forward_pipeline(
                     session, context, store, events,
-                    PipelineState.DOCUMENTING, definition.worker_id, "documentation_worker",
+                    decision.target_state, definition.worker_id, decision.target_worker,
                     "QA completed; forwarding to Documentation",
                 )
                 _complete_task(session, context, store, events)
             elif definition.worker_id == "documentation_worker":
+                decision = orchestrator.handoff_after(definition.worker_id)
+                _emit_orchestration_decision(events, context, decision)
                 _forward_pipeline(
                     session, context, store, events,
-                    PipelineState.DONE, definition.worker_id, "runtime",
+                    decision.target_state, definition.worker_id, decision.target_worker,
                     "documentation completed; pipeline done",
                 )
             session.progress = (index + 1) * 20
@@ -268,82 +307,131 @@ class RealWorkerRuntime:
             dashboard.render(session)
         return self._finalize(session, context, settings, store, events, dashboard)
 
-    def _run_revision(self, session, context, selected, controlled, bus, events):
-        for retry_id in ("development_worker", "qa_worker"):
-            task = context.runtime_task
-            if task is not None:
-                target = WorkerState.RUNNING if retry_id == "development_worker" else WorkerState.QA
-                task.transition(target, f"{retry_id} revision started")
-                _sync_runtime_task(session, context, events.store)
-                if retry_id == "development_worker":
-                    _emit_pipeline_event(
-                        events, "TaskRejected", context, "qa_worker",
-                        "QA rejected development output for revision",
+    def _run_revision(
+        self, session, context, selected, controlled, bus, events, orchestrator,
+        settings,
+    ):
+        while True:
+            for retry_definition in orchestrator.revision_workers():
+                retry_id = retry_definition.worker_id
+                session.workers[retry_id] = "running"
+                session.current_activity = f"{retry_definition.role} is revising..."
+                task = context.runtime_task
+                if task is not None:
+                    target = (
+                        WorkerState.RUNNING
+                        if retry_id == "development_worker" else WorkerState.QA
                     )
+                    task.transition(target, f"{retry_id} revision started")
+                    _sync_runtime_task(session, context, events.store)
+                    if retry_id == "development_worker":
+                        _emit_pipeline_event(
+                            events, "TaskRejected", context, "qa_worker",
+                            "QA rejected development output for revision",
+                        )
+                        _forward_pipeline(
+                            session, context, events.store, events,
+                            PipelineState.DEVELOPING, "qa_worker", "development_worker",
+                            "QA requested development revision",
+                            {"revision_count": orchestrator.revision_count},
+                        )
+                        events.emit(
+                            "TASK_STARTED", retry_id, "development revision started",
+                            **_task_event_fields(task),
+                        )
+                _start_pipeline_worker(session, context, events.store, events, retry_id)
+                retry = BaseWorker(retry_definition, selected).execute(context)
+                evidence = {
+                    "verified_changed_files": [], "verified_test_executions": [],
+                    "execution_evidence": [],
+                }
+                pending = None
+                observation = None
+                if retry.status == "completed":
+                    evidence, pending, observation = _execute_proposals(
+                        controlled, retry_id, retry.output, self.root,
+                    )
+                    retry.output, findings = apply_execution_truth_contract(
+                        retry_id, retry.output, evidence,
+                    )
+                    session.truth_contract_findings.extend(findings)
+                    _merge_execution_evidence(session, evidence)
+                session.results.append(asdict(retry))
+                context.record_worker_output(retry_id, retry.output)
+                context.update_runtime_evidence(session.execution_verification)
+                if context.runtime_task is not None:
+                    context.runtime_task.record_output(retry_id, retry.output)
+                    for item in evidence.get("execution_evidence", []):
+                        context.runtime_task.record_evidence(item)
+                    _sync_runtime_task(session, context, events.store)
+                bus.publish(
+                    retry_id, "runtime", "WORKER_OUTPUT", retry.summary, retry.output,
+                )
+                if retry.status != "completed":
+                    _fail_task(
+                        session, context, events.store, events, retry_id,
+                        "revision worker failed",
+                    )
+                    session.status = "failed"
+                    session.error = retry.error
+                    events.emit("PROVIDER_ERROR", retry_id, retry.error)
+                    return False
+                session.workers[retry_id] = "completed"
+                metadata = retry.output.get("_provider", {})
+                events.emit(
+                    "WORKER_COMPLETED", retry_id,
+                    json.dumps(metadata) if metadata else "",
+                )
+                if retry_id == "qa_worker":
+                    events.emit(
+                        "QA_COMPLETED", retry_id, "revision QA completed",
+                        **_task_event_fields(context.runtime_task),
+                    )
+                _complete_pipeline_worker(context, events, retry_id)
+                if pending is not None:
+                    return self._pause_for_approval(
+                        session, context, settings, orchestrator.revision_count,
+                        orchestrator.worker_index("qa_worker"), pending,
+                        observation or {}, events.store, events,
+                    )
+                if retry_id == "development_worker":
+                    decision = orchestrator.handoff_after(retry_id)
+                    _emit_orchestration_decision(events, context, decision)
                     _forward_pipeline(
                         session, context, events.store, events,
-                        PipelineState.DEVELOPING, "qa_worker", "development_worker",
-                        "QA requested development revision",
+                        decision.target_state, retry_id, decision.target_worker,
+                        "development revision completed; forwarding to QA",
+                        {"revision_count": orchestrator.revision_count},
                     )
-                    events.emit(
-                        "TASK_STARTED", retry_id, "development revision started",
-                        **_task_event_fields(task),
-                    )
-            _start_pipeline_worker(session, context, events.store, events, retry_id)
-            retry_definition = next(item for item in WorkerRegistry().list() if item.worker_id == retry_id)
-            retry = BaseWorker(retry_definition, selected).execute(context)
-            evidence = {"verified_changed_files": [], "verified_test_executions": [], "execution_evidence": []}
-            if retry.status == "completed":
-                evidence, pending, _ = _execute_proposals(controlled, retry_id, retry.output, self.root)
-                if pending is not None:
-                    _fail_task(session, context, events.store, events, retry_id,
-                               "approval pause during revision is unsupported")
-                    session.status = "failed"
-                    session.error = "Approval pause during revision is not supported"
-                    return False
-                retry.output, findings = apply_execution_truth_contract(retry_id, retry.output, evidence)
-                session.truth_contract_findings.extend(findings)
-                _merge_execution_evidence(session, evidence)
-            session.results.append(asdict(retry))
-            context.record_worker_output(retry_id, retry.output)
-            context.update_runtime_evidence(session.execution_verification)
-            if context.runtime_task is not None:
-                context.runtime_task.record_output(retry_id, retry.output)
-                for item in evidence.get("execution_evidence", []):
-                    context.runtime_task.record_evidence(item)
-                _sync_runtime_task(session, context, events.store)
-            bus.publish(retry_id, "runtime", "WORKER_OUTPUT", retry.summary, retry.output)
-            if retry.status != "completed":
-                _fail_task(session, context, events.store, events, retry_id,
-                           "revision worker failed")
-                session.status = "failed"
-                session.error = retry.error
-                return False
-            if retry_id == "qa_worker":
-                events.emit(
-                    "QA_COMPLETED", retry_id, "revision QA completed",
-                    **_task_event_fields(context.runtime_task),
-                )
-            _complete_pipeline_worker(context, events, retry_id)
-            if retry_id == "development_worker":
+            if not claimed_qa_failures(context["outputs"]["qa_worker"]):
+                decision = orchestrator.handoff_after("qa_worker")
+                _emit_orchestration_decision(events, context, decision)
+                _complete_task(session, context, events.store, events)
                 _forward_pipeline(
                     session, context, events.store, events,
-                    PipelineState.QA_PENDING, retry_id, "qa_worker",
-                    "development revision completed; forwarding to QA",
+                    decision.target_state, "qa_worker", decision.target_worker,
+                    "revision QA completed; forwarding to Documentation",
                 )
-        if claimed_qa_failures(context["outputs"]["qa_worker"]):
-            _fail_task(session, context, events.store, events, "qa_worker",
-                       "QA revision failed")
-            session.status = "failed"
-            session.error = "QA revision failed"
-            return False
-        _complete_task(session, context, events.store, events)
-        _forward_pipeline(
-            session, context, events.store, events,
-            PipelineState.DOCUMENTING, "qa_worker", "documentation_worker",
-            "revision QA completed; forwarding to Documentation",
-        )
-        return True
+                return True
+            try:
+                decision = orchestrator.request_revision()
+            except RevisionLimitExceeded as exc:
+                _sync_runtime_task(session, context, events.store)
+                events.emit(
+                    "ORCHESTRATION_ERROR", "qa_worker", str(exc),
+                    **_task_event_fields(context.runtime_task),
+                )
+                _fail_task(session, context, events.store, events, "qa_worker", str(exc))
+                session.status = "failed"
+                session.error = str(exc)
+                return False
+            _sync_runtime_task(session, context, events.store)
+            _emit_orchestration_decision(events, context, decision)
+            events.emit(
+                "REVISION_STARTED", "development_worker",
+                f"revision {orchestrator.revision_count}",
+                **_task_event_fields(context.runtime_task),
+            )
 
     def _pause_for_approval(
         self, session, context, settings, revisions, next_index,
@@ -362,9 +450,14 @@ class RealWorkerRuntime:
             task.transition(WorkerState.WAITING_APPROVAL, "controlled action requires approval", observation)
             _sync_runtime_task(session, context, store)
         if context.runtime_pipeline is not None:
+            orchestrator = RuntimeOrchestrator(
+                context, max_revisions=int(settings.get("max_revisions", 1)),
+            )
+            decision = orchestrator.approval_required(request.source_worker)
+            _emit_orchestration_decision(events, context, decision)
             _forward_pipeline(
                 session, context, store, events,
-                PipelineState.APPROVAL_PENDING, request.source_worker, "approval_guardian",
+                decision.target_state, request.source_worker, decision.target_worker,
                 "controlled action requires Product Owner approval",
                 {"approval_request_id": record["approval_request_id"]},
             )
@@ -693,6 +786,24 @@ def _emit_pipeline_event(events, name, context, worker_id, detail, payload=None)
             "owner": task.owner,
             "pipeline_state": pipeline.state.value,
             **dict(payload or {}),
+        },
+    )
+
+
+def _emit_orchestration_decision(events, context, decision):
+    task = context.runtime_task
+    if task is None:
+        return
+    events.emit(
+        "ORCHESTRATION_DECISION", decision.source_worker, decision.reason,
+        task_id=task.id,
+        state=decision.target_state.value,
+        payload={
+            "action": decision.action.value,
+            "source_worker": decision.source_worker,
+            "target_worker": decision.target_worker,
+            "target_state": decision.target_state.value,
+            **dict(decision.metadata),
         },
     )
 

@@ -1,5 +1,19 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-3.0 Sprint 2 Multi-Agent Runtime Orchestrator
+
+- Added an explicit `RuntimeOrchestrator` inside `real_worker_runtime` to own
+  deterministic worker routing without replacing the existing runtime engine.
+- Routed worker execution through the registered pipeline owners and recorded
+  append-only orchestration decisions in `RuntimeTask` and the runtime event
+  stream.
+- Added a persisted, deterministic QA revision counter and safe explicit
+  failure when the configured revision limit is exhausted.
+- Extended revision execution to support multiple bounded Developer-to-QA
+  cycles and approval pause/resume during a revised controlled action.
+- Preserved provider contracts, Guardian decisions, controlled execution,
+  Execution Truth, and AFDE-2.7 approval binding and consumption semantics.
+
 ## AFDE-3.0 Sprint 1 Multi-Agent Development Pipeline Foundation
 
 - Added an additive `RuntimePipeline` connecting Planner, Developer, QA,
