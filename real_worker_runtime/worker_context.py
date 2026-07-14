@@ -4,6 +4,7 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
+from .runtime_pipeline import RuntimePipeline
 from .runtime_task import RuntimeTask
 
 
@@ -22,6 +23,7 @@ class WorkerContext:
     runtime_evidence: dict[str, Any] = field(default_factory=dict)
     prior_worker_artifacts: dict[str, dict[str, Any]] = field(default_factory=dict)
     runtime_task: RuntimeTask | None = None
+    runtime_pipeline: RuntimePipeline | None = None
     outputs: dict[str, Any] = field(default_factory=dict)
     revision: int = 0
 
@@ -38,6 +40,7 @@ class WorkerContext:
             runtime_evidence=deepcopy(value.get("runtime_evidence", {})),
             prior_worker_artifacts=deepcopy(value.get("prior_worker_artifacts", {})),
             runtime_task=RuntimeTask.from_value(value.get("runtime_task")),
+            runtime_pipeline=RuntimePipeline.from_value(value.get("runtime_pipeline")),
             outputs=deepcopy(value.get("outputs", {})),
             revision=int(value.get("revision", 0)),
         )
@@ -59,6 +62,7 @@ class WorkerContext:
             "runtime_evidence": deepcopy(self.runtime_evidence),
             "prior_worker_artifacts": deepcopy(self.prior_worker_artifacts),
             "runtime_task": self.runtime_task.to_dict() if self.runtime_task else None,
+            "runtime_pipeline": self.runtime_pipeline.to_dict() if self.runtime_pipeline else None,
             "outputs": deepcopy(self.outputs),
             "revision": self.revision,
         }

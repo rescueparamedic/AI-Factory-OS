@@ -19,6 +19,7 @@ from .execution_truth import apply_execution_truth_contract, claimed_qa_failures
 from .message_bus import MessageBus
 from .models import RuntimeSession, WorkerState
 from .provider_bridge import ProviderBridge
+from .runtime_pipeline import PipelineState, RuntimePipeline
 from .runtime_task import RuntimeTask
 from .worker_context import WorkerContext
 from .worker_registry import WorkerRegistry
@@ -79,6 +80,9 @@ class RealWorkerRuntime:
             context = WorkerContext(
                 request=session.request,
                 runtime_task=RuntimeTask.from_value(session.runtime_tasks[-1]),
+                runtime_pipeline=RuntimePipeline.from_value(
+                    session.runtime_pipelines[-1] if session.runtime_pipelines else None
+                ),
             )
             _fail_task(session, context, artifact_store, events, record["source_worker"],
                        "controlled action approval rejected")
@@ -106,6 +110,14 @@ class RealWorkerRuntime:
             "APPROVAL_GRANTED", request.source_worker, approval_id,
             **_task_event_fields(task),
         )
+        if context.runtime_pipeline is not None:
+            context.runtime_pipeline.mark_approved()
+            _sync_runtime_pipeline(session, context, artifact_store)
+            _emit_pipeline_event(
+                events, "TaskApproved", context, request.source_worker,
+                "exact controlled action approval granted",
+                {"approval_request_id": approval_id},
+            )
         observed = ControlledExecutor(self.root).execute_approved(request, approved)
         consumed = approval_store.consume(approved)
         events.emit("APPROVAL_CONSUMED", request.source_worker, approval_id)
@@ -127,6 +139,12 @@ class RealWorkerRuntime:
         if task is not None:
             task.transition(WorkerState.RESUMED, "approved action executed", observed)
             _sync_runtime_task(session, context, artifact_store)
+        if context.runtime_pipeline is not None:
+            _forward_pipeline(
+                session, context, artifact_store, events,
+                PipelineState.QA_PENDING, request.source_worker, "qa_worker",
+                "approved controlled action completed; forwarding to QA",
+            )
         session.workers[request.source_worker] = "completed"
         session.status = "running"
         session.current_activity = "Approved action executed; runtime resuming"
@@ -165,6 +183,7 @@ class RealWorkerRuntime:
             elif definition.worker_id == "qa_worker" and task is not None:
                 task.transition(WorkerState.QA, "QA worker started")
                 _sync_runtime_task(session, context, store)
+            _start_pipeline_worker(session, context, store, events, definition.worker_id)
             dashboard.render(session)
             events.emit("WORKER_STARTED", definition.worker_id)
             result = BaseWorker(definition, selected).execute(context)
@@ -199,10 +218,17 @@ class RealWorkerRuntime:
             bus.publish(definition.worker_id, "runtime", "WORKER_OUTPUT", result.summary, result.output)
             metadata = result.output.get("_provider", {})
             events.emit("WORKER_COMPLETED", definition.worker_id, json.dumps(metadata) if metadata else "")
+            _complete_pipeline_worker(context, events, definition.worker_id)
             if pending_request is not None:
                 return self._pause_for_approval(
                     session, context, settings, revisions, index + 1,
                     pending_request, pending_observation or {}, store, events,
+                )
+            if definition.worker_id == "development_worker":
+                _forward_pipeline(
+                    session, context, store, events,
+                    PipelineState.QA_PENDING, definition.worker_id, "qa_worker",
+                    "development completed; forwarding to QA",
                 )
             if definition.worker_id == "qa_worker" and claimed_qa_failures(result.output):
                 events.emit(
@@ -225,7 +251,18 @@ class RealWorkerRuntime:
                     "QA_COMPLETED", definition.worker_id, "QA completed",
                     **_task_event_fields(context.runtime_task),
                 )
+                _forward_pipeline(
+                    session, context, store, events,
+                    PipelineState.DOCUMENTING, definition.worker_id, "documentation_worker",
+                    "QA completed; forwarding to Documentation",
+                )
                 _complete_task(session, context, store, events)
+            elif definition.worker_id == "documentation_worker":
+                _forward_pipeline(
+                    session, context, store, events,
+                    PipelineState.DONE, definition.worker_id, "runtime",
+                    "documentation completed; pipeline done",
+                )
             session.progress = (index + 1) * 20
             session.current_activity = result.summary
             dashboard.render(session)
@@ -239,10 +276,20 @@ class RealWorkerRuntime:
                 task.transition(target, f"{retry_id} revision started")
                 _sync_runtime_task(session, context, events.store)
                 if retry_id == "development_worker":
+                    _emit_pipeline_event(
+                        events, "TaskRejected", context, "qa_worker",
+                        "QA rejected development output for revision",
+                    )
+                    _forward_pipeline(
+                        session, context, events.store, events,
+                        PipelineState.DEVELOPING, "qa_worker", "development_worker",
+                        "QA requested development revision",
+                    )
                     events.emit(
                         "TASK_STARTED", retry_id, "development revision started",
                         **_task_event_fields(task),
                     )
+            _start_pipeline_worker(session, context, events.store, events, retry_id)
             retry_definition = next(item for item in WorkerRegistry().list() if item.worker_id == retry_id)
             retry = BaseWorker(retry_definition, selected).execute(context)
             evidence = {"verified_changed_files": [], "verified_test_executions": [], "execution_evidence": []}
@@ -277,6 +324,13 @@ class RealWorkerRuntime:
                     "QA_COMPLETED", retry_id, "revision QA completed",
                     **_task_event_fields(context.runtime_task),
                 )
+            _complete_pipeline_worker(context, events, retry_id)
+            if retry_id == "development_worker":
+                _forward_pipeline(
+                    session, context, events.store, events,
+                    PipelineState.QA_PENDING, retry_id, "qa_worker",
+                    "development revision completed; forwarding to QA",
+                )
         if claimed_qa_failures(context["outputs"]["qa_worker"]):
             _fail_task(session, context, events.store, events, "qa_worker",
                        "QA revision failed")
@@ -284,6 +338,11 @@ class RealWorkerRuntime:
             session.error = "QA revision failed"
             return False
         _complete_task(session, context, events.store, events)
+        _forward_pipeline(
+            session, context, events.store, events,
+            PipelineState.DOCUMENTING, "qa_worker", "documentation_worker",
+            "revision QA completed; forwarding to Documentation",
+        )
         return True
 
     def _pause_for_approval(
@@ -302,6 +361,13 @@ class RealWorkerRuntime:
         if task is not None:
             task.transition(WorkerState.WAITING_APPROVAL, "controlled action requires approval", observation)
             _sync_runtime_task(session, context, store)
+        if context.runtime_pipeline is not None:
+            _forward_pipeline(
+                session, context, store, events,
+                PipelineState.APPROVAL_PENDING, request.source_worker, "approval_guardian",
+                "controlled action requires Product Owner approval",
+                {"approval_request_id": record["approval_request_id"]},
+            )
         store.json("continuation.json", {
             "session_id": session.session_id,
             "approval_request_id": record["approval_request_id"],
@@ -344,6 +410,7 @@ class RealWorkerRuntime:
         session.progress = 100 if session.status == "completed" else session.progress
         session.updated_at = _now()
         _sync_runtime_task(session, context, store)
+        _sync_runtime_pipeline(session, context, store)
         _write_partial_artifacts(store, context, session)
         report = _truthful_report(session, context)
         if not any(item["type"] == "final_report" for item in session.artifacts):
@@ -472,14 +539,33 @@ def _create_runtime_task(session, context, planner_output, store, events):
         priority=priority,
         dependencies=dependencies,
         inputs={"request": context.request, "planner_output": planner_output},
+        owner="planning_worker",
     )
     context.runtime_task = task
+    context.runtime_pipeline = RuntimePipeline(task.id)
     events.emit(
         "TASK_CREATED", task.worker, "planner output accepted",
         **_task_event_fields(task),
     )
     task.transition(WorkerState.READY, "planner output converted to runtime task")
+    context.runtime_pipeline.transition(
+        PipelineState.ASSIGNED, "development_worker",
+        "Planner assigned task to Developer",
+    )
+    handoff = task.handoff(
+        "development_worker", "Planner forwarded task to Developer",
+        {"pipeline_state": PipelineState.ASSIGNED.value},
+    )
     _sync_runtime_task(session, context, store)
+    _sync_runtime_pipeline(session, context, store)
+    _emit_pipeline_event(
+        events, "TaskAssigned", context, "development_worker",
+        "Planner assigned task to Developer", handoff,
+    )
+    _emit_pipeline_event(
+        events, "TaskForwarded", context, "planning_worker",
+        "Planner forwarded task to Developer", handoff,
+    )
 
 
 def _complete_task(session, context, store, events):
@@ -496,14 +582,22 @@ def _complete_task(session, context, store, events):
 
 def _fail_task(session, context, store, events, worker_id, reason, evidence=None):
     task = context.runtime_task
-    if task is None or task.state in {WorkerState.COMPLETED, WorkerState.FAILED}:
+    if task is None:
         return
-    task.transition(WorkerState.FAILED, reason, evidence)
-    _sync_runtime_task(session, context, store)
-    events.emit(
-        "TASK_FAILED", worker_id, reason,
-        **_task_event_fields(task),
-    )
+    if task.state not in {WorkerState.COMPLETED, WorkerState.FAILED}:
+        task.transition(WorkerState.FAILED, reason, evidence)
+        _sync_runtime_task(session, context, store)
+        events.emit(
+            "TASK_FAILED", worker_id, reason,
+            **_task_event_fields(task),
+        )
+    if context.runtime_pipeline is not None:
+        context.runtime_pipeline.mark_rejected()
+        _sync_runtime_pipeline(session, context, store)
+        _emit_pipeline_event(
+            events, "TaskRejected", context, worker_id, reason,
+            evidence or {},
+        )
 
 
 def _sync_runtime_task(session, context, store):
@@ -520,6 +614,87 @@ def _sync_runtime_task(session, context, store):
     path = store.json("runtime_task.json", snapshot)
     if not any(item["type"] == "runtime_task.json" for item in session.artifacts):
         session.artifacts.append({"type": "runtime_task.json", "path": str(path)})
+
+
+def _sync_runtime_pipeline(session, context, store):
+    pipeline = context.runtime_pipeline
+    if pipeline is None:
+        return
+    snapshot = pipeline.to_dict()
+    session.runtime_pipelines = [
+        snapshot if item.get("task_id") == pipeline.task_id else item
+        for item in session.runtime_pipelines
+    ]
+    if not any(item.get("task_id") == pipeline.task_id for item in session.runtime_pipelines):
+        session.runtime_pipelines.append(snapshot)
+    path = store.json("runtime_pipeline.json", snapshot)
+    if not any(item["type"] == "runtime_pipeline.json" for item in session.artifacts):
+        session.artifacts.append({"type": "runtime_pipeline.json", "path": str(path)})
+
+
+def _start_pipeline_worker(session, context, store, events, worker_id):
+    pipeline = context.runtime_pipeline
+    if pipeline is None or worker_id not in {
+        "development_worker", "qa_worker", "documentation_worker",
+    }:
+        return
+    if worker_id == "development_worker" and pipeline.state == PipelineState.ASSIGNED:
+        pipeline.transition(
+            PipelineState.DEVELOPING, worker_id, "Developer started assigned task",
+        )
+        _sync_runtime_pipeline(session, context, store)
+    _emit_pipeline_event(
+        events, "TaskStarted", context, worker_id,
+        f"{worker_id} started pipeline work",
+    )
+
+
+def _complete_pipeline_worker(context, events, worker_id):
+    if context.runtime_pipeline is None or worker_id not in {
+        "development_worker", "qa_worker", "documentation_worker",
+    }:
+        return
+    _emit_pipeline_event(
+        events, "TaskCompleted", context, worker_id,
+        f"{worker_id} completed pipeline work",
+    )
+
+
+def _forward_pipeline(
+    session, context, store, events, target_state,
+    source_worker, target_worker, reason, metadata=None,
+):
+    pipeline = context.runtime_pipeline
+    task = context.runtime_task
+    if pipeline is None or task is None:
+        return
+    pipeline.transition(target_state, target_worker, reason, metadata)
+    handoff = task.handoff(
+        target_worker, reason,
+        {"pipeline_state": pipeline.state.value, **dict(metadata or {})},
+    )
+    _sync_runtime_task(session, context, store)
+    _sync_runtime_pipeline(session, context, store)
+    _emit_pipeline_event(
+        events, "TaskForwarded", context, source_worker, reason, handoff,
+    )
+
+
+def _emit_pipeline_event(events, name, context, worker_id, detail, payload=None):
+    task = context.runtime_task
+    pipeline = context.runtime_pipeline
+    if task is None or pipeline is None:
+        return
+    events.emit(
+        name, worker_id, detail,
+        task_id=task.id,
+        state=pipeline.state.value,
+        payload={
+            "owner": task.owner,
+            "pipeline_state": pipeline.state.value,
+            **dict(payload or {}),
+        },
+    )
 
 
 def _task_event_fields(task):

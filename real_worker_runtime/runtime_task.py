@@ -51,11 +51,15 @@ class RuntimeTask:
     outputs: dict[str, Any] = field(default_factory=dict)
     evidence: list[dict[str, Any]] = field(default_factory=list)
     history: list[dict[str, Any]] = field(default_factory=list)
+    owner: str = ""
+    handoff_metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         self.state = _state(self.state)
         if not self.id or not self.worker:
             raise ValueError("runtime task id and worker are required")
+        if not self.owner:
+            self.owner = self.worker
         if not self.history:
             self.history.append({
                 "from": None,
@@ -69,6 +73,7 @@ class RuntimeTask:
         cls, worker: str, *, priority: int = 0,
         dependencies: list[str] | None = None,
         inputs: Mapping[str, Any] | None = None,
+        owner: str | None = None,
     ) -> RuntimeTask:
         return cls(
             id=f"TASK-{uuid4().hex}",
@@ -76,6 +81,7 @@ class RuntimeTask:
             priority=priority,
             dependencies=list(dependencies or []),
             inputs=deepcopy(dict(inputs or {})),
+            owner=owner or worker,
         )
 
     @classmethod
@@ -94,6 +100,8 @@ class RuntimeTask:
             outputs=deepcopy(value.get("outputs", {})),
             evidence=deepcopy(value.get("evidence", [])),
             history=deepcopy(value.get("history", [])),
+            owner=value.get("owner", value["worker"]),
+            handoff_metadata=deepcopy(value.get("handoff_metadata", {})),
         )
 
     def transition(
@@ -125,6 +133,24 @@ class RuntimeTask:
     def record_evidence(self, evidence: Mapping[str, Any]) -> None:
         self.evidence.append(deepcopy(dict(evidence)))
 
+    def handoff(
+        self, target_worker: str, reason: str,
+        metadata: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        if not target_worker:
+            raise ValueError("handoff target worker is required")
+        entry = {
+            "from": self.owner,
+            "to": target_worker,
+            "timestamp": _now(),
+            "reason": reason,
+            "metadata": deepcopy(dict(metadata or {})),
+        }
+        self.owner = target_worker
+        self.handoff_metadata.setdefault("history", []).append(entry)
+        self.handoff_metadata["latest"] = deepcopy(entry)
+        return deepcopy(entry)
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
@@ -136,4 +162,6 @@ class RuntimeTask:
             "outputs": deepcopy(self.outputs),
             "evidence": deepcopy(self.evidence),
             "history": deepcopy(self.history),
+            "owner": self.owner,
+            "handoff_metadata": deepcopy(self.handoff_metadata),
         }
