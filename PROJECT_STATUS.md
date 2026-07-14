@@ -1,5 +1,21 @@
 # AI Factory OS Project Status
 
+## AFDE-3.0 Sprint 4
+
+- Multi-Agent Result Handoff and QA Revision Loop is implemented on
+  `feature/afde-3.0-sprint-4-result-handoff-qa-revision` from the verified
+  Sprint 3 merge baseline.
+- Typed Planner-to-Developer, Developer-to-QA, QA-to-Developer, and
+  QA-to-Documentation result handoffs now persist producer/consumer roles,
+  task identity, result reference, validation metadata, revision state, and
+  append-only delivery history.
+- Typed QA decisions persist acceptance, revision request, limit exhaustion,
+  reason, count, configured maximum, and the source QA result reference.
+- `RuntimeOrchestrator` owns handoff creation/delivery and QA decisions while
+  retaining the existing pipeline, role executor, task, and context layers.
+- Approval, Guardian, controlled execution, Execution Truth, provider
+  behavior, and deterministic bounded revision limits remain unchanged.
+
 ## AFDE-3.0 Sprint 3
 
 - Agent Role Execution is implemented on

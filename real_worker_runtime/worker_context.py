@@ -26,6 +26,8 @@ class WorkerContext:
     runtime_pipeline: RuntimePipeline | None = None
     outputs: dict[str, Any] = field(default_factory=dict)
     revision: int = 0
+    result_handoffs: list[dict[str, Any]] = field(default_factory=list)
+    active_result_handoff: dict[str, Any] | None = None
 
     @classmethod
     def from_value(cls, value: WorkerContext | Mapping[str, Any]) -> WorkerContext:
@@ -43,6 +45,8 @@ class WorkerContext:
             runtime_pipeline=RuntimePipeline.from_value(value.get("runtime_pipeline")),
             outputs=deepcopy(value.get("outputs", {})),
             revision=int(value.get("revision", 0)),
+            result_handoffs=deepcopy(value.get("result_handoffs", [])),
+            active_result_handoff=deepcopy(value.get("active_result_handoff")),
         )
 
     def record_worker_output(self, worker_id: str, output: dict[str, Any]) -> None:
@@ -65,6 +69,8 @@ class WorkerContext:
             "runtime_pipeline": self.runtime_pipeline.to_dict() if self.runtime_pipeline else None,
             "outputs": deepcopy(self.outputs),
             "revision": self.revision,
+            "result_handoffs": deepcopy(self.result_handoffs),
+            "active_result_handoff": deepcopy(self.active_result_handoff),
         }
 
     def __getitem__(self, key: str) -> Any:

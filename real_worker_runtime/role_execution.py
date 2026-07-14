@@ -48,6 +48,8 @@ class RoleExecutionRequest:
     revision: int
     task_state: str
     pipeline_state: str
+    input_handoff_id: str = ""
+    input_result_reference: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -58,6 +60,8 @@ class RoleExecutionRequest:
             "revision": self.revision,
             "task_state": self.task_state,
             "pipeline_state": self.pipeline_state,
+            "input_handoff_id": self.input_handoff_id,
+            "input_result_reference": self.input_result_reference,
         }
 
 

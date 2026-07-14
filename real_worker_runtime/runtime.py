@@ -195,6 +195,12 @@ class RealWorkerRuntime:
             _emit_role_event(events, "ROLE_RESULT_RECORDED", role_result)
             _emit_role_event(events, "ROLE_EXECUTION_COMPLETED", role_result)
             _emit_role_event(events, "ROLE_HANDOFF_REQUESTED", role_result)
+            result_handoff = orchestrator.create_result_handoff(
+                role_result, RuntimeRole.QA,
+                validation_metadata=_handoff_validation_metadata(role_result),
+            )
+            _sync_runtime_task(session, context, artifact_store)
+            _emit_result_handoff_event(events, "RESULT_HANDOFF_CREATED", result_handoff)
         if task is not None:
             task.transition(WorkerState.RESUMED, "approved action executed", observed)
             _sync_runtime_task(session, context, artifact_store)
@@ -267,6 +273,9 @@ class RealWorkerRuntime:
                 role_request = orchestrator.build_role_request(
                     definition.worker_id, task_id=provisional_task_id,
                 )
+                if role_request.input_handoff_id:
+                    _sync_runtime_task(session, context, store)
+                    _emit_role_handoff_delivery(events, role_request)
                 _emit_role_request_event(events, "ROLE_EXECUTION_STARTED", role_request)
                 try:
                     role_result = orchestrator.invoke_role(
@@ -330,6 +339,12 @@ class RealWorkerRuntime:
                 orchestrator = RuntimeOrchestrator(
                     context, max_revisions=int(settings.get("max_revisions", 1)),
                 )
+                result_handoff = orchestrator.create_result_handoff(
+                    role_result, RuntimeRole.DEVELOPER,
+                    validation_metadata=_handoff_validation_metadata(role_result),
+                )
+                _sync_runtime_task(session, context, store)
+                _emit_result_handoff_event(events, "RESULT_HANDOFF_CREATED", result_handoff)
                 decision = orchestrator.handoff_after(definition.worker_id)
                 _emit_orchestration_decision(events, context, decision)
             elif context.runtime_task is not None and definition.worker_id in {"development_worker", "qa_worker"}:
@@ -355,6 +370,12 @@ class RealWorkerRuntime:
                     pending_request, pending_observation or {}, store, events,
                 )
             if definition.worker_id == "development_worker":
+                result_handoff = orchestrator.create_result_handoff(
+                    role_result, RuntimeRole.QA,
+                    validation_metadata=_handoff_validation_metadata(role_result),
+                )
+                _sync_runtime_task(session, context, store)
+                _emit_result_handoff_event(events, "RESULT_HANDOFF_CREATED", result_handoff)
                 decision = orchestrator.handoff_after(definition.worker_id)
                 _emit_orchestration_decision(events, context, decision)
                 _forward_pipeline(
@@ -367,10 +388,18 @@ class RealWorkerRuntime:
                     "QA_COMPLETED", definition.worker_id, "QA requested revision",
                     **_task_event_fields(context.runtime_task),
                 )
+                revision_reason = _qa_revision_reason(result.output)
+                qa_reference = _latest_role_result_reference(context.runtime_task)
                 try:
-                    decision = orchestrator.request_revision()
+                    decision = orchestrator.request_revision(
+                        revision_reason, qa_reference,
+                    )
                 except RevisionLimitExceeded as exc:
                     _sync_runtime_task(session, context, store)
+                    _emit_qa_decision_event(
+                        events, "REVISION_LIMIT_EXCEEDED",
+                        orchestrator.latest_qa_revision_decision,
+                    )
                     events.emit(
                         "ORCHESTRATION_ERROR", definition.worker_id, str(exc),
                         **_task_event_fields(context.runtime_task),
@@ -381,7 +410,20 @@ class RealWorkerRuntime:
                     session.error = str(exc)
                     break
                 revisions = orchestrator.revision_count
+                result_handoff = orchestrator.create_result_handoff(
+                    role_result, RuntimeRole.DEVELOPER,
+                    validation_metadata={
+                        **_handoff_validation_metadata(role_result),
+                        "qa_outcome": "revision_requested",
+                    },
+                    revision_reason=revision_reason,
+                )
                 _sync_runtime_task(session, context, store)
+                _emit_qa_decision_event(
+                    events, "QA_REVISION_REQUESTED",
+                    orchestrator.latest_qa_revision_decision,
+                )
+                _emit_result_handoff_event(events, "RESULT_HANDOFF_CREATED", result_handoff)
                 _emit_orchestration_decision(events, context, decision)
                 events.emit(
                     "REVISION_STARTED", "development_worker", f"revision {revisions}",
@@ -400,6 +442,20 @@ class RealWorkerRuntime:
                     "QA_COMPLETED", definition.worker_id, "QA completed",
                     **_task_event_fields(context.runtime_task),
                 )
+                qa_reference = _latest_role_result_reference(context.runtime_task)
+                qa_decision = orchestrator.accept_qa(
+                    "QA accepted development result", qa_reference,
+                )
+                result_handoff = orchestrator.create_result_handoff(
+                    role_result, RuntimeRole.DOCUMENTATION,
+                    validation_metadata={
+                        **_handoff_validation_metadata(role_result),
+                        "qa_outcome": "accepted",
+                    },
+                )
+                _sync_runtime_task(session, context, store)
+                _emit_qa_decision_event(events, "QA_ACCEPTED", qa_decision.to_dict())
+                _emit_result_handoff_event(events, "RESULT_HANDOFF_CREATED", result_handoff)
                 decision = orchestrator.handoff_after(definition.worker_id)
                 _emit_orchestration_decision(events, context, decision)
                 _forward_pipeline(
@@ -455,6 +511,15 @@ class RealWorkerRuntime:
                         )
                 _start_pipeline_worker(session, context, events.store, events, retry_id)
                 role_request = orchestrator.build_role_request(retry_id)
+                if role_request.input_handoff_id:
+                    _sync_runtime_task(session, context, events.store)
+                    _emit_role_handoff_delivery(events, role_request)
+                    if retry_id == "development_worker":
+                        events.emit(
+                            "REVISION_RESUMED", retry_id,
+                            f"revision {orchestrator.revision_count} delivered to Developer",
+                            **_task_event_fields(context.runtime_task),
+                        )
                 _emit_role_request_event(
                     events, "ROLE_EXECUTION_STARTED", role_request,
                 )
@@ -544,6 +609,17 @@ class RealWorkerRuntime:
                         observation or {}, events.store, events,
                     )
                 if retry_id == "development_worker":
+                    result_handoff = orchestrator.create_result_handoff(
+                        role_result, RuntimeRole.QA,
+                        validation_metadata={
+                            **_handoff_validation_metadata(role_result),
+                            "revision_count": orchestrator.revision_count,
+                        },
+                    )
+                    _sync_runtime_task(session, context, events.store)
+                    _emit_result_handoff_event(
+                        events, "RESULT_HANDOFF_CREATED", result_handoff,
+                    )
                     decision = orchestrator.handoff_after(retry_id)
                     _emit_orchestration_decision(events, context, decision)
                     _forward_pipeline(
@@ -553,6 +629,22 @@ class RealWorkerRuntime:
                         {"revision_count": orchestrator.revision_count},
                     )
             if not claimed_qa_failures(context["outputs"]["qa_worker"]):
+                qa_reference = _latest_role_result_reference(context.runtime_task)
+                qa_decision = orchestrator.accept_qa(
+                    "QA accepted revised development result", qa_reference,
+                )
+                result_handoff = orchestrator.create_result_handoff(
+                    role_result, RuntimeRole.DOCUMENTATION,
+                    validation_metadata={
+                        **_handoff_validation_metadata(role_result),
+                        "qa_outcome": "accepted",
+                    },
+                )
+                _sync_runtime_task(session, context, events.store)
+                _emit_qa_decision_event(events, "QA_ACCEPTED", qa_decision.to_dict())
+                _emit_result_handoff_event(
+                    events, "RESULT_HANDOFF_CREATED", result_handoff,
+                )
                 decision = orchestrator.handoff_after("qa_worker")
                 _emit_orchestration_decision(events, context, decision)
                 _forward_pipeline(
@@ -561,10 +653,18 @@ class RealWorkerRuntime:
                     "revision QA completed; forwarding to Documentation",
                 )
                 return True
+            revision_reason = _qa_revision_reason(context["outputs"]["qa_worker"])
+            qa_reference = _latest_role_result_reference(context.runtime_task)
             try:
-                decision = orchestrator.request_revision()
+                decision = orchestrator.request_revision(
+                    revision_reason, qa_reference,
+                )
             except RevisionLimitExceeded as exc:
                 _sync_runtime_task(session, context, events.store)
+                _emit_qa_decision_event(
+                    events, "REVISION_LIMIT_EXCEEDED",
+                    orchestrator.latest_qa_revision_decision,
+                )
                 events.emit(
                     "ORCHESTRATION_ERROR", "qa_worker", str(exc),
                     **_task_event_fields(context.runtime_task),
@@ -573,7 +673,22 @@ class RealWorkerRuntime:
                 session.status = "failed"
                 session.error = str(exc)
                 return False
+            result_handoff = orchestrator.create_result_handoff(
+                role_result, RuntimeRole.DEVELOPER,
+                validation_metadata={
+                    **_handoff_validation_metadata(role_result),
+                    "qa_outcome": "revision_requested",
+                },
+                revision_reason=revision_reason,
+            )
             _sync_runtime_task(session, context, events.store)
+            _emit_qa_decision_event(
+                events, "QA_REVISION_REQUESTED",
+                orchestrator.latest_qa_revision_decision,
+            )
+            _emit_result_handoff_event(
+                events, "RESULT_HANDOFF_CREATED", result_handoff,
+            )
             _emit_orchestration_decision(events, context, decision)
             events.emit(
                 "REVISION_STARTED", "development_worker",
@@ -1017,6 +1132,76 @@ def _emit_role_event(events, name, result):
             "handoff_target": result.handoff_target,
             "evidence_references": list(result.evidence_references),
             "error": result.error,
+        },
+    )
+
+
+def _handoff_validation_metadata(result):
+    return {
+        "role_result_state": result.state.value,
+        "worker_id": result.worker_id,
+        "evidence_references": list(result.evidence_references),
+        "has_error": bool(result.error),
+    }
+
+
+def _latest_role_result_reference(task):
+    if task is None or not task.role_executions:
+        return ""
+    return f"runtime_task:role_executions[{len(task.role_executions) - 1}]"
+
+
+def _qa_revision_reason(output):
+    issues = output.get("issues", [])
+    if isinstance(issues, list):
+        reasons = [item for item in issues if isinstance(item, str) and item]
+        if reasons:
+            return "; ".join(reasons[:10])
+    results = output.get("claimed_test_results", {})
+    recommendation = results.get("recommendation") if isinstance(results, dict) else None
+    return str(recommendation or "QA requested development revision")
+
+
+def _emit_result_handoff_event(events, name, handoff):
+    events.emit(
+        name, handoff.producer_role.worker_id,
+        f"{handoff.producer_role.value} result handed to {handoff.consumer_role.value}",
+        task_id=handoff.task_id, state="result_handoff",
+        payload={
+            "handoff_id": handoff.handoff_id,
+            "producer_role": handoff.producer_role.value,
+            "consumer_role": handoff.consumer_role.value,
+            "result_reference": handoff.result_reference,
+            "validation_metadata": dict(handoff.validation_metadata),
+            "revision_count": handoff.revision_count,
+            "revision_reason": handoff.revision_reason,
+        },
+    )
+
+
+def _emit_role_handoff_delivery(events, request):
+    events.emit(
+        "RESULT_HANDOFF_DELIVERED", request.worker_id,
+        f"result handoff delivered to {request.role.value}",
+        task_id=request.task_id, state=request.task_state,
+        payload={
+            "handoff_id": request.input_handoff_id,
+            "consumer_role": request.role.value,
+            "result_reference": request.input_result_reference,
+        },
+    )
+
+
+def _emit_qa_decision_event(events, name, decision):
+    if not decision:
+        return
+    events.emit(
+        name, "qa_worker", decision["reason"],
+        task_id=decision["task_id"], state=decision["outcome"],
+        payload={
+            "revision_count": decision["revision_count"],
+            "max_revisions": decision["max_revisions"],
+            "qa_result_reference": decision["qa_result_reference"],
         },
     )
 

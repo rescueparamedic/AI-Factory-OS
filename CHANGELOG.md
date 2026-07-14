@@ -1,5 +1,21 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-3.0 Sprint 4 Multi-Agent Result Handoff and QA Revision Loop
+
+- Added typed `AgentResultHandoff`, `QARevisionDecision`, handoff state, and QA
+  outcome models.
+- Added an append-only result handoff ledger synchronized between
+  `RuntimeTask` and `WorkerContext`.
+- Connected Planner output to Developer, Developer output to QA, QA revision
+  output back to Developer, revised Developer output to QA, and accepted QA
+  output to Documentation through explicit handoffs.
+- Persisted QA revision reasons and counts without replacing the Sprint 2
+  bounded revision authority.
+- Added deterministic handoff creation/delivery, QA revision, revision resume,
+  revision limit, and QA acceptance events.
+- Preserved AFDE-2.7 approval pause/resume, Guardian, controlled execution,
+  Execution Truth, provider contracts, and all prior role/pipeline events.
+
 ## AFDE-3.0 Sprint 3 Agent Role Execution
 
 - Added typed `RuntimeRole`, `RoleExecutionRequest`, role-specific execution
