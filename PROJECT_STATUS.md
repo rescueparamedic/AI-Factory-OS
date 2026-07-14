@@ -1,5 +1,20 @@
 # AI Factory OS Project Status
 
+## AFDE-3.0 Sprint 3
+
+- Agent Role Execution is implemented on
+  `feature/afde-3.0-sprint-3-agent-role-execution` from the verified Sprint 2
+  merge baseline.
+- Planner, Developer, QA, and Documentation now execute through one typed,
+  provider-neutral `RoleExecutor` boundary requested by `RuntimeOrchestrator`.
+- Typed role requests/results persist task, role, worker, state, output,
+  evidence references, handoff, error, and append-only execution history.
+- Role failures, invalid results, identity mismatches, invalid handoffs,
+  missing evidence, and terminal execution fail through existing task/session
+  and event semantics.
+- AFDE-2.7 approval, Guardian, controlled execution, Execution Truth, provider
+  behavior, and bounded QA revisions remain authoritative and unchanged.
+
 ## AFDE-3.0 Sprint 2
 
 - The first real Multi-Agent Runtime Orchestrator is implemented on

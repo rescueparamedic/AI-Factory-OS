@@ -54,6 +54,7 @@ class RuntimeTask:
     owner: str = ""
     handoff_metadata: dict[str, Any] = field(default_factory=dict)
     orchestration_metadata: dict[str, Any] = field(default_factory=dict)
+    role_executions: list[dict[str, Any]] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         self.state = _state(self.state)
@@ -104,6 +105,7 @@ class RuntimeTask:
             owner=value.get("owner", value["worker"]),
             handoff_metadata=deepcopy(value.get("handoff_metadata", {})),
             orchestration_metadata=deepcopy(value.get("orchestration_metadata", {})),
+            role_executions=deepcopy(value.get("role_executions", [])),
         )
 
     def transition(
@@ -134,6 +136,9 @@ class RuntimeTask:
 
     def record_evidence(self, evidence: Mapping[str, Any]) -> None:
         self.evidence.append(deepcopy(dict(evidence)))
+
+    def record_role_execution(self, result: Mapping[str, Any]) -> None:
+        self.role_executions.append(deepcopy(dict(result)))
 
     def handoff(
         self, target_worker: str, reason: str,
@@ -167,4 +172,5 @@ class RuntimeTask:
             "owner": self.owner,
             "handoff_metadata": deepcopy(self.handoff_metadata),
             "orchestration_metadata": deepcopy(self.orchestration_metadata),
+            "role_executions": deepcopy(self.role_executions),
         }

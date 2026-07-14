@@ -1,5 +1,22 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-3.0 Sprint 3 Agent Role Execution
+
+- Added typed `RuntimeRole`, `RoleExecutionRequest`, role-specific execution
+  results, and role execution state/history models.
+- Added one `RoleExecutor` boundary over the existing `BaseWorker` and
+  `ProviderBridge`, supporting deterministic injected executors without a
+  second provider registry.
+- Extended `RuntimeOrchestrator` to build role requests, invoke the executor,
+  validate task/role/worker identity and handoffs, and append normalized role
+  results to `RuntimeTask`.
+- Added role start, result, completion/failure, and handoff-request events to
+  the existing runtime stream.
+- Preserved approval pause/resume/reject, bounded QA revision, Guardian,
+  controlled execution, Execution Truth, and provider contracts.
+- Delayed terminal task completion until Documentation succeeds after QA pass,
+  allowing Documentation failure to remain a truthful task failure.
+
 ## AFDE-3.0 Sprint 2 Multi-Agent Runtime Orchestrator
 
 - Added an explicit `RuntimeOrchestrator` inside `real_worker_runtime` to own
