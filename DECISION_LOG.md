@@ -1,5 +1,17 @@
 # Decision Log
 
+## 2026-07-15 — AFDE-3.1 Central Runtime Approval Enforcement
+
+- `ApprovalDecision` and `ApprovalGuardian` remain canonical; no second
+  approval classifier is introduced.
+- `ControlledExecutor` is the final permission check for real runtime file and
+  command side effects.
+- AUTO_APPROVE requires durable evidence and agreement between Guardian and
+  Controlled Execution; either DENY wins.
+- Human approval is bound to deterministic action and context fingerprints
+  and revalidated immediately before execution.
+- Sprint Auto Runner retains its existing boundary to prevent double execution.
+
 ## 2026-07-14 — AFDE-3.0 Runtime Lifecycle Finalization
 
 - AFDE-3.0 Multi-Agent Runtime adopts deterministic lifecycle finalization,

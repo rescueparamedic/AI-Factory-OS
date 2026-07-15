@@ -1,5 +1,14 @@
 # AI Factory OS Sprint v2.7.3 적용 방법
 
+## AFDE-3.1 safe runtime approval enforcement
+
+Protected real-runtime file and command actions now pass through one final
+Controlled Execution boundary that evaluates the existing Approval Guardian,
+records redacted decision evidence, and applies `AUTO_APPROVE`, `ASK_USER`, or
+`DENY`. Waiting approvals bind the exact action and runtime context and are
+revalidated before single-use resume. See
+`docs/reports/AFDE_3_1_SAFE_AUTO_APPROVAL_ENGINE_REPORT.md`.
+
 ## AFDE-3.0 runtime lifecycle evidence
 
 Each persisted `RuntimeTask` now includes additive `lifecycle_status`,
