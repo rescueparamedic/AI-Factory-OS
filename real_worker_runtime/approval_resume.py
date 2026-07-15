@@ -7,7 +7,9 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from .controlled_execution import ActionType, ExecutionRequest
+from .controlled_execution import (
+    ActionType, ExecutionRequest, execution_action_fingerprint,
+)
 from .errors import RuntimeSessionError
 
 
@@ -38,12 +40,16 @@ class RuntimeApprovalStore:
             "normalized_action_payload": payload,
             "target": request.relative_path if request.action_type is ActionType.FILE_WRITE else list(request.argv),
             "action_fingerprint": action_fingerprint(request),
+            "context_fingerprint": guardian.get("context_fingerprint", ""),
+            "normalized_context": guardian.get("normalized_context", {}),
             "guardian_policy_classification": guardian.get("policy_classification"),
-            "guardian_rule_id": guardian.get("guardian_rule_id"),
-            "guardian_reason": guardian.get("guardian_reason"),
+            "guardian_rule_id": guardian.get("rule_id") or guardian.get("guardian_rule_id"),
+            "guardian_reason": guardian.get("reason") or guardian.get("guardian_reason"),
             "created_at": now,
             "status": PENDING,
             "approved_at": None,
+            "approved_by": None,
+            "revalidation_result": None,
             "consumed_at": None,
             "rejected_at": None,
         }
@@ -64,12 +70,14 @@ class RuntimeApprovalStore:
             raise RuntimeSessionError("approval record identity mismatch")
         return record
 
-    def approve(self, approval_id: str) -> dict[str, Any]:
+    def approve(self, approval_id: str, approved_by: str = "Product Owner") -> dict[str, Any]:
         record = self.load(approval_id)
         if record.get("status") != PENDING:
             raise RuntimeSessionError(f"approval is not pending: {record.get('status')}")
         record["status"] = APPROVED
         record["approved_at"] = _now()
+        record["approved_by"] = str(approved_by or "Product Owner")[:100]
+        record["revalidation_result"] = "pending"
         self._save(record)
         return record
 
@@ -93,6 +101,25 @@ class RuntimeApprovalStore:
         self._save(current)
         return current
 
+    def mark_revalidated(self, record: dict[str, Any]) -> dict[str, Any]:
+        current = self.load(record["approval_request_id"])
+        if current != record or current.get("status") != APPROVED:
+            raise RuntimeSessionError("approval changed before revalidation")
+        current["revalidation_result"] = "matched"
+        current["revalidated_at"] = _now()
+        self._save(current)
+        return current
+
+    def record_invalidation(self, approval_id: str, reason: str) -> dict[str, Any]:
+        current = self.load(approval_id)
+        if current.get("status") != PENDING:
+            raise RuntimeSessionError("only a pending approval can be invalidated")
+        current["revalidation_result"] = "mismatch"
+        current["invalidation_reason"] = str(reason)[:500]
+        current["invalidated_at"] = _now()
+        self._save(current)
+        return current
+
     def _save(self, record: dict[str, Any]) -> None:
         self.directory.mkdir(parents=True, exist_ok=True)
         path = self.directory / f"{record['approval_request_id']}.json"
@@ -113,6 +140,14 @@ def normalized_action_payload(request: ExecutionRequest) -> dict[str, Any]:
 
 
 def action_fingerprint(request: ExecutionRequest) -> str:
+    return execution_action_fingerprint(request)
+
+
+def fingerprint_matches(request: ExecutionRequest, fingerprint: Any) -> bool:
+    return fingerprint in {action_fingerprint(request), _legacy_action_fingerprint(request)}
+
+
+def _legacy_action_fingerprint(request: ExecutionRequest) -> str:
     canonical = {
         "execution_request_id": request.request_id,
         "action_type": request.action_type.value,
@@ -144,7 +179,7 @@ def request_from_record(record: dict[str, Any]) -> ExecutionRequest:
             )
     except (KeyError, TypeError, ValueError) as exc:
         raise RuntimeSessionError("approval action payload is invalid") from exc
-    if action_fingerprint(request) != record.get("action_fingerprint"):
+    if not fingerprint_matches(request, record.get("action_fingerprint")):
         raise RuntimeSessionError("approval action fingerprint mismatch")
     expected_target = request.relative_path if action is ActionType.FILE_WRITE else list(request.argv)
     if expected_target != record.get("target"):

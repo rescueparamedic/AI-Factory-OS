@@ -1,5 +1,16 @@
 # AI Factory OS Project Status
 
+## AFDE-3.1 Safe Auto Approval Engine
+
+- Existing Approval Guardian and Controlled Execution policies are enforced
+  together at the real runtime side-effect boundary.
+- AUTO_APPROVE requires both policies and durable evidence; ASK_USER preserves
+  exact action/context and waits; DENY and subsystem failures fail closed.
+- Resume revalidates branch, cwd, repository, environment, task/session,
+  action payload, target, and one-time approval state.
+- Sprint Auto Runner and Sprint 5 lifecycle/handoff/revision behavior remain
+  compatible without double execution.
+
 ## AFDE-3.0 Sprint 5
 
 - Runtime lifecycle finalization and structured failure propagation are

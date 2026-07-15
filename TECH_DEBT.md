@@ -1,5 +1,15 @@
 # Technical Debt
 
+## AFDE-3.1 Safe Auto Approval Engine
+
+- Local atomic JSON approval evidence has no multi-process lock,
+  cryptographic signature, remote identity attestation, or multi-user RBAC.
+- Real AFDE runtime and Sprint Auto Runner have authoritative boundaries;
+  unrelated legacy executors are not globally intercepted.
+- Context fingerprints cover stable context rather than volatile Git HEAD;
+  branch, cwd, repository, environment, task/session, action, target, payload,
+  and pre-image remain bound.
+
 ## AFDE-3.0 Runtime Lifecycle
 
 - Durable resume after waiting approval remains a future Sprint; Sprint 5 only
@@ -22,9 +32,8 @@
 - Command classification is text-based. Shell syntax differs between Windows,
   POSIX shells, and tool-specific parsers; structured tool permissions should
   eventually replace text inference at execution boundaries.
-- Existing subprocess and worker execution paths are not yet centrally routed
-  through Guardian. Sprint AFDE-2.3 provides the stable policy API, CLI path,
-  and adapter, but executor-by-executor enforcement remains future work.
+- Legacy subprocess paths outside the real AFDE runtime and Sprint Auto Runner
+  remain executor-specific; AFDE-3.1 avoids global process monkey-patching.
 - Symlink and junction containment depends on host filesystem resolution and
   should receive platform-specific integration coverage.
 - Protected branches currently default to `main` and `master`; repository-host

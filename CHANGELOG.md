@@ -1,5 +1,16 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-3.1 Safe Auto Approval Engine
+
+- Added normalized runtime approval context and deterministic action/context
+  fingerprints at the existing ControlledExecutor boundary.
+- Required existing Controlled Execution and Approval Guardian permission plus
+  durable pre-execution evidence before automatic side effects.
+- Added exact context revalidation, stale-context invalidation, approver
+  evidence, and single-use consumption.
+- Extended waiting state/CLI evidence with safe reason, action summary,
+  `RUNTIME_APPROVAL_REQUIRED`, and exact-resume guidance.
+
 ## AFDE-3.0 Sprint 5 Runtime Lifecycle Finalization
 
 - Extended `RuntimeTask` with typed lifecycle status, append-only validated

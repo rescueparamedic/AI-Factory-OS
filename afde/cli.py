@@ -155,7 +155,9 @@ def cmd_factory_demo(args):
         for item in session.artifacts: print(f"- {item['type']}: {item['path']}")
         if session.pending_approval and session.status == "waiting_approval":
             print(f"Approval required: {session.pending_approval['approval_request_id']}")
-            print(f"Action: {session.pending_approval['action_type']} {session.pending_approval['target']}")
+            print(f"Action: {session.pending_approval.get('safe_action_summary', '')}")
+            print(f"Reason: {session.pending_approval.get('guardian_reason', '')}")
+            print(f"Next: {session.pending_approval.get('next_action', '')}")
 
 def cmd_openai_probe(args):
     probe=OpenAIResponsesProbe(model=args.model,allow_live_api=args.allow_live_api)
