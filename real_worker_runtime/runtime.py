@@ -11,6 +11,7 @@ from sprint_auto_runner import SprintAutoRunner
 
 from .approval_resume import RuntimeApprovalStore, action_fingerprint, request_from_record
 from .artifact_store import ArtifactStore
+from .automation_bridge import CodexAutomationBridge
 from .controlled_execution import (
     ActionType, ControlledExecutor, ExecutionRequest,
     build_runtime_approval_context, context_fingerprint,
@@ -273,6 +274,7 @@ class RealWorkerRuntime:
         bus = MessageBus(store, session)
         dashboard = TerminalDashboard(settings.get("live", False))
         controlled = ControlledExecutor(self.root) if settings.get("enable_controlled_execution") else None
+        automation_bridge = CodexAutomationBridge(self.root, controlled) if controlled else None
         role_executor = self._role_executor(selected)
         orchestrator = RuntimeOrchestrator(
             context, max_revisions=int(settings.get("max_revisions", 1)),
@@ -342,6 +344,7 @@ class RealWorkerRuntime:
                     _approval_execution_context(
                         self.root, session, context, definition.worker_id,
                     ),
+                    automation_bridge,
                 )
                 result.output, findings = apply_execution_truth_contract(definition.worker_id, result.output, evidence)
                 session.truth_contract_findings.extend(findings)
@@ -563,6 +566,7 @@ class RealWorkerRuntime:
         self, session, context, selected, controlled, bus, events, orchestrator,
         settings, role_executor,
     ):
+        automation_bridge = CodexAutomationBridge(self.root, controlled) if controlled else None
         while True:
             task = context.runtime_task
             if task is not None and task.lifecycle_status is RuntimeLifecycleStatus.REVISING:
@@ -639,6 +643,7 @@ class RealWorkerRuntime:
                         _approval_execution_context(
                             self.root, session, context, retry_id,
                         ),
+                        automation_bridge,
                     )
                     retry.output, findings = apply_execution_truth_contract(
                         retry_id, retry.output, evidence,
@@ -1008,9 +1013,35 @@ def _approval_execution_context(root, session, context, worker_id):
     )
 
 
-def _execute_proposals(executor, worker_id, output, root, approval_context=None):
+def _execute_proposals(executor, worker_id, output, root, approval_context=None, automation_bridge=None):
     evidence = {"verified_changed_files": [], "verified_test_executions": [], "execution_evidence": []}
     if executor is None:
+        return evidence, None, None
+    if isinstance(output, dict) and "actions" in output:
+        try:
+            results = automation_bridge.execute_output(output, approval_context)
+        except Exception as exc:
+            observed = {
+                "status": "DENIED", "decision": "deny",
+                "policy_classification": "MALFORMED_TOOL_ACTION",
+                "policy_reason": safe_message(exc),
+            }
+            evidence["execution_evidence"].append(observed)
+            return evidence, None, observed
+        for result in results:
+            observed = dict(result.evidence)
+            observed.update({
+                "tool_action_id": result.action_id,
+                "tool_action_fingerprint": result.action_fingerprint,
+                "tool_action_type": result.action_type,
+            })
+            evidence["execution_evidence"].append(observed)
+            if result.status == "WAITING_APPROVAL":
+                return evidence, result.execution_request, observed
+            if result.status == "SUCCEEDED" and observed.get("changed"):
+                evidence["verified_changed_files"].append(observed["relative_path"])
+            if result.action_type == "TEST_RUN" and result.status in {"SUCCEEDED", "FAILED"}:
+                evidence["verified_test_executions"].append(observed)
         return evidence, None, None
     if worker_id == "development_worker":
         for item in output.get("proposed_file_writes", []):

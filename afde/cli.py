@@ -9,7 +9,7 @@ from pathlib import Path
 
 from approval_guardian import ApprovalGuardian, ApprovalRequest
 from sprint_auto_runner import SprintAutoRunner
-from real_worker_runtime import RealWorkerRuntime
+from real_worker_runtime import CodexAutomationBridge, RealWorkerRuntime
 from real_worker_runtime.openai_probe import OpenAIResponsesProbe
 from real_worker_runtime.raw_openai_probe import RawOpenAIResponsesProbe
 from real_worker_runtime.http_boundary_probe import HTTPBoundaryDiagnostic
@@ -181,6 +181,22 @@ def cmd_runtime_report(args): print(RealWorkerRuntime(Path.cwd()).report(args.se
 def cmd_runtime_cancel(args): _print_json(RealWorkerRuntime(Path.cwd()).cancel(args.session_id))
 
 
+def cmd_tool_action_demo(args):
+    session = RealWorkerRuntime(Path.cwd()).run(
+        f"[tool-action-{args.path}] AFDE-3.2 structured action demo",
+        provider="mock", live=False, enable_controlled_execution=True,
+    )
+    _print_json({
+        "session_id": session.session_id, "status": session.status,
+        "pending_approval": session.pending_approval,
+        "execution_verification": session.execution_verification,
+    })
+
+
+def cmd_tool_action_status(args):
+    _print_json(CodexAutomationBridge(Path.cwd()).status(args.action_id))
+
+
 def build_parser():
     parser = argparse.ArgumentParser(prog="afde", description="AI Factory Development Environment CLI")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -254,6 +270,8 @@ def build_parser():
     p=sub.add_parser("runtime-status"); p.add_argument("--session-id",required=True); p.set_defaults(func=cmd_runtime_status)
     p=sub.add_parser("runtime-report"); p.add_argument("--session-id",required=True); p.set_defaults(func=cmd_runtime_report)
     p=sub.add_parser("runtime-cancel"); p.add_argument("--session-id",required=True); p.set_defaults(func=cmd_runtime_cancel)
+    p=sub.add_parser("tool-action-demo",help="Run the deterministic AFDE-3.2 structured action demo"); p.add_argument("--path",choices=["auto","ask","deny"],default="auto"); p.set_defaults(func=cmd_tool_action_demo)
+    p=sub.add_parser("tool-action-status",help="Show persisted evidence for one structured action"); p.add_argument("--action-id",required=True); p.set_defaults(func=cmd_tool_action_status)
 
     return parser
 

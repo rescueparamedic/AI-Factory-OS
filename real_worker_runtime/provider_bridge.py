@@ -1,11 +1,14 @@
 from __future__ import annotations
+from hashlib import sha256
+from pathlib import Path
+import subprocess
 import re
 from afde.provider_manager import ProviderManager
 from .errors import ProviderConfigurationError, ProviderResponseError
 
 class ProviderBridge:
     def __init__(self, root, model=None, allow_live_api=False, openai_client=None):
-        self.manager=ProviderManager(root); self.model=model; self.allow_live_api=allow_live_api; self.openai_client=openai_client; self.provider="mock"
+        self.root=Path(root).resolve(); self.manager=ProviderManager(root); self.model=model; self.allow_live_api=allow_live_api; self.openai_client=openai_client; self.provider="mock"
     def select(self, provider="mock"):
         provider=provider.lower()
         statuses={x["provider"]:x for x in self.manager.as_dicts()}
@@ -29,8 +32,11 @@ class ProviderBridge:
           "qa_worker":{"claimed_test_commands":["python -m pytest tests/test_afde_2_7_fixture.py -q"] if "[approval-resume-mvp]" in request else (["python controlled_execution/hello_from_afde.py"] if "[controlled-execution-mvp]" in request else ["Sprint Auto Runner python version validation"]),"claimed_passed":0 if "[qa-fail-once]" in request and context.get("revision",0)==0 else 1,"claimed_failed":1 if "[qa-fail-once]" in request and context.get("revision",0)==0 else 0,"issues":["mock revision requested"] if "[qa-fail-once]" in request and context.get("revision",0)==0 else [],"recommendation":"REVISE" if "[qa-fail-once]" in request and context.get("revision",0)==0 else "PASS","requested_test_executions":[{"argv":["python","-m","pytest","tests/test_afde_2_7_fixture.py","-q"],"purpose":"Validate approved fixture state"}] if "[approval-resume-mvp]" in request else ([{"argv":["python","controlled_execution/hello_from_afde.py"],"purpose":"Validate deterministic controlled file"}] if "[controlled-execution-mvp]" in request else [])},
           "documentation_worker":{"runtime_report":"final_report.md","artifact_index":"artifact_index.json","user_summary":"Five-worker demo completed successfully."},
         }
+        output = _apply_structured_mock_contract(
+            worker_id, request, templates[worker_id], context, self.root,
+        )
         return _validate_provider_output(
-            worker_id, _apply_bounded_qa_contract(worker_id, templates[worker_id], context)
+            worker_id, _apply_bounded_qa_contract(worker_id, output, context)
         )
 
 
@@ -38,6 +44,71 @@ _APPROVAL_FIXTURE = "tests/fixtures/afde_2_7_approval_target.txt"
 _APPROVAL_FIXTURE_QA_ARGV = [
     "python", "-m", "pytest", "tests/test_afde_2_7_fixture.py", "-q",
 ]
+
+
+def _apply_structured_mock_contract(worker_id, request, output, context, root):
+    marker = next((item for item in ("auto", "ask", "deny") if f"[tool-action-{item}]" in request), None)
+    if marker is None or worker_id not in {"development_worker", "qa_worker"}:
+        return output
+    metadata = context.get("task_metadata", {})
+    task = context.get("runtime_task")
+    base = {
+        "source_worker": worker_id,
+        "cwd": metadata.get("cwd", str(root)),
+        "repository": metadata.get("repository", str(root)),
+        "branch": _git_branch(root),
+        "runtime_task_id": task.id if task is not None else "",
+        "runtime_session_id": metadata.get("session_id", ""),
+        "stage": "developer" if worker_id == "development_worker" else "qa",
+        "revision": int(context.get("revision", 0)),
+        "expected_result": {"status": "SUCCEEDED"},
+        "metadata": {"mock": True},
+    }
+    return _mock_action_output(worker_id, marker, output, base, root)
+
+
+def _mock_action_output(worker_id, marker, output, base, root):
+    session_id = base["runtime_session_id"] or "mock"
+    if worker_id == "qa_worker":
+        if marker != "auto":
+            output["actions"] = []
+            return output
+        output["actions"] = [{
+            **base, "action_id": f"TA-{session_id}-qa-{base['revision']}",
+            "action_type": "COMMAND_RUN", "purpose": "Verify structured bridge output",
+            "target": "controlled_execution/tool_action_demo.py",
+            "arguments": {"argv": ["python", "controlled_execution/tool_action_demo.py"]},
+            "preconditions": {},
+        }]
+        return output
+    return _mock_development_action(marker, output, base, root, session_id)
+
+
+def _mock_development_action(marker, output, base, root, session_id):
+    target = 'README.md' if marker == 'ask' else '../outside.txt' if marker == 'deny' else 'controlled_execution/tool_action_demo.py'
+    existing = root / target
+    expected_hash = sha256(existing.read_bytes()).hexdigest() if existing.is_file() else None
+    output['actions'] = [{
+        **base,
+        'action_id': f'TA-{session_id}-dev-{base["revision"]}',
+        'action_type': 'FILE_WRITE',
+        'purpose': f'Demonstrate the structured {marker} approval path',
+        'target': target,
+        'arguments': {'content': 'print(42)\n'},
+        'preconditions': {'expected_preimage_sha256': expected_hash},
+    }]
+    return output
+
+
+def _git_branch(root):
+    try:
+        result = subprocess.run(
+            ["git", "branch", "--show-current"], cwd=root,
+            capture_output=True, text=True, timeout=3, shell=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return ""
+    return result.stdout.strip() if result.returncode == 0 else ""
 
 
 def _apply_bounded_qa_contract(worker_id, output, context):
