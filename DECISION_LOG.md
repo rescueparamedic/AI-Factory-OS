@@ -1,5 +1,19 @@
 # Decision Log
 
+## 2026-07-14 — AFDE-3.0 Runtime Lifecycle Finalization
+
+- AFDE-3.0 Multi-Agent Runtime adopts deterministic lifecycle finalization,
+  structured role failure propagation, and append-only runtime transition
+  history.
+- `RuntimeTask` remains the sole lifecycle owner; `WorkerContext` remains the
+  serialized continuation carrier and `RuntimeOrchestrator` remains the role,
+  handoff, and bounded-revision coordinator.
+- Existing WorkerState and RuntimePipeline transitions remain authoritative for
+  their established contracts. The lifecycle status is an additive run-level
+  projection with fail-closed transition validation.
+- Final summaries are derived from persisted task evidence and never infer
+  success from provider claims.
+
 ## 2026-07-12 — AFDE-2.7 Human Approval Resume
 
 - Reused atomic Runtime JSON for approval and continuation records.

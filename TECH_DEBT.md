@@ -1,5 +1,14 @@
 # Technical Debt
 
+## AFDE-3.0 Runtime Lifecycle
+
+- Durable resume after waiting approval remains a future Sprint; Sprint 5 only
+  preserves sufficient continuation and lifecycle evidence.
+- Crash-safe persistence, a SQLite runtime store, process restart recovery,
+  concurrent runtime locking, and distributed worker state are not included.
+- Tamper-evident audit chaining, cancellation propagation, per-role timeout
+  policy, and provider/role retry policy remain future work.
+
 ## AFDE-2.7 Approval Resume
 
 - Atomic local JSON does not yet provide multi-process approval locking.

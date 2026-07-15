@@ -9,6 +9,7 @@ from typing import Any, Mapping
 from .errors import InvalidRoleResult, RoleExecutionError
 from .execution_truth import claimed_qa_failures
 from .models import WorkerDefinition, WorkerResult, WorkerState
+from .runtime_lifecycle import safe_message
 from .worker_context import WorkerContext
 from .workers import BaseWorker
 
@@ -79,6 +80,10 @@ class RoleExecutionResult:
     summary: str
     error: str = ""
     history: list[dict[str, Any]] = field(default_factory=list)
+    failure_code: str = ""
+    exception_type: str = ""
+    retryable: bool = False
+    cause_reference: str = ""
 
     def __post_init__(self) -> None:
         self.role = RuntimeRole(self.role)
@@ -110,6 +115,10 @@ class RoleExecutionResult:
                 completed_at=value.get("completed_at", ""),
                 summary=value.get("summary", ""), error=value.get("error", ""),
                 history=deepcopy(value.get("history", [])),
+                failure_code=value.get("failure_code", ""),
+                exception_type=value.get("exception_type", ""),
+                retryable=bool(value.get("retryable", False)),
+                cause_reference=value.get("cause_reference", ""),
             )
         except (KeyError, TypeError, ValueError) as exc:
             raise InvalidRoleResult("role result mapping is invalid") from exc
@@ -135,6 +144,10 @@ class RoleExecutionResult:
             "summary": self.summary,
             "error": self.error,
             "history": deepcopy(self.history),
+            "failure_code": self.failure_code,
+            "exception_type": self.exception_type,
+            "retryable": self.retryable,
+            "cause_reference": self.cause_reference,
         }
 
 
@@ -185,7 +198,9 @@ class RoleExecutor:
                 output={}, evidence_references=[], handoff_target="",
                 started_at=worker_result.started_at,
                 completed_at=worker_result.completed_at,
-                summary=worker_result.summary, error=worker_result.error,
+                summary=worker_result.summary, error=safe_message(worker_result.error),
+                failure_code="provider_or_worker_failure",
+                exception_type="WorkerExecutionError",
             )
         self._validate_output(request.role, worker_result.output, context)
         return _RESULT_TYPES[request.role](

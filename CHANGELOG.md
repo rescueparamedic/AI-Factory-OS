@@ -1,5 +1,19 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-3.0 Sprint 5 Runtime Lifecycle Finalization
+
+- Extended `RuntimeTask` with typed lifecycle status, append-only validated
+  transitions, per-role attempt records, normalized failures, and a final
+  execution summary.
+- Added deterministic completed, failed, blocked, and waiting-approval
+  finalization while retaining the existing worker and pipeline states.
+- Distinguished QA rejection/revision exhaustion from QA execution failure and
+  prevented Documentation or later roles after required-stage failure.
+- Preserved approval continuation state and added paused/blocked summaries
+  without moving or duplicating the AFDE-2.7 approval boundary.
+- Added safe error normalization and lifecycle transition events without
+  storing provider credentials, raw authorization data, or sensitive prompts.
+
 ## AFDE-3.0 Sprint 4 Multi-Agent Result Handoff and QA Revision Loop
 
 - Added typed `AgentResultHandoff`, `QARevisionDecision`, handoff state, and QA
