@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass, field
 import ast
 from datetime import datetime
 from enum import Enum
@@ -11,10 +11,13 @@ import re
 import subprocess
 import sys
 from time import monotonic
-from typing import Any, Callable
+from typing import Any, Callable, Mapping
 from uuid import uuid4
 
-from approval_guardian import ApprovalDecision, ApprovalGuardian, ApprovalRequest
+from approval_guardian import (
+    ApprovalDecision, ApprovalGuardian, ApprovalRequest, ApprovalResult,
+)
+from approval_guardian.audit import command_fingerprint, redact_command
 
 
 SAFE_EXECUTION_DIR = "controlled_execution"
@@ -57,6 +60,57 @@ class PolicyResult:
     reason: str
     safe_representation: str
     resolved_target: str | None = None
+
+
+@dataclass(frozen=True)
+class RuntimeApprovalContext:
+    """Normalized execution-boundary context; policy remains Guardian-owned."""
+
+    cwd: str
+    repository: str
+    branch: str
+    environment: str
+    runtime_task_id: str = ""
+    runtime_session_id: str = ""
+    stage: str = "runtime"
+    actor: str = "controlled-runtime"
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def normalized(self) -> dict[str, Any]:
+        return {
+            "cwd": str(Path(self.cwd).resolve()),
+            "repository": str(Path(self.repository).resolve()),
+            "branch": str(self.branch or ""),
+            "environment": str(self.environment or "dev").lower(),
+            "runtime_task_id": str(self.runtime_task_id or ""),
+            "runtime_session_id": str(self.runtime_session_id or ""),
+            "stage": str(self.stage or "runtime"),
+            "actor": str(self.actor or "controlled-runtime"),
+            "metadata": _safe_metadata(self.metadata),
+        }
+
+
+def context_fingerprint(context: RuntimeApprovalContext) -> str:
+    encoded = json.dumps(
+        context.normalized(), ensure_ascii=False, sort_keys=True, separators=(",", ":"),
+    )
+    return sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def build_runtime_approval_context(
+    root: str | Path, *, runtime_task_id: str = "",
+    runtime_session_id: str = "", stage: str = "runtime",
+    actor: str = "controlled-runtime", environment: str = "local",
+    metadata: Mapping[str, Any] | None = None,
+) -> RuntimeApprovalContext:
+    repository = Path(root).resolve()
+    return RuntimeApprovalContext(
+        cwd=str(repository), repository=str(repository),
+        branch=_git_branch(repository), environment=environment,
+        runtime_task_id=runtime_task_id,
+        runtime_session_id=runtime_session_id,
+        stage=stage, actor=actor, metadata=metadata,
+    )
 
 
 class ControlledExecutionPolicy:
@@ -138,47 +192,118 @@ class ControlledExecutor:
         self.runner = runner
         self.evidence_dir = self.root / "data" / "execution_evidence"
 
-    def execute(self, request: ExecutionRequest) -> dict[str, Any]:
-        policy = self.policy.classify(request)
+    def execute(
+        self, request: ExecutionRequest,
+        context: RuntimeApprovalContext | None = None,
+    ) -> dict[str, Any]:
+        try:
+            normalized_context = self._context(request, context)
+            policy = self.policy.classify(request)
+        except Exception as exc:
+            return self._failed_closed(request, "CONTEXT_OR_POLICY_FAILURE", exc, context)
         if policy.decision == "DENY":
-            return self._persist(request, policy, None, "DENIED")
-        guardian = self.guardian.evaluate(ApprovalRequest(
-            command=policy.safe_representation, cwd=str(self.root), actor="controlled-runtime",
-            task_id=request.request_id, environment="local",
-        ))
+            return self._persist(request, policy, None, "DENIED", normalized_context)
+        try:
+            guardian = self.guardian.evaluate(ApprovalRequest(
+                command=policy.safe_representation,
+                cwd=normalized_context.cwd,
+                actor=normalized_context.actor,
+                task_id=normalized_context.runtime_task_id or request.request_id,
+                branch=normalized_context.branch or None,
+                environment=normalized_context.environment,
+                metadata=normalized_context.normalized()["metadata"],
+            ))
+            if not isinstance(guardian, ApprovalResult) or not isinstance(
+                guardian.decision, ApprovalDecision
+            ):
+                raise ValueError("Approval Guardian returned an invalid decision")
+        except Exception as exc:
+            return self._failed_closed(request, "GUARDIAN_FAILURE", exc, normalized_context)
         if guardian.decision is ApprovalDecision.DENY:
-            return self._persist(request, policy, guardian, "DENIED")
+            return self._persist(request, policy, guardian, "DENIED", normalized_context)
         approval_needed = policy.decision == "ASK_USER" or guardian.decision is ApprovalDecision.ASK_USER
         if approval_needed:
-            return self._persist(request, policy, guardian, "WAITING_APPROVAL")
+            return self._persist(
+                request, policy, guardian, "WAITING_APPROVAL", normalized_context,
+            )
+        authorized = self._base(request, policy, "AUTO_APPROVED", normalized_context)
+        authorized.update(self._approval_fields(policy, guardian, normalized_context))
+        try:
+            self._persist_raw(authorized)
+        except OSError as exc:
+            return self._failed_closed(
+                request, "AUDIT_RECORD_FAILURE", exc, normalized_context,
+                persist=False,
+            )
         if request.action_type is ActionType.FILE_WRITE:
-            evidence = self._write_file(request, policy)
+            execution = self._write_file(request, policy)
         else:
-            evidence = self._run_command(request, policy)
-        evidence["approval_decision"] = guardian.decision.value
-        return self._persist_raw(evidence)
+            execution = self._run_command(request, policy)
+        evidence = {**authorized, **execution}
+        evidence.update(self._approval_fields(policy, guardian, normalized_context))
+        try:
+            return self._persist_raw(evidence)
+        except OSError as exc:
+            evidence["status"] = "AUDIT_FAILURE_AFTER_EXECUTION"
+            evidence["safe_cause"] = _sanitize(str(exc))
+            evidence["error_code"] = "RUNTIME_CONTROLLED_EXECUTION_BLOCKED"
+            return evidence
 
-    def execute_approved(self, request: ExecutionRequest, approval_record: dict[str, Any]) -> dict[str, Any]:
-        from .approval_resume import APPROVED, action_fingerprint, request_from_record
+    def execute_approved(
+        self, request: ExecutionRequest, approval_record: dict[str, Any],
+        context: RuntimeApprovalContext | None = None,
+    ) -> dict[str, Any]:
+        from .approval_resume import APPROVED, request_from_record
         if approval_record.get("status") != APPROVED:
             raise ValueError("an exact persisted APPROVED record is required")
         bound_request = request_from_record(approval_record)
-        if bound_request != request or approval_record.get("action_fingerprint") != action_fingerprint(request):
+        from .approval_resume import fingerprint_matches
+        if bound_request != request or not fingerprint_matches(request, approval_record.get("action_fingerprint")):
             raise ValueError("approved execution request binding mismatch")
-        policy = self.policy.classify(request)
+        normalized_context = self._context(request, context)
+        if approval_record.get("context_fingerprint") != context_fingerprint(normalized_context):
+            raise ValueError("approved execution context fingerprint mismatch")
+        try:
+            policy = self.policy.classify(request)
+        except Exception as exc:
+            return self._failed_closed(
+                request, "POLICY_REVALIDATION_FAILURE", exc, normalized_context,
+            )
         if policy.decision != "ASK_USER" or policy.classification != "EXISTING_FILE_REPLACEMENT":
-            return self._persist(request, policy, None, "DENIED")
-        guardian = self.guardian.evaluate(ApprovalRequest(
-            command=policy.safe_representation, cwd=str(self.root), actor="approved-runtime-resume",
-            task_id=request.request_id, environment="local",
-        ))
-        if guardian.decision is not ApprovalDecision.ASK_USER:
-            return self._persist(request, policy, guardian, "DENIED")
-        evidence = self._write_file(request, policy)
+            return self._persist(request, policy, None, "DENIED", normalized_context)
+        try:
+            guardian = self.guardian.evaluate(ApprovalRequest(
+                command=policy.safe_representation, cwd=normalized_context.cwd,
+                actor="approved-runtime-resume",
+                task_id=normalized_context.runtime_task_id or request.request_id,
+                branch=normalized_context.branch or None,
+                environment=normalized_context.environment,
+                metadata=normalized_context.normalized()["metadata"],
+            ))
+        except Exception as exc:
+            return self._failed_closed(
+                request, "GUARDIAN_REVALIDATION_FAILURE", exc, normalized_context,
+            )
+        if not isinstance(guardian, ApprovalResult) or guardian.decision is not ApprovalDecision.ASK_USER:
+            return self._persist(request, policy, guardian, "DENIED", normalized_context)
+        execution = self._write_file(request, policy)
+        evidence = {
+            **self._base(request, policy, execution["status"], normalized_context),
+            **execution,
+        }
+        evidence.update(self._approval_fields(policy, guardian, normalized_context))
         evidence["approval_decision"] = "human_approved"
-        evidence["guardian_rule_id"] = guardian.rule_id
-        evidence["guardian_reason"] = guardian.reason
-        return self._persist_raw(evidence)
+        evidence["approval_state"] = "consumption_pending"
+        evidence["approved_by"] = approval_record.get("approved_by", "Product Owner")
+        evidence["approved_at"] = approval_record.get("approved_at")
+        evidence["revalidation_result"] = "matched"
+        try:
+            return self._persist_raw(evidence)
+        except OSError as exc:
+            evidence["status"] = "AUDIT_FAILURE_AFTER_EXECUTION"
+            evidence["safe_cause"] = _sanitize(str(exc))
+            evidence["error_code"] = "RUNTIME_CONTROLLED_EXECUTION_BLOCKED"
+            return evidence
 
     def _write_file(self, request: ExecutionRequest, policy: PolicyResult) -> dict[str, Any]:
         target = Path(policy.resolved_target or "")
@@ -222,18 +347,117 @@ class ControlledExecutor:
             "timed_out": timed_out, "stdout": _sanitize(stdout), "stderr": _sanitize(stderr),
         }
 
-    def _base(self, request: ExecutionRequest, policy: PolicyResult, status: str) -> dict[str, Any]:
-        return {"request_id": request.request_id, "action_type": request.action_type.value,
+    def _base(
+        self, request: ExecutionRequest, policy: PolicyResult, status: str,
+        context: RuntimeApprovalContext | None = None,
+    ) -> dict[str, Any]:
+        value = {"request_id": request.request_id, "action_type": request.action_type.value,
                 "source_worker": request.source_worker, "purpose": request.purpose,
                 "policy_classification": policy.classification, "status": status}
+        if context is not None:
+            normalized = context.normalized()
+            value.update({
+                "actor": normalized["actor"], "stage": normalized["stage"],
+                "runtime_task_id": normalized["runtime_task_id"],
+                "runtime_session_id": normalized["runtime_session_id"],
+                "action_fingerprint": execution_action_fingerprint(request),
+                "context_fingerprint": context_fingerprint(context),
+                "normalized_context": normalized,
+                "approval_timestamp": datetime.now().astimezone().isoformat(timespec="seconds"),
+                "approval_state": "evaluated",
+            })
+        return value
 
-    def _persist(self, request: ExecutionRequest, policy: PolicyResult, guardian: Any, status: str) -> dict[str, Any]:
-        evidence = self._base(request, policy, status)
-        evidence["approval_decision"] = guardian.decision.value if guardian else policy.decision.lower()
-        evidence["policy_reason"] = policy.reason
-        evidence["guardian_rule_id"] = guardian.rule_id if guardian else None
-        evidence["guardian_reason"] = guardian.reason if guardian else None
-        return self._persist_raw(evidence)
+    def _persist(
+        self, request: ExecutionRequest, policy: PolicyResult, guardian: Any,
+        status: str, context: RuntimeApprovalContext,
+    ) -> dict[str, Any]:
+        evidence = self._base(request, policy, status, context)
+        evidence.update(self._approval_fields(policy, guardian, context))
+        try:
+            return self._persist_raw(evidence)
+        except OSError as exc:
+            return self._failed_closed(
+                request, "AUDIT_RECORD_FAILURE", exc, context, persist=False,
+            )
+
+    def _approval_fields(self, policy, guardian, context) -> dict[str, Any]:
+        guardian_decision = (
+            guardian.decision if isinstance(guardian, ApprovalResult) else None
+        )
+        if policy.decision == "DENY" or guardian_decision is ApprovalDecision.DENY:
+            decision = ApprovalDecision.DENY.value
+        elif policy.decision == "ASK_USER" or guardian_decision is ApprovalDecision.ASK_USER:
+            decision = ApprovalDecision.ASK_USER.value
+        else:
+            decision = ApprovalDecision.AUTO_APPROVE.value
+        policy_controls = policy.decision in {"DENY", "ASK_USER"} and (
+            guardian_decision is None or guardian_decision is ApprovalDecision.AUTO_APPROVE
+        )
+        rule_id = (
+            f"CE-{policy.classification}"
+            if policy_controls else guardian.rule_id
+            if isinstance(guardian, ApprovalResult) else f"CE-{policy.classification}"
+        )
+        reason = (
+            policy.reason if policy_controls else guardian.reason
+            if isinstance(guardian, ApprovalResult) else policy.reason
+        )
+        return {
+            "approval_decision": decision,
+            "decision": decision,
+            "policy_reason": _sanitize(policy.reason),
+            "guardian_rule_id": guardian.rule_id if isinstance(guardian, ApprovalResult) else None,
+            "rule_id": rule_id,
+            "guardian_reason": _sanitize(guardian.reason) if isinstance(guardian, ApprovalResult) else _sanitize(policy.reason),
+            "reason": _sanitize(reason),
+            "normalized_action": redact_command(policy.safe_representation),
+            "normalized_action_fingerprint": command_fingerprint(policy.safe_representation),
+            "execution_result_reference": f"execution_evidence:{context.runtime_session_id}:{context.runtime_task_id}",
+        }
+
+    def _context(
+        self, request: ExecutionRequest, context: RuntimeApprovalContext | None,
+    ) -> RuntimeApprovalContext:
+        value = context or RuntimeApprovalContext(
+            cwd=str(self.root), repository=str(self.root),
+            branch=_git_branch(self.root), environment="local",
+            actor=request.source_worker, stage=_stage_for(request),
+        )
+        normalized = value.normalized()
+        if Path(normalized["repository"]) != self.root:
+            raise ValueError("approval repository context mismatch")
+        if not _inside(Path(normalized["cwd"]), self.root):
+            raise ValueError("approval cwd is outside the repository")
+        return RuntimeApprovalContext(**normalized)
+
+    def _failed_closed(
+        self, request: ExecutionRequest, classification: str, error: Exception,
+        context: RuntimeApprovalContext | None, *, persist: bool = True,
+    ) -> dict[str, Any]:
+        safe_context = context if isinstance(context, RuntimeApprovalContext) else RuntimeApprovalContext(
+            cwd=str(self.root), repository=str(self.root), branch="",
+            environment="local", actor=request.source_worker, stage=_stage_for(request),
+        )
+        policy = PolicyResult(
+            "DENY", classification, "Approval enforcement failed closed.", "[DENIED]",
+        )
+        evidence = self._base(request, policy, "DENIED", safe_context)
+        evidence.update({
+            "approval_decision": ApprovalDecision.DENY.value,
+            "decision": ApprovalDecision.DENY.value,
+            "guardian_rule_id": "AGV2-D004", "rule_id": "AGV2-D004",
+            "guardian_reason": "Approval enforcement failed closed.",
+            "reason": "Approval enforcement failed closed.",
+            "safe_cause": _sanitize(str(error)),
+            "error_code": "RUNTIME_CONTROLLED_EXECUTION_BLOCKED",
+        })
+        if persist:
+            try:
+                return self._persist_raw(evidence)
+            except OSError:
+                pass
+        return evidence
 
     def _persist_raw(self, evidence: dict[str, Any]) -> dict[str, Any]:
         self.evidence_dir.mkdir(parents=True, exist_ok=True)
@@ -289,3 +513,47 @@ def _sanitize(value: str) -> str:
     text = re.sub(r"(?i)authorization\s*:\s*bearer\s+\S+", "Authorization: [REDACTED]", text)
     text = re.sub(r"(?i)(api[_-]?key|token|password|credential)\s*[=:]\s*\S+", r"\1=[REDACTED]", text)
     return text[:4000]
+
+
+def _safe_metadata(value: Mapping[str, Any] | None) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, item in dict(value or {}).items():
+        name = str(key)
+        if any(marker in name.lower() for marker in ("key", "token", "secret", "password", "authorization")):
+            result[name] = "[REDACTED]"
+        elif isinstance(item, (str, int, float, bool)) or item is None:
+            result[name] = _sanitize(item) if isinstance(item, str) else item
+        else:
+            result[name] = _sanitize(str(item))
+    return result
+
+
+def execution_action_fingerprint(request: ExecutionRequest) -> str:
+    payload = {
+        "action_type": request.action_type.value,
+        "source_worker": request.source_worker,
+        "relative_path": request.relative_path,
+        "content_sha256": (
+            sha256((request.content or "").encode("utf-8")).hexdigest()
+            if request.action_type is ActionType.FILE_WRITE else ""
+        ),
+        "argv": list(request.argv),
+        "expected_preimage_sha256": request.expected_preimage_sha256,
+        "purpose": request.purpose,
+    }
+    return sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()
+
+
+def _stage_for(request: ExecutionRequest) -> str:
+    return "qa" if request.action_type is ActionType.COMMAND_RUN else "development"
+
+
+def _git_branch(root: Path) -> str:
+    try:
+        result = subprocess.run(
+            ["git", "branch", "--show-current"], cwd=root,
+            capture_output=True, text=True, timeout=3, shell=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return ""
+    return result.stdout.strip() if result.returncode == 0 else ""

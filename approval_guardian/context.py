@@ -23,7 +23,11 @@ class EvaluationContext:
 def build_context(request: ApprovalRequest, repository_root: str | Path) -> EvaluationContext:
     root = Path(repository_root).resolve()
     cwd = Path(request.cwd or root).resolve()
-    branch = request.branch or _git_value(root, ["branch", "--show-current"])
+    branch = (
+        request.branch
+        if request.branch is not None
+        else _git_value(root, ["branch", "--show-current"])
+    )
     clean_value = _git_value(root, ["status", "--porcelain"])
     clean = None if clean_value is None else not bool(clean_value)
     return EvaluationContext(

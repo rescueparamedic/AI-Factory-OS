@@ -11,7 +11,10 @@ from sprint_auto_runner import SprintAutoRunner
 
 from .approval_resume import RuntimeApprovalStore, action_fingerprint, request_from_record
 from .artifact_store import ArtifactStore
-from .controlled_execution import ActionType, ControlledExecutor, ExecutionRequest
+from .controlled_execution import (
+    ActionType, ControlledExecutor, ExecutionRequest,
+    build_runtime_approval_context, context_fingerprint,
+)
 from .dashboard import TerminalDashboard
 from .errors import (
     InvalidRoleResult, RevisionLimitExceeded, RoleExecutionError,
@@ -144,6 +147,18 @@ class RealWorkerRuntime:
         selected = ProviderBridge(self.root, settings.get("model"), settings.get("allow_live_api", False), openai_client)
         selected.select(session.provider)
         context = WorkerContext.from_value(continuation["context"])
+        approval_context = _approval_execution_context(
+            self.root, session, context, request.source_worker,
+        )
+        current_context_fingerprint = context_fingerprint(approval_context)
+        if current_context_fingerprint != record.get("context_fingerprint"):
+            approval_store.record_invalidation(
+                approval_id,
+                "execution context changed; exact approval revalidation failed",
+            )
+            raise RuntimeSessionError(
+                "approval execution context changed; a new approval is required"
+            )
         approved = approval_store.approve(approval_id)
         artifact_store = ArtifactStore(self.root, session.session_id)
         events = EventStream(artifact_store)
@@ -170,7 +185,10 @@ class RealWorkerRuntime:
                 "exact controlled action approval granted",
                 {"approval_request_id": approval_id},
             )
-        observed = ControlledExecutor(self.root).execute_approved(request, approved)
+        observed = ControlledExecutor(self.root).execute_approved(
+            request, approved, approval_context,
+        )
+        approved = approval_store.mark_revalidated(approved)
         consumed = approval_store.consume(approved)
         events.emit("APPROVAL_CONSUMED", request.source_worker, approval_id)
         session.pending_approval = _approval_summary(consumed)
@@ -320,7 +338,10 @@ class RealWorkerRuntime:
             evidence = {"verified_changed_files": [], "verified_test_executions": [], "execution_evidence": []}
             if result.status == "completed":
                 evidence, pending_request, pending_observation = _execute_proposals(
-                    controlled, definition.worker_id, result.output, self.root
+                    controlled, definition.worker_id, result.output, self.root,
+                    _approval_execution_context(
+                        self.root, session, context, definition.worker_id,
+                    ),
                 )
                 result.output, findings = apply_execution_truth_contract(definition.worker_id, result.output, evidence)
                 session.truth_contract_findings.extend(findings)
@@ -615,6 +636,9 @@ class RealWorkerRuntime:
                 if retry.status == "completed":
                     evidence, pending, observation = _execute_proposals(
                         controlled, retry_id, retry.output, self.root,
+                        _approval_execution_context(
+                            self.root, session, context, retry_id,
+                        ),
                     )
                     retry.output, findings = apply_execution_truth_contract(
                         retry_id, retry.output, evidence,
@@ -825,6 +849,7 @@ class RealWorkerRuntime:
             "approval_request_id": record["approval_request_id"],
             "execution_request_id": request.request_id,
             "action_fingerprint": action_fingerprint(request),
+            "context_fingerprint": record.get("context_fingerprint", ""),
             "next_worker_index": next_index,
             "revisions": revisions,
             "context": context.to_dict(),
@@ -969,7 +994,21 @@ class RealWorkerRuntime:
         return data
 
 
-def _execute_proposals(executor, worker_id, output, root):
+def _approval_execution_context(root, session, context, worker_id):
+    task = context.runtime_task
+    role = RuntimeRole.from_worker(worker_id)
+    return build_runtime_approval_context(
+        root,
+        runtime_task_id=task.id if task is not None else "",
+        runtime_session_id=session.session_id,
+        stage=role.value if role is not None else "runtime",
+        actor=worker_id,
+        environment="local",
+        metadata={"revision": int(context.revision)},
+    )
+
+
+def _execute_proposals(executor, worker_id, output, root, approval_context=None):
     evidence = {"verified_changed_files": [], "verified_test_executions": [], "execution_evidence": []}
     if executor is None:
         return evidence, None, None
@@ -983,7 +1022,7 @@ def _execute_proposals(executor, worker_id, output, root):
                 relative_path, item.get("content", ""), worker_id,
                 item.get("purpose", ""), expected_hash,
             )
-            observed = executor.execute(request)
+            observed = executor.execute(request, approval_context)
             evidence["execution_evidence"].append(observed)
             if observed.get("status") == "WAITING_APPROVAL":
                 return evidence, request, observed
@@ -994,7 +1033,7 @@ def _execute_proposals(executor, worker_id, output, root):
             if not isinstance(item, dict) or not isinstance(item.get("argv"), list):
                 continue
             request = ExecutionRequest.command_run(item["argv"], worker_id, item.get("purpose", ""))
-            observed = executor.execute(request)
+            observed = executor.execute(request, approval_context)
             evidence["execution_evidence"].append(observed)
             if observed.get("status") in {"SUCCEEDED", "FAILED"}:
                 evidence["verified_test_executions"].append(observed)
@@ -1454,9 +1493,22 @@ def _approval_summary(record):
         "action_type": record["action_type"],
         "target": record["target"],
         "action_fingerprint": record["action_fingerprint"],
+        "context_fingerprint": record.get("context_fingerprint", ""),
         "policy_classification": record["guardian_policy_classification"],
         "guardian_rule_id": record["guardian_rule_id"],
         "guardian_reason": record["guardian_reason"],
+        "decision": "ask_user" if record["status"] == "PENDING" else record["status"].lower(),
+        "error_code": (
+            "RUNTIME_APPROVAL_REQUIRED"
+            if record["status"] == "PENDING" else ""
+        ),
+        "safe_action_summary": (
+            f"{record['action_type']} {record['target']}"
+        )[:500],
+        "next_action": "resume requires exact approval",
+        "approved_by": record.get("approved_by"),
+        "approved_at": record.get("approved_at"),
+        "revalidation_result": record.get("revalidation_result"),
         "status": record["status"],
     }
 
