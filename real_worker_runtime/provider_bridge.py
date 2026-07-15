@@ -75,9 +75,9 @@ def _mock_action_output(worker_id, marker, output, base, root):
             return output
         output["actions"] = [{
             **base, "action_id": f"TA-{session_id}-qa-{base['revision']}",
-            "action_type": "COMMAND_RUN", "purpose": "Verify structured bridge output",
-            "target": "controlled_execution/tool_action_demo.py",
-            "arguments": {"argv": ["python", "controlled_execution/tool_action_demo.py"]},
+            "action_type": "TEST_RUN", "purpose": "Verify structured bridge output",
+            "target": "controlled_execution/test_tool_action_demo.py",
+            "arguments": {"argv": ["python", "-m", "pytest", "controlled_execution/test_tool_action_demo.py", "-q"]},
             "preconditions": {},
         }]
         return output
@@ -85,7 +85,7 @@ def _mock_action_output(worker_id, marker, output, base, root):
 
 
 def _mock_development_action(marker, output, base, root, session_id):
-    target = 'README.md' if marker == 'ask' else '../outside.txt' if marker == 'deny' else 'controlled_execution/tool_action_demo.py'
+    target = 'README.md' if marker == 'ask' else '../outside.txt' if marker == 'deny' else 'controlled_execution/test_tool_action_demo.py'
     existing = root / target
     expected_hash = sha256(existing.read_bytes()).hexdigest() if existing.is_file() else None
     output['actions'] = [{
@@ -94,7 +94,7 @@ def _mock_development_action(marker, output, base, root, session_id):
         'action_type': 'FILE_WRITE',
         'purpose': f'Demonstrate the structured {marker} approval path',
         'target': target,
-        'arguments': {'content': 'print(42)\n'},
+        'arguments': {'content': 'def test_structured_bridge():\n    assert 42 == 42\n'},
         'preconditions': {'expected_preimage_sha256': expected_hash},
     }]
     return output

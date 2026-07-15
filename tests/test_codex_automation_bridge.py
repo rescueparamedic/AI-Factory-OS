@@ -181,6 +181,9 @@ def test_mock_runtime_structured_action_paths(tmp_path, marker, status):
         f"[tool-action-{marker}]", live=False, enable_controlled_execution=True,
     )
     assert session.status == status, session.to_dict()
+    if marker == "auto":
+        assert session.execution_verification["status"] == "VERIFIED"
+        assert session.execution_verification["verified_test_executions"][0]["exit_code"] == 0
     evidence = list((tmp_path / "data" / "tool_action_evidence").glob("*.json"))
     assert evidence
 
