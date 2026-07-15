@@ -300,6 +300,31 @@ def test_structured_failure_contract_and_transition_history_are_safe():
     assert datetime.fromisoformat(task.lifecycle_transitions[-1]["timestamp"]).tzinfo
 
 
+def test_controlled_execution_denial_blocks_runtime(tmp_path, monkeypatch):
+    original = ProviderBridge.generate
+
+    def propose_denied_path(provider, worker_id, request, context):
+        output = original(provider, worker_id, request, context)
+        if worker_id == "development_worker":
+            output["proposed_file_writes"] = [{
+                "relative_path": "../outside.txt",
+                "content": "must not be written",
+                "purpose": "verify fail-closed policy",
+            }]
+        return output
+
+    monkeypatch.setattr(ProviderBridge, "generate", propose_denied_path)
+    session = RealWorkerRuntime(tmp_path).run(
+        "controlled denial", live=False, enable_controlled_execution=True,
+    )
+    failure = session.execution_summary["failure"]
+
+    assert session.status == "blocked"
+    assert session.runtime_tasks[0]["lifecycle_status"] == "blocked"
+    assert failure["error_code"] == "RUNTIME_CONTROLLED_EXECUTION_BLOCKED"
+    assert not (tmp_path.parent / "outside.txt").exists()
+
+
 def test_lifecycle_serialization_round_trip_is_append_only():
     task = RuntimeTask.create("development_worker")
     task.transition_lifecycle(

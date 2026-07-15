@@ -325,6 +325,10 @@ class RealWorkerRuntime:
                 result.output, findings = apply_execution_truth_contract(definition.worker_id, result.output, evidence)
                 session.truth_contract_findings.extend(findings)
                 _merge_execution_evidence(session, evidence)
+            blocked_observation = next((
+                item for item in evidence.get("execution_evidence", [])
+                if item.get("status") in {"DENIED", "PREIMAGE_MISMATCH"}
+            ), None)
             if role_result is not None and role_request is not None:
                 role_result.output = dict(result.output)
                 role_result.evidence_references = _role_evidence_references(
@@ -332,6 +336,16 @@ class RealWorkerRuntime:
                 )
                 if pending_request is not None:
                     _set_role_waiting_approval(role_result)
+                elif blocked_observation is not None:
+                    role_result.state = RoleExecutionState.FAILED
+                    role_result.handoff_target = ""
+                    role_result.failure_code = "controlled_execution_blocked"
+                    role_result.exception_type = "ControlledExecutionBlocked"
+                    role_result.error = safe_message(
+                        blocked_observation.get("policy_reason")
+                        or blocked_observation.get("status")
+                    )
+                    role_result.cause_reference = "execution_evidence:latest"
                 try:
                     role_result = orchestrator.record_role_result(
                         role_result, role_request,
@@ -339,6 +353,8 @@ class RealWorkerRuntime:
                 except (InvalidRoleResult, RoleExecutionError) as exc:
                     role_result = _failed_role_result(role_request, exc)
                     orchestrator.record_role_result(role_result, role_request)
+                    result = role_result.to_worker_result()
+                else:
                     result = role_result.to_worker_result()
                 _sync_runtime_task(session, context, store)
                 _emit_role_event(events, "ROLE_RESULT_RECORDED", role_result)
@@ -375,11 +391,32 @@ class RealWorkerRuntime:
                     context.runtime_task.record_evidence(item)
                 _sync_runtime_task(session, context, store)
             if result.status != "completed":
-                _fail_task(session, context, store, events, definition.worker_id,
-                           "worker execution failed")
-                session.status = "failed"
+                controlled_block = (
+                    role_result is not None
+                    and role_result.failure_code == "controlled_execution_blocked"
+                )
+                _fail_task(
+                    session, context, store, events, definition.worker_id,
+                    result.error or "worker execution failed",
+                    failure_code=(
+                        "controlled_execution_blocked"
+                        if controlled_block else "role_execution_failed"
+                    ),
+                    exception_type=(
+                        "ControlledExecutionBlocked"
+                        if controlled_block else "RoleExecutionError"
+                    ),
+                    lifecycle_target=(
+                        RuntimeLifecycleStatus.BLOCKED
+                        if controlled_block else RuntimeLifecycleStatus.FAILED
+                    ),
+                )
+                session.status = "blocked" if controlled_block else "failed"
                 session.error = result.error
-                events.emit("PROVIDER_ERROR", definition.worker_id, result.error)
+                events.emit(
+                    "CONTROLLED_EXECUTION_BLOCKED" if controlled_block else "PROVIDER_ERROR",
+                    definition.worker_id, result.error,
+                )
                 break
             session.workers[definition.worker_id] = "completed"
             bus.publish(definition.worker_id, "runtime", "WORKER_OUTPUT", result.summary, result.output)

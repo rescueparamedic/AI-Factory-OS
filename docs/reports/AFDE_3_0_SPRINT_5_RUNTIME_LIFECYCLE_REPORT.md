@@ -122,11 +122,11 @@ Sprint.
 ## Tests and validation
 
 - Pre-implementation baseline: `405 passed, 1 skipped`.
-- Sprint 5 focused tests: `20 passed`.
+- Sprint 5 focused tests: `21 passed`.
 - Compatibility matrix: `233 passed` across RuntimePipeline,
   RuntimeOrchestrator, RoleExecutor, handoff/revision, approval, Guardian,
   controlled execution, Execution Truth, and provider behavior.
-- Full pytest: `428 passed, 1 skipped`.
+- Full pytest: `429 passed, 1 skipped`.
 - Compile validation: PASS for `approval_guardian`, `afde`,
   `real_worker_runtime`, `sprint_auto_runner`, and `tests`.
 - Exact 14-file scope secret scan: PASS; no high-confidence credential
