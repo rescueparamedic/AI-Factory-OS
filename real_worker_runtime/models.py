@@ -10,7 +10,9 @@ class WorkerState(str, Enum):
     PLANNING="planning"; READY="ready"; RUNNING="running"; WAITING_APPROVAL="waiting_approval"
     RESUMED="resumed"; QA="qa"; COMPLETED="completed"; FAILED="failed"
 class RuntimeState(str, Enum):
-    CREATED="created"; RUNNING="running"; WAITING_APPROVAL="waiting_approval"; BLOCKED="blocked"; FAILED="failed"; COMPLETED="completed"; CANCELLED="cancelled"
+    CREATED="created"; PENDING="pending"; QUEUED="queued"; RUNNING="running"
+    WAITING_APPROVAL="waiting_approval"; REVISING="revising"; BLOCKED="blocked"
+    FAILED="failed"; COMPLETED="completed"; CANCELLED="cancelled"
 
 @dataclass(frozen=True)
 class WorkerDefinition:

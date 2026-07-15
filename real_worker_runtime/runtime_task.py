@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Mapping
 from uuid import uuid4
 
@@ -11,7 +11,7 @@ from .models import WorkerState
 from .runtime_lifecycle import (
     RoleLifecycleRecord, RoleLifecycleStatus, RuntimeExecutionSummary, RuntimeFailure,
     RuntimeLifecycleStatus, RuntimeTransition, lifecycle_status, safe_message,
-    safe_metadata, validate_transition,
+    runtime_error_code, safe_metadata, validate_transition,
 )
 
 
@@ -29,8 +29,42 @@ _TRANSITIONS = {
 }
 
 
+class _TransitionHistory(list[dict[str, Any]]):
+    """List-compatible persisted history with lifecycle-owned mutation."""
+
+    def _append(self, value: dict[str, Any]) -> None:
+        list.append(self, value)
+
+    def append(self, value) -> None:
+        raise TypeError("runtime transition history is append-only through transition_lifecycle")
+
+    def extend(self, values) -> None:
+        raise TypeError("runtime transition history is append-only through transition_lifecycle")
+
+    def clear(self) -> None:
+        raise TypeError("runtime transition history cannot be cleared")
+
+    def pop(self, index=-1):
+        raise TypeError("runtime transition history cannot be removed")
+
+    def remove(self, value) -> None:
+        raise TypeError("runtime transition history cannot be removed")
+
+    def __setitem__(self, key, value) -> None:
+        raise TypeError("runtime transition history records cannot be replaced")
+
+    def __delitem__(self, key) -> None:
+        raise TypeError("runtime transition history records cannot be removed")
+
+    def __iadd__(self, values):
+        raise TypeError("runtime transition history is append-only through transition_lifecycle")
+
+    def __deepcopy__(self, memo):
+        return _TransitionHistory(deepcopy(list(self), memo))
+
+
 def _now() -> str:
-    return datetime.now().astimezone().isoformat(timespec="seconds")
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
 def _state(value: WorkerState | str) -> WorkerState:
@@ -74,6 +108,7 @@ class RuntimeTask:
     def __post_init__(self) -> None:
         self.state = _state(self.state)
         self.lifecycle_status = lifecycle_status(self.lifecycle_status)
+        self.lifecycle_transitions = _TransitionHistory(self.lifecycle_transitions)
         if not self.id or not self.worker:
             raise ValueError("runtime task id and worker are required")
         if not self.owner:
@@ -86,7 +121,7 @@ class RuntimeTask:
                 "reason": "task created",
             })
         if not self.lifecycle_transitions:
-            self.lifecycle_transitions.append(RuntimeTransition(
+            self.lifecycle_transitions._append(RuntimeTransition(
                 sequence=1, timestamp=self.started_at, runtime_task_id=self.id,
                 from_status=None, to_status=self.lifecycle_status.value,
                 stage="runtime", role="", attempt=0, revision_index=0,
@@ -164,8 +199,13 @@ class RuntimeTask:
             RuntimeLifecycleStatus.BLOCKED,
         }:
             self.completed_at = timestamp
-        self.lifecycle_transitions.append(record)
+        self.lifecycle_transitions._append(record)
         return deepcopy(record)
+
+    @property
+    def transition_history(self) -> tuple[dict[str, Any], ...]:
+        """Read-only-by-copy public view of successful lifecycle transitions."""
+        return tuple(deepcopy(self.lifecycle_transitions))
 
     def record_role_lifecycle(
         self, *, role: str, revision_index: int, started_at: str,
@@ -185,13 +225,17 @@ class RuntimeTask:
         self, *, failure_code: str, stage: str, role: str, message: str,
         exception_type: str = "RuntimeError", retryable: bool = False,
         cause_reference: str = "", revision_index: int = 0,
+        metadata: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         attempt = sum(item.get("role") == role for item in self.role_lifecycle)
         failure = RuntimeFailure(
-            failure_code=failure_code, stage=stage, role=role,
+            error_code=runtime_error_code(failure_code), stage=stage, actor=role,
             attempt=attempt, revision_index=int(revision_index),
-            exception_type=exception_type, safe_message=safe_message(message),
-            retryable=bool(retryable), cause_reference=cause_reference,
+            error_type=exception_type, message=safe_message(message),
+            retryable=bool(retryable), cause=safe_message(cause_reference),
+            metadata=safe_metadata({
+                **dict(metadata or {}), "legacy_failure_code": failure_code,
+            }),
             timestamp=_now(),
         ).to_dict()
         self.failures.append(failure)

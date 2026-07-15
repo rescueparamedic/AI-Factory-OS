@@ -18,6 +18,7 @@ from .result_handoff import (
     ResultHandoffLedger,
 )
 from .runtime_pipeline import PipelineState
+from .runtime_lifecycle import RuntimeLifecycleStatus
 from .worker_context import WorkerContext
 from .worker_registry import WorkerRegistry
 
@@ -242,6 +243,17 @@ class RuntimeOrchestrator:
         if task is not None:
             task.orchestration_metadata["revision_count"] = revision
             task.orchestration_metadata["max_revisions"] = self.max_revisions
+            if task.lifecycle_status is RuntimeLifecycleStatus.RUNNING:
+                task.transition_lifecycle(
+                    RuntimeLifecycleStatus.REVISING,
+                    stage="qa", role="qa", revision_index=revision,
+                    reason_code="qa_revision_requested", message=reason,
+                    metadata={
+                        "revision_number": revision,
+                        "max_revisions": self.max_revisions,
+                        "qa_reason": reason,
+                    },
+                )
         self._record_qa_decision(
             QARevisionOutcome.REVISION_REQUESTED, reason, revision,
             qa_result_reference,

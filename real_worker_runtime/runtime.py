@@ -433,6 +433,7 @@ class RealWorkerRuntime:
                     session.error = str(exc)
                     break
                 revisions = orchestrator.revision_count
+                _emit_lifecycle_transition(events, context.runtime_task)
                 result_handoff = orchestrator.create_result_handoff(
                     role_result, RuntimeRole.DEVELOPER,
                     validation_metadata={
@@ -505,6 +506,21 @@ class RealWorkerRuntime:
         settings, role_executor,
     ):
         while True:
+            task = context.runtime_task
+            if task is not None and task.lifecycle_status is RuntimeLifecycleStatus.REVISING:
+                task.transition_lifecycle(
+                    RuntimeLifecycleStatus.RUNNING,
+                    stage="developer", role="developer",
+                    revision_index=int(context.revision),
+                    reason_code="qa_revision_started",
+                    message="Developer started the requested QA revision",
+                    metadata={
+                        "revision_number": int(context.revision),
+                        "max_revisions": int(settings.get("max_revisions", 0)),
+                    },
+                )
+                _emit_lifecycle_transition(events, task)
+                _sync_runtime_task(session, context, events.store)
             for retry_definition in orchestrator.revision_workers():
                 retry_id = retry_definition.worker_id
                 session.workers[retry_id] = "running"
@@ -700,6 +716,7 @@ class RealWorkerRuntime:
                 session.status = "failed"
                 session.error = str(exc)
                 return False
+            _emit_lifecycle_transition(events, context.runtime_task)
             result_handoff = orchestrator.create_result_handoff(
                 role_result, RuntimeRole.DEVELOPER,
                 validation_metadata={

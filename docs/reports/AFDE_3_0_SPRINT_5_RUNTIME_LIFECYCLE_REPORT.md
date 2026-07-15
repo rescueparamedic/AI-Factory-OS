@@ -34,8 +34,9 @@ machine owner was created.
 
 ## Runtime terminal and role lifecycle semantics
 
-The run-level lifecycle uses `pending`, `running`, `completed`, `failed`,
-`blocked`, and `waiting_approval`. Only validated transitions are appended;
+The run-level lifecycle reuses `RuntimeState` and supports `created`, `pending`
+(legacy construction compatibility), `queued`, `running`, `waiting_approval`,
+`revising`, `completed`, `failed`, `blocked`, and `cancelled`. Only validated transitions are appended;
 duplicate transitions and terminal restart attempts raise the existing
 `InvalidTaskTransition` failure. Sequence numbers are monotonically assigned
 by the authoritative task.
@@ -52,6 +53,17 @@ Approval pause produces `waiting_approval`; rejection retains the existing
 session `blocked` meaning. No subsequent work runs from a paused or terminal
 lifecycle.
 
+The implemented transition policy is:
+
+- `created -> queued | cancelled`
+- `pending -> queued | running | waiting_approval | blocked | failed | cancelled`
+- `queued -> running | blocked | cancelled`
+- `running -> waiting_approval | revising | completed | failed | blocked | cancelled`
+- `waiting_approval -> running | failed | blocked | cancelled`
+- `revising -> running | failed | blocked | cancelled`
+- `completed`, `failed`, `blocked`, and `cancelled` are terminal in the current
+  runtime policy.
+
 ## Append-only transitions and failure propagation
 
 Each transition records sequence, timestamp, task identity, from/to status,
@@ -59,9 +71,15 @@ stage, role, attempt, revision index, stable reason code, bounded safe message,
 and safe metadata. The same transitions emit
 `RUNTIME_LIFECYCLE_TRANSITION` on the existing event stream.
 
-Normalized failures record code, stage, role, attempt, revision index,
-exception type, bounded safe message, retryability, cause reference, and
-timestamp. Credential-like fragments are redacted. Planner failure prevents
+Normalized failures expose `error_type`, `error_code`, `message`, `stage`,
+`actor`, `retryable`, `cause`, and `metadata`, plus attempt, revision index,
+and timestamp. The legacy `failure_code`, `role`, `exception_type`,
+`safe_message`, and `cause_reference` keys remain as compatibility aliases.
+Stable codes include `RUNTIME_ILLEGAL_TRANSITION`, `RUNTIME_WORKER_FAILURE`,
+`RUNTIME_ROLE_EXECUTION_FAILURE`, `RUNTIME_PIPELINE_FAILURE`,
+`RUNTIME_APPROVAL_REJECTED`, `RUNTIME_APPROVAL_REQUIRED`,
+`RUNTIME_REVISION_LIMIT_EXCEEDED`, `RUNTIME_CONTROLLED_EXECUTION_BLOCKED`, and
+`RUNTIME_INVALID_RESULT_HANDOFF`. Credential-like fragments are redacted. Planner failure prevents
 all later roles; Developer failure prevents QA and Documentation; QA execution
 failure remains different from a revision request; Documentation failure
 prevents completed finalization.
@@ -104,11 +122,11 @@ Sprint.
 ## Tests and validation
 
 - Pre-implementation baseline: `405 passed, 1 skipped`.
-- Sprint 5 focused tests: `18 passed`.
+- Sprint 5 focused tests: `20 passed`.
 - Compatibility matrix: `233 passed` across RuntimePipeline,
   RuntimeOrchestrator, RoleExecutor, handoff/revision, approval, Guardian,
   controlled execution, Execution Truth, and provider behavior.
-- Full pytest: `423 passed, 1 skipped`.
+- Full pytest: `428 passed, 1 skipped`.
 - Compile validation: PASS for `approval_guardian`, `afde`,
   `real_worker_runtime`, `sprint_auto_runner`, and `tests`.
 - Exact 14-file scope secret scan: PASS; no high-confidence credential

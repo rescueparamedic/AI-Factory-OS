@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -54,6 +55,12 @@ def test_revision_lifecycle_preserves_attempts_results_and_order(tmp_path):
     assert len(task["role_executions"]) == 6
     assert len(task["result_handoffs"]) == 5
     assert session.execution_summary["revision_count"] == 1
+    assert [item["to_status"] for item in task["lifecycle_transitions"]] == [
+        "pending", "running", "revising", "running", "completed",
+    ]
+    revision = task["lifecycle_transitions"][2]
+    assert revision["metadata"]["revision_number"] == 1
+    assert revision["metadata"]["max_revisions"] == 1
 
 
 def test_revision_exhaustion_is_structured_failure_and_skips_documentation(
@@ -77,6 +84,7 @@ def test_revision_exhaustion_is_structured_failure_and_skips_documentation(
     assert session.status == "failed"
     assert task["lifecycle_status"] == "failed"
     assert failure["failure_code"] == "qa_revision_exhausted"
+    assert failure["error_code"] == "RUNTIME_REVISION_LIMIT_EXCEEDED"
     assert failure["stage"] == "qa"
     assert session.execution_summary["role_statuses"]["documentation"] == "skipped"
     assert not any(item["role"] == "documentation" for item in task["role_lifecycle"])
@@ -213,11 +221,12 @@ def test_transition_validation_rejects_duplicate_and_terminal_restart():
         RuntimeLifecycleStatus.RUNNING, stage="planner",
         reason_code="start", message="start",
     )
-    with pytest.raises(InvalidTaskTransition):
+    with pytest.raises(InvalidTaskTransition) as rejected:
         task.transition_lifecycle(
             RuntimeLifecycleStatus.RUNNING, stage="planner",
             reason_code="duplicate", message="duplicate",
         )
+    assert rejected.value.error_code == "RUNTIME_ILLEGAL_TRANSITION"
     task.transition_lifecycle(
         RuntimeLifecycleStatus.COMPLETED, stage="runtime",
         reason_code="done", message="done",
@@ -228,6 +237,67 @@ def test_transition_validation_rejects_duplicate_and_terminal_restart():
             reason_code="restart", message="restart",
         )
     assert [item["sequence"] for item in task.lifecycle_transitions] == [1, 2, 3]
+
+
+def test_full_additive_lifecycle_policy_supports_queue_revision_and_cancel():
+    task = RuntimeTask(
+        id="TASK-policy", worker="development_worker",
+        lifecycle_status=RuntimeLifecycleStatus.CREATED,
+    )
+    task.transition_lifecycle(
+        "queued", stage="scheduler", reason_code="queued", message="queued",
+    )
+    task.transition_lifecycle(
+        "running", stage="planner", reason_code="started", message="started",
+    )
+    task.transition_lifecycle(
+        "revising", stage="qa", role="qa", reason_code="revise",
+        message="QA requested revision", metadata={"revision_number": 1},
+    )
+    task.transition_lifecycle(
+        "running", stage="developer", role="developer",
+        reason_code="revision_started", message="revision started",
+    )
+    task.transition_lifecycle(
+        "cancelled", stage="runtime", role="product_owner",
+        reason_code="cancelled", message="cancelled",
+    )
+
+    assert [item["to_status"] for item in task.lifecycle_transitions] == [
+        "created", "queued", "running", "revising", "running", "cancelled",
+    ]
+    with pytest.raises(InvalidTaskTransition):
+        task.transition_lifecycle(
+            "running", stage="runtime", reason_code="restart", message="restart",
+        )
+
+
+def test_structured_failure_contract_and_transition_history_are_safe():
+    task = RuntimeTask.create("development_worker")
+    task.transition_lifecycle(
+        "running", stage="developer", role="developer",
+        reason_code="start", message="start",
+    )
+    failure = task.record_failure(
+        failure_code="provider_or_worker_failure", stage="developer",
+        role="developer", message="token=super-secret", exception_type="WorkerError",
+        cause_reference="authorization: bearer hidden", metadata={"api_key": "hidden"},
+    )
+
+    assert {
+        "error_type", "error_code", "message", "stage", "actor",
+        "retryable", "cause", "metadata",
+    } <= failure.keys()
+    assert failure["error_code"] == "RUNTIME_WORKER_FAILURE"
+    assert "super-secret" not in failure["message"]
+    assert "hidden" not in failure["cause"]
+    assert failure["metadata"]["api_key"] == "[REDACTED]"
+    view = task.transition_history
+    view[0]["to_status"] = "corrupted"
+    assert task.lifecycle_transitions[0]["to_status"] == "pending"
+    with pytest.raises(TypeError):
+        task.lifecycle_transitions.append({"to_status": "corrupted"})
+    assert datetime.fromisoformat(task.lifecycle_transitions[-1]["timestamp"]).tzinfo
 
 
 def test_lifecycle_serialization_round_trip_is_append_only():

@@ -7,15 +7,9 @@ import re
 from typing import Any, Mapping
 
 from .errors import InvalidTaskTransition
+from .models import RuntimeState
 
-
-class RuntimeLifecycleStatus(str, Enum):
-    PENDING = "pending"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    BLOCKED = "blocked"
-    WAITING_APPROVAL = "waiting_approval"
+RuntimeLifecycleStatus = RuntimeState
 
 
 class RoleLifecycleStatus(str, Enum):
@@ -28,27 +22,68 @@ class RoleLifecycleStatus(str, Enum):
 
 
 _TRANSITIONS = {
+    RuntimeLifecycleStatus.CREATED: {
+        RuntimeLifecycleStatus.QUEUED,
+        RuntimeLifecycleStatus.CANCELLED,
+    },
     RuntimeLifecycleStatus.PENDING: {
+        RuntimeLifecycleStatus.QUEUED,
         RuntimeLifecycleStatus.RUNNING,
         RuntimeLifecycleStatus.FAILED,
         RuntimeLifecycleStatus.BLOCKED,
+        RuntimeLifecycleStatus.CANCELLED,
         RuntimeLifecycleStatus.WAITING_APPROVAL,
+    },
+    RuntimeLifecycleStatus.QUEUED: {
+        RuntimeLifecycleStatus.RUNNING,
+        RuntimeLifecycleStatus.BLOCKED,
+        RuntimeLifecycleStatus.CANCELLED,
     },
     RuntimeLifecycleStatus.RUNNING: {
         RuntimeLifecycleStatus.COMPLETED,
         RuntimeLifecycleStatus.FAILED,
         RuntimeLifecycleStatus.BLOCKED,
+        RuntimeLifecycleStatus.CANCELLED,
+        RuntimeLifecycleStatus.REVISING,
         RuntimeLifecycleStatus.WAITING_APPROVAL,
     },
     RuntimeLifecycleStatus.WAITING_APPROVAL: {
         RuntimeLifecycleStatus.RUNNING,
         RuntimeLifecycleStatus.FAILED,
         RuntimeLifecycleStatus.BLOCKED,
+        RuntimeLifecycleStatus.CANCELLED,
+    },
+    RuntimeLifecycleStatus.REVISING: {
+        RuntimeLifecycleStatus.RUNNING,
+        RuntimeLifecycleStatus.FAILED,
+        RuntimeLifecycleStatus.BLOCKED,
+        RuntimeLifecycleStatus.CANCELLED,
     },
     RuntimeLifecycleStatus.COMPLETED: set(),
     RuntimeLifecycleStatus.FAILED: set(),
     RuntimeLifecycleStatus.BLOCKED: set(),
+    RuntimeLifecycleStatus.CANCELLED: set(),
 }
+
+ERROR_CODES = {
+    "approval_rejected": "RUNTIME_APPROVAL_REJECTED",
+    "approval_required": "RUNTIME_APPROVAL_REQUIRED",
+    "controlled_execution_blocked": "RUNTIME_CONTROLLED_EXECUTION_BLOCKED",
+    "invalid_role_result": "RUNTIME_INVALID_RESULT_HANDOFF",
+    "pipeline_failure": "RUNTIME_PIPELINE_FAILURE",
+    "provider_or_worker_failure": "RUNTIME_WORKER_FAILURE",
+    "qa_revision_exhausted": "RUNTIME_REVISION_LIMIT_EXCEEDED",
+    "revision_limit_exceeded": "RUNTIME_REVISION_LIMIT_EXCEEDED",
+    "role_execution_exception": "RUNTIME_ROLE_EXECUTION_FAILURE",
+    "role_execution_failed": "RUNTIME_ROLE_EXECUTION_FAILURE",
+    "runtime_illegal_transition": "RUNTIME_ILLEGAL_TRANSITION",
+}
+
+
+def runtime_error_code(value: str) -> str:
+    if value.startswith("RUNTIME_"):
+        return value
+    return ERROR_CODES.get(value, "RUNTIME_ROLE_EXECUTION_FAILURE")
 
 _SENSITIVE = re.compile(
     r"(?i)(authorization\s*:|bearer\s+|api[_-]?key\s*[=:]|secret[_-]?key\s*[=:]|"
@@ -105,9 +140,11 @@ class RuntimeTransition:
             "to_status": self.to_status,
             "stage": self.stage,
             "role": self.role,
+            "actor": self.role,
             "attempt": self.attempt,
             "revision_index": self.revision_index,
             "reason_code": self.reason_code,
+            "reason": self.safe_message,
             "safe_message": self.safe_message,
             "metadata": deepcopy(self.metadata),
         }
@@ -130,19 +167,29 @@ class RoleLifecycleRecord:
 
 @dataclass(frozen=True)
 class RuntimeFailure:
-    failure_code: str
+    error_code: str
     stage: str
-    role: str
+    actor: str
     attempt: int
     revision_index: int
-    exception_type: str
-    safe_message: str
+    error_type: str
+    message: str
     retryable: bool
-    cause_reference: str
+    cause: str
+    metadata: dict[str, Any]
     timestamp: str
 
     def to_dict(self) -> dict[str, Any]:
-        return dict(self.__dict__)
+        value = {**self.__dict__, "metadata": deepcopy(self.metadata)}
+        # Compatibility aliases for persisted Sprint 1-4/Sprint 5 consumers.
+        value.update({
+            "failure_code": self.metadata.get("legacy_failure_code", self.error_code),
+            "role": self.actor,
+            "exception_type": self.error_type,
+            "safe_message": self.message,
+            "cause_reference": self.cause,
+        })
+        return value
 
 
 @dataclass(frozen=True)
