@@ -77,12 +77,19 @@ class RuntimeDashboard:
         tree = self._git('status', '--porcelain')
         commit = self._git('log', '-1', '--format=%H %s')
         available = None not in (branch, tree, commit)
+        commit_parts = commit.split(' ', 1) if commit else []
         return {
             'current_branch': branch or 'unavailable',
             'working_tree': (
                 'dirty' if tree else 'clean'
             ) if available else 'unavailable',
             'latest_commit': commit or 'unavailable',
+            'latest_commit_hash': commit_parts[0] if commit_parts else 'unavailable',
+            'latest_commit_summary': (
+                commit_parts[1] if len(commit_parts) > 1 else 'unavailable'
+            ),
+            'availability': 'available' if available else 'unavailable',
+            'error': '' if available else 'repository status unavailable',
         }
 
     def render(self, session_id: str) -> str:
@@ -264,6 +271,18 @@ def _approvals(session: Mapping[str, Any]) -> list[dict[str, str]]:
             or item.get('target', '')
         ),
         'status': 'PENDING',
+        'actor': str(
+            item.get('actor') or item.get('worker')
+            or item.get('source_worker') or ''
+        ),
+        'reason': str(item.get('guardian_reason') or item.get('reason') or ''),
+        'risk': str(
+            item.get('permission_level') or item.get('risk_level')
+            or item.get('policy_classification') or ''
+        ),
+        'requested_at': str(
+            item.get('requested_at') or item.get('created_at') or ''
+        ),
         'next_action': str(
             item.get('next_action', 'resume requires exact approval')
         ),
@@ -285,19 +304,24 @@ def _timeline(directory: Path, pipeline: RuntimePipeline | None) -> list[dict[st
             'timestamp': str(item.get('timestamp', '')),
             'event': str(item.get('event', '')),
             'worker': str(item.get('worker_id', '')),
+            'task': str(item.get('task_id', '')),
             'detail': str(item.get('detail', '')),
+            'summary': str(item.get('summary') or item.get('detail', '')),
         } for item in source]
     else:
         rows = [{
             'timestamp': str(item.get('timestamp', '')),
             'event': 'PipelineTransition',
             'worker': str(item.get('worker', '')),
+            'task': pipeline.task_id if pipeline else '',
             'detail': str(item.get('reason', '')),
+            'summary': str(item.get('reason', '')),
         } for item in (pipeline.history if pipeline else [])]
     unique = {}
     for item in rows:
         key = (
-            item['timestamp'], item['event'], item['worker'], item['detail'],
+            item['timestamp'], item['event'], item['worker'],
+            item['task'], item['detail'],
         )
         unique.setdefault(key, item)
     return sorted(unique.values(), key=lambda item: item['timestamp'])
@@ -311,10 +335,20 @@ def _evidence(session: Mapping[str, Any], directory: Path) -> list[dict[str, str
             continue
         raw = Path(str(item.get('path', '')))
         path = (raw if raw.is_absolute() else directory / raw).resolve()
+        try:
+            identifier = str(path.relative_to(directory.resolve()))
+        except ValueError:
+            continue
         if path.is_file() and path not in seen:
             rows.append({
                 'type': str(item.get('type', item.get('artifact_type', 'artifact'))),
-                'path': str(path),
+                'name': str(item.get('name') or path.name),
+                'path': identifier,
+                'identifier': identifier,
+                'timestamp': datetime.fromtimestamp(
+                    path.stat().st_mtime,
+                ).astimezone().isoformat(timespec='seconds'),
+                'availability': 'available',
             })
             seen.add(path)
     return rows

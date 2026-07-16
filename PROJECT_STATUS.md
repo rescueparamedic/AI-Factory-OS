@@ -1,5 +1,21 @@
 # AI Factory OS Project Status
 
+## AFDE-3.6 Live Web Dashboard
+
+- The AFDE-3.5 browser foundation is now a practical localhost live operations
+  console while `RuntimePipeline` and Dashboard Snapshot remain authoritative.
+- One `/runtime` request updates every view. The browser prevents overlapping
+  requests, preserves the last valid display during failure, and recovers on a
+  later successful poll without creating a second state store.
+- Runtime, current task/worker, five lifecycle stages, worker progress and
+  provenance, approvals, timeline, evidence metadata, repository, and
+  connection status are presented responsively.
+- The web boundary remains GET/HEAD-only. Evidence is metadata-only and
+  session-contained; approval, execution, repository, and evidence mutations
+  remain unavailable.
+- WebSocket/SSE, authentication/RBAC/TLS, remote access, and multi-session
+  aggregation remain explicitly deferred.
+
 ## AFDE-3.5 Web Dashboard Foundation
 
 - A localhost-only browser presentation layer now consumes the AFDE-3.4

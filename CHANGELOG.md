@@ -1,5 +1,22 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-3.6 Live Web Dashboard
+
+- Upgraded the browser skeleton into a responsive live operations console
+  with dedicated runtime, current operation, worker progress, lifecycle,
+  approval, timeline, evidence, repository, and connection views.
+- Added status badges for all runtime states, honest progress provenance,
+  richer approval/timeline/evidence metadata, and repository availability and
+  commit fields while retaining the AFDE-3.5 API routes.
+- Added a single non-overlapping `/runtime` polling loop with last-valid-view
+  preservation, visible disconnect/recovery state, unload cleanup, and a
+  read-only manual refresh.
+- Strengthened safe rendering, CSP form denial, session-contained evidence
+  identifiers, keyboard focus, ARIA refresh announcements, responsive layouts,
+  and reduced-motion behavior.
+- Added focused AFDE-3.6 compatibility, rendering, polling, traversal,
+  mutation-rejection, serialization, and persisted-byte invariance coverage.
+
 ## AFDE-3.5 Web Dashboard Foundation
 
 - Added a reusable read-only `DashboardAPI` with JSON runtime, session,

@@ -1,5 +1,22 @@
 # Decision Log
 
+## 2026-07-16 - AFDE-3.6 Live Presentation State
+
+- Preserve Dashboard Snapshot as the only browser data projection and continue
+  one complete `/runtime` GET per refresh; individual cards do not poll.
+- Treat the last successful snapshot as presentation continuity only. A failed
+  request changes connection messaging but never replaces the visible runtime
+  data or becomes authoritative state.
+- Prevent overlapping requests with one in-flight guard, reschedule only after
+  completion, abort on unload, and allow manual refresh through the identical
+  read-only request path.
+- Keep evidence metadata-only. Only available artifacts resolved inside the
+  runtime session directory are projected, and no preview/file-serving route
+  is introduced.
+- Use semantic sections, text-bearing status badges, visible keyboard focus,
+  an ARIA live region, responsive breakpoints, and reduced-motion handling as
+  the accessibility baseline.
+
 ## 2026-07-16 - AFDE-3.5 Snapshot-Backed Web Boundary
 
 - `DashboardAPI` is the only web-facing data adapter and consumes
