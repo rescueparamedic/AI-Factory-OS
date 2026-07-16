@@ -1,5 +1,19 @@
 # Decision Log
 
+## 2026-07-16 - AFDE-3.7 Validated Session Discovery and Presentation Tools
+
+- Discover sessions directly from existing runtime-session directories and
+  derive summaries through `RuntimeDashboard.snapshot`; do not add a registry.
+- Validate selected IDs syntactically and against discovery results before
+  asking the snapshot provider for data. Never accept or return filesystem paths.
+- Keep search, filters, sorting, selected-session URL state, dialog state, and
+  statistics in the browser presentation layer only; never persist them as
+  runtime or analytics state.
+- Preserve one guarded runtime poll. Permit a lower-frequency `/sessions` read
+  with its own overlap guard because it does not poll or duplicate runtime state.
+- Keep evidence detail metadata-only and use text-created DOM plus focus-return
+  dialog behavior for safe accessible inspection.
+
 ## 2026-07-16 - AFDE-3.6 Live Presentation State
 
 - Preserve Dashboard Snapshot as the only browser data projection and continue

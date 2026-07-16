@@ -4,20 +4,30 @@ from copy import deepcopy
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 from pathlib import Path
+import re
 from typing import Any, Mapping
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 
 from .live_dashboard import SnapshotProvider, validate_refresh_interval
 
 
 API_ROUTES = frozenset({
     '/runtime', '/session', '/workers', '/timeline',
-    '/approval-queue', '/evidence', '/repository', '/config',
+    '/approval-queue', '/evidence', '/repository', '/config', '/sessions',
 })
 LOCAL_HOSTS = frozenset({'127.0.0.1', 'localhost'})
+SESSION_ID_PATTERN = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$')
 
 
 class DashboardRouteNotFound(LookupError):
+    pass
+
+
+class DashboardSessionInvalid(ValueError):
+    pass
+
+
+class DashboardSessionNotFound(LookupError):
     pass
 
 
@@ -35,21 +45,69 @@ class DashboardAPI:
         self.poll_interval = validate_refresh_interval(poll_interval)
 
     def get(self, route: str) -> dict[str, Any]:
-        path = urlsplit(route).path.rstrip('/') or '/'
+        parsed = urlsplit(route)
+        path = parsed.path.rstrip('/') or '/'
         if path not in API_ROUTES:
             raise DashboardRouteNotFound(path)
+        if path == '/sessions':
+            return {
+                'sessions': deepcopy(self._sessions()),
+                'read_only': True,
+            }
+        selected_session = self._selected_session(parsed.query)
         if path == '/config':
             return {
-                'session_id': self.session_id,
+                'session_id': selected_session,
                 'poll_interval_seconds': self.poll_interval,
                 'runtime_endpoint': '/runtime',
+                'sessions_endpoint': '/sessions',
                 'transport': 'http-polling',
                 'read_only': True,
             }
-        snapshot = self.provider.snapshot(self.session_id)
+        snapshot = self.provider.snapshot(selected_session)
         if not isinstance(snapshot, Mapping):
             raise TypeError('dashboard snapshot must be a mapping')
         return deepcopy(self._view(path, snapshot))
+
+    def _selected_session(self, query: str) -> str:
+        if not query:
+            return self.session_id
+        values = parse_qs(query, keep_blank_values=True).get('session_id', [])
+        if len(values) != 1 or not SESSION_ID_PATTERN.fullmatch(values[0]):
+            raise DashboardSessionInvalid('invalid session ID')
+        selected = values[0]
+        if selected not in {
+            item.get('session_id') for item in self._sessions()
+            if isinstance(item, Mapping)
+        }:
+            raise DashboardSessionNotFound(selected)
+        return selected
+
+    def _sessions(self) -> list[dict[str, Any]]:
+        discover = getattr(self.provider, 'sessions', None)
+        if callable(discover):
+            values = discover()
+            if not isinstance(values, list):
+                raise TypeError('dashboard sessions must be a list')
+            return [dict(item) for item in values if isinstance(item, Mapping)]
+        snapshot = self.provider.snapshot(self.session_id)
+        if not isinstance(snapshot, Mapping):
+            raise TypeError('dashboard snapshot must be a mapping')
+        progress = snapshot.get('progress', {})
+        if not isinstance(progress, Mapping):
+            progress = {}
+        return [{
+            'session_id': snapshot.get('session_id', self.session_id),
+            'runtime_status': snapshot.get('runtime_status', 'Unavailable'),
+            'created_at': snapshot.get('created_at', 'unavailable'),
+            'updated_at': snapshot.get('updated_at', 'unavailable'),
+            'current_task': snapshot.get('current_task', 'unavailable'),
+            'current_worker': snapshot.get('current_worker', 'unavailable'),
+            'progress': progress.get('value'),
+            'progress_source': progress.get('source', 'unavailable'),
+            'approval_count': len(snapshot.get('approval_queue', [])),
+            'evidence_count': len(snapshot.get('evidence', [])),
+        }]
 
     @staticmethod
     def _view(path: str, snapshot: Mapping[str, Any]) -> dict[str, Any]:
@@ -95,7 +153,7 @@ def build_dashboard_handler(
     }
 
     class DashboardRequestHandler(BaseHTTPRequestHandler):
-        server_version = 'AFDE-Dashboard/3.6'
+        server_version = 'AFDE-Dashboard/3.7'
 
         def do_GET(self) -> None:
             self._read(head_only=False)
@@ -133,11 +191,23 @@ def build_dashboard_handler(
                 self._response(200, content_type, body, head_only)
                 return
             try:
-                payload = api.get(path)
+                payload = api.get(self.path)
                 body = _json_bytes(payload)
             except DashboardRouteNotFound:
                 self._json(
                     404, {'error': 'route_not_found', 'path': path},
+                    head_only=head_only,
+                )
+                return
+            except DashboardSessionInvalid:
+                self._json(
+                    400, {'error': 'invalid_session_id'},
+                    head_only=head_only,
+                )
+                return
+            except DashboardSessionNotFound:
+                self._json(
+                    404, {'error': 'runtime_session_not_found'},
                     head_only=head_only,
                 )
                 return
