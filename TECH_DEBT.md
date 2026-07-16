@@ -1,5 +1,17 @@
 # Technical Debt
 
+## AFDE-3.2 Codex Automation Bridge
+
+- Local exclusive claim files prevent duplicate action IDs on one filesystem,
+  but do not provide a transactional multi-host queue or recovery leases.
+- The JSONL evidence ledger is append-only by convention, without locking,
+  rotation, signatures, or a tamper-evident hash chain.
+- The existing approval-resume consumer is limited to existing-file
+  replacement; new files outside the controlled sandbox can pause but are not
+  yet consumable through that legacy resume path.
+- GitHub PR creation, merge, deployment, release, and remote policy discovery
+  remain deliberately outside the bridge.
+
 ## AFDE-3.1 Safe Auto Approval Engine
 
 - Local atomic JSON approval evidence has no multi-process lock,

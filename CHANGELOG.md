@@ -1,5 +1,15 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-3.2 Codex Automation Bridge
+
+- Added the strict structured `ToolAction` contract and deterministic action
+  fingerprints for file, command, test, and bounded Git operations.
+- Added context binding, adapter dispatch, persistent duplicate prevention,
+  redacted evidence, and AUTO/ASK/DENY runtime continuation behavior.
+- Reused Approval Guardian and ControlledExecutor as the only protected
+  side-effect boundary; legacy proposals remain an absent-actions fallback.
+- Added deterministic mock CLI demos and action evidence inspection.
+
 ## AFDE-3.1 Safe Auto Approval Engine
 
 - Added normalized runtime approval context and deterministic action/context

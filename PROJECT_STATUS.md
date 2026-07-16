@@ -1,5 +1,16 @@
 # AI Factory OS Project Status
 
+## AFDE-3.2 Codex Automation Bridge
+
+- Structured `ToolAction` output is the canonical runtime automation path.
+- File, command, test, and safe Git adapters reuse the existing execution and
+  approval boundary.
+- Exact context binding, action fingerprints, redacted evidence, and atomic
+  duplicate-ID prevention are active.
+- Mock AUTO/ASK/DENY demos and CLI evidence lookup require no external API.
+- Merge, release, deployment, destructive Git, protected-branch push, and
+  secret input remain unsupported.
+
 ## AFDE-3.1 Safe Auto Approval Engine
 
 - Existing Approval Guardian and Controlled Execution policies are enforced

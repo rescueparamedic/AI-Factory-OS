@@ -1,5 +1,23 @@
 # AI Factory OS Sprint v2.7.3 적용 방법
 
+## AFDE-3.2 Codex Automation Bridge
+
+Worker results can now provide a canonical `actions` array using the strict
+`ToolAction` contract. The bridge binds each action to its runtime context and
+routes protected writes, commands, tests, and bounded Git operations through
+the existing Approval Guardian and `ControlledExecutor`.
+
+```powershell
+python -m afde.cli tool-action-demo --path auto
+python -m afde.cli tool-action-demo --path ask
+python -m afde.cli tool-action-demo --path deny
+python -m afde.cli tool-action-status --action-id <ACTION_ID>
+```
+
+The mock demo makes no API call. Merge, deploy, release, destructive Git,
+protected-branch push, secret input, and raw shell-text extraction remain
+unsupported. See `docs/reports/AFDE_3_2_CODEX_AUTOMATION_BRIDGE_REPORT.md`.
+
 ## AFDE-3.1 safe runtime approval enforcement
 
 Protected real-runtime file and command actions now pass through one final

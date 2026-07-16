@@ -18,6 +18,8 @@ from .runtime_lifecycle import (
     RuntimeFailure, RuntimeLifecycleStatus, RuntimeTransition,
 )
 from .worker_context import WorkerContext
+from .tool_actions import ToolAction, ToolActionType, ToolExecutionResult
+from .automation_bridge import CodexAutomationBridge
 
 __all__ = [
     "AgentResultHandoff", "DeveloperExecutionResult", "DocumentationExecutionResult",
@@ -30,4 +32,5 @@ __all__ = [
     "RuntimeTask", "WorkerContext", "RoleLifecycleRecord",
     "RoleLifecycleStatus", "RuntimeExecutionSummary", "RuntimeFailure",
     "RuntimeLifecycleStatus", "RuntimeTransition",
+    "CodexAutomationBridge", "ToolAction", "ToolActionType", "ToolExecutionResult",
 ]

@@ -161,12 +161,27 @@ class ControlledExecutionPolicy:
             return PolicyResult("DENY", "NETWORK_COMMAND", "Network commands are forbidden.", safe_repr)
         if _contains_secret(" ".join(argv)):
             return PolicyResult("DENY", "SECRET_COMMAND_ARGUMENT", "Credential-like command arguments are forbidden.", safe_repr)
-        if lowered[0] in {"git", "pip", "npm", "python3", "python.exe"} and lowered[:3] != ("python.exe", "-m", "pytest"):
+        if lowered[0] in {"pip", "npm", "python3", "python.exe"} and lowered[:3] != ("python.exe", "-m", "pytest"):
             return PolicyResult("DENY", "UNSUPPORTED_EXECUTABLE", "Executable is not in the MVP allowlist.", safe_repr)
         if any(item in _META or any(char in item for char in "\r\n") for item in argv):
             return PolicyResult("DENY", "COMMAND_COMPOSITION", "Chaining, redirection, and control operators are forbidden.", safe_repr)
         if lowered == ("python", "--version"):
             return PolicyResult("AUTO_APPROVE", "SAFE_PYTHON_VERSION", "Allowlisted local version check.", safe_repr)
+        if lowered in {("git", "status", "--short"), ("git", "diff", "--check")}:
+            return PolicyResult("AUTO_APPROVE", "SAFE_GIT_INSPECTION", "Allowlisted read-only Git inspection.", safe_repr)
+        if len(argv) >= 4 and lowered[:3] == ("git", "add", "--"):
+            if all(_safe_git_path(item, self.root) for item in argv[3:]):
+                return PolicyResult("AUTO_APPROVE", "SAFE_GIT_ADD", "Explicit workspace-contained paths may be staged on a feature branch.", safe_repr)
+            return PolicyResult("DENY", "UNSAFE_GIT_PATH", "Git staging paths must be explicit and workspace-contained.", safe_repr)
+        branch = _git_branch(self.root)
+        if len(argv) == 4 and lowered[:3] == ("git", "commit", "-m"):
+            if branch.startswith("feature/") and "\n" not in argv[3]:
+                return PolicyResult("AUTO_APPROVE", "SAFE_FEATURE_COMMIT", "Bounded commit on the current feature branch.", safe_repr)
+            return PolicyResult("DENY", "PROTECTED_OR_INVALID_COMMIT", "Commits require the current feature branch and one message.", safe_repr)
+        if len(argv) == 4 and lowered[:3] == ("git", "push", "origin"):
+            if branch.startswith("feature/") and argv[3] == branch:
+                return PolicyResult("AUTO_APPROVE", "SAFE_FEATURE_PUSH", "Exact current feature branch push is allowlisted.", safe_repr)
+            return PolicyResult("DENY", "PROTECTED_OR_MISMATCHED_PUSH", "Push must target the exact current feature branch.", safe_repr)
         if len(argv) >= 3 and lowered[:3] == ("python", "-m", "pytest"):
             if all(_safe_pytest_arg(item, self.root) for item in argv[3:]):
                 return PolicyResult("AUTO_APPROVE", "SAFE_PYTEST", "Allowlisted bounded pytest command.", safe_repr)
@@ -177,6 +192,8 @@ class ControlledExecutionPolicy:
             sandbox = self.root / SAFE_EXECUTION_DIR
             if script.suffix.lower() == ".py" and _inside(target, sandbox.resolve()) and target.is_file() and _safe_python_script(target):
                 return PolicyResult("AUTO_APPROVE", "SAFE_SANDBOX_PYTHON", "Allowlisted workspace-contained Python script.", safe_repr, str(target))
+        if lowered[0] == "git":
+            return PolicyResult("DENY", "UNSUPPORTED_EXECUTABLE", "Git command is outside the bounded automation allowlist.", safe_repr)
         return PolicyResult("DENY", "UNSUPPORTED_COMMAND", "Command is not exactly allowlisted.", safe_repr)
 
 
@@ -330,7 +347,7 @@ class ControlledExecutor:
 
     def _run_command(self, request: ExecutionRequest, policy: PolicyResult) -> dict[str, Any]:
         started = datetime.now().astimezone(); clock = monotonic(); timed_out = False
-        execution_argv = [sys.executable, *request.argv[1:]]
+        execution_argv = list(request.argv) if request.argv and request.argv[0].lower() == 'git' else [sys.executable, *request.argv[1:]]
         try:
             completed = self.runner(
                 execution_argv, cwd=self.root, capture_output=True, text=True,
@@ -504,6 +521,16 @@ def _safe_pytest_arg(value: str, root: Path) -> bool:
     if value.startswith("-") or any(item in value for item in _META): return False
     target = (root / value.split("::", 1)[0]).resolve()
     return _inside(target, root) and (target.suffix == ".py" or "tests" in target.parts)
+
+
+def _safe_git_path(value: str, root: Path) -> bool:
+    if not value or value in {".", "..", "*", ":/"} or value.startswith("-"):
+        return False
+    candidate = Path(value)
+    if candidate.is_absolute():
+        return False
+    target = (root / candidate).resolve()
+    return _inside(target, root) and ".git" not in {part.lower() for part in target.relative_to(root).parts}
 
 
 def _file_hash(path: Path) -> str: return sha256(path.read_bytes()).hexdigest()

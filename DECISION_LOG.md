@@ -1,5 +1,17 @@
 # Decision Log
 
+## 2026-07-15 - AFDE-3.2 Structured Automation Boundary
+
+- `ToolAction` is the canonical worker-to-runtime automation contract; raw
+  text is never interpreted as executable authority.
+- Approval Guardian and ControlledExecutor remain the sole protected
+  side-effect policies and boundary.
+- Structured actions bind exact repository, cwd, branch, task, session, stage,
+  revision, worker, target, and payload evidence before execution.
+- Existing proposal fields remain compatible only when `actions` is absent.
+- Merge, deployment, release, destructive Git, protected push, and secret input
+  are excluded rather than modeled as approvable bridge actions.
+
 ## 2026-07-15 — AFDE-3.1 Central Runtime Approval Enforcement
 
 - `ApprovalDecision` and `ApprovalGuardian` remain canonical; no second
