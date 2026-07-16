@@ -1,5 +1,17 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-3.4 Live Terminal Dashboard
+
+- Added safely copied dashboard snapshots with current stage, task, worker,
+  status, evidence, repository state, timestamp, and progress provenance.
+- Added a reusable bounded polling controller with configurable intervals,
+  maximum refreshes/duration, refresh-error recovery, and clean Ctrl+C exit.
+- Added a dependency-free terminal live renderer with ANSI clearing only on
+  supported terminals and safe no-clear or redirected-output fallback.
+- Added `runtime-dashboard --live`, `--refresh-interval`,
+  `--max-refreshes`, `--max-duration`, and `--no-clear`.
+- Preserved existing non-live text and JSON output behavior.
+
 ## AFDE-3.3 Runtime Dashboard MVP
 
 - Added a read-only persisted runtime dashboard with Running, Waiting,

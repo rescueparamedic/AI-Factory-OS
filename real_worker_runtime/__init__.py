@@ -21,9 +21,14 @@ from .worker_context import WorkerContext
 from .tool_actions import ToolAction, ToolActionType, ToolExecutionResult
 from .automation_bridge import CodexAutomationBridge
 from .dashboard import RuntimeDashboard
+from .live_dashboard import (
+    LiveDashboardController, LiveRefreshResult, TerminalLiveDashboardRenderer,
+)
 
 __all__ = [
+    'LiveDashboardController', 'LiveRefreshResult',
     'RuntimeDashboard',
+    'TerminalLiveDashboardRenderer',
     "AgentResultHandoff", "DeveloperExecutionResult", "DocumentationExecutionResult",
     "OrchestrationAction", "OrchestrationDecision", "PipelineState",
     "PlannerExecutionResult", "QAExecutionResult", "QARevisionDecision",

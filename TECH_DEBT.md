@@ -1,5 +1,19 @@
 # Technical Debt
 
+## AFDE-3.4 Live Terminal Dashboard
+
+- Polling reads local JSON files without filesystem notifications, locking,
+  transactional snapshots, or cross-process consistency guarantees.
+- ANSI clearing depends on TTY and terminal capability detection; unsupported
+  Windows terminals and redirected output use append-only no-clear frames.
+- Lifecycle-derived progress is deterministic but coarse and may move backward
+  during valid QA revision loops; it is labeled rather than presented as an
+  exact execution estimate.
+- Live output is single-session and local. Web UI, WebSocket/SSE delivery,
+  multi-session aggregation, remote evidence, identity, and RBAC are deferred.
+- No-clear mode suppresses repeated timeline entries but repeats summary
+  sections on each refresh for readable redirected logs.
+
 ## AFDE-3.3 Runtime Dashboard MVP
 
 - The CLI view is an on-demand local snapshot without a web UI, WebSocket
