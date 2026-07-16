@@ -3,62 +3,89 @@
 <head>
   <meta charset='utf-8'>
   <meta name='viewport' content='width=device-width, initial-scale=1'>
-  <title>AI Factory OS Runtime Dashboard</title>
+  <title>AI Factory OS Live Runtime Dashboard</title>
   <link rel='stylesheet' href='/dashboard.css'>
   <script src='/dashboard.js' defer></script>
 </head>
 <body>
+  <a class='skip-link' href='#dashboard'>Skip to dashboard</a>
   <header class='site-header'>
     <div>
-      <p class='eyebrow'>AI Factory OS</p>
-      <h1>Runtime Dashboard</h1>
-      <p class='subtitle'>Read-only localhost projection</p>
+      <p class='eyebrow'>AI Factory OS · Local operations console</p>
+      <h1>Live Runtime Dashboard</h1>
+      <p class='subtitle'>One read-only snapshot. No approval or execution controls.</p>
     </div>
-    <div class='refresh-panel' aria-live='polite'>
-      <span id='connection-status' class='status-badge'>Connecting</span>
-      <span id='refresh-time'>Waiting for snapshot</span>
+    <div class='connection-panel' aria-label='Connection and refresh status'>
+      <div class='connection-line'>
+        <span id='connection-status' class='status-badge status-waiting'>Connecting</span>
+        <button id='refresh-button' type='button'>Refresh now</button>
+      </div>
+      <p id='refresh-status' class='refresh-status' role='status' aria-live='polite'>Waiting for first snapshot</p>
+      <p id='polling-status' class='microcopy'>Polling configuration unavailable</p>
     </div>
   </header>
 
-  <main class='dashboard-grid'>
+  <main id='dashboard' class='dashboard-grid'>
     <section class='card runtime-card' aria-labelledby='runtime-title'>
-      <h2 id='runtime-title'>Runtime</h2>
+      <div class='card-heading'>
+        <h2 id='runtime-title'>Runtime overview</h2>
+        <span id='runtime-status' class='status-badge status-waiting'>Waiting</span>
+      </div>
       <dl id='runtime-summary' class='metrics'></dl>
-      <div class='progress-track' aria-label='Runtime progress'>
+      <div id='runtime-progress-track' class='progress-track' role='progressbar' aria-label='Runtime progress' aria-valuemin='0' aria-valuemax='100' aria-valuetext='Progress unavailable'>
         <div id='runtime-progress' class='progress-value'></div>
       </div>
-      <p id='progress-source' class='card-note'></p>
+      <p id='progress-source' class='card-note'>Progress unavailable</p>
+    </section>
+
+    <section class='card current-card' aria-labelledby='current-title'>
+      <h2 id='current-title'>Current operation</h2>
+      <dl id='current-operation' class='metrics'></dl>
     </section>
 
     <section class='card workers-card' aria-labelledby='workers-title'>
-      <h2 id='workers-title'>Workers</h2>
-      <div id='workers' class='table-wrap'></div>
+      <h2 id='workers-title'>Worker progress</h2>
+      <div id='workers' class='worker-list' aria-live='polite'></div>
     </section>
 
-    <section class='card timeline-card' aria-labelledby='timeline-title'>
-      <h2 id='timeline-title'>Timeline</h2>
-      <ol id='timeline' class='event-list'></ol>
+    <section class='card lifecycle-card' aria-labelledby='lifecycle-title'>
+      <h2 id='lifecycle-title'>Lifecycle status</h2>
+      <ol id='lifecycle' class='lifecycle-list'></ol>
     </section>
 
     <section class='card approval-card' aria-labelledby='approval-title'>
-      <h2 id='approval-title'>Approval Queue</h2>
+      <div class='card-heading'>
+        <h2 id='approval-title'>Approval queue</h2>
+        <span class='read-only-label'>Read only</span>
+      </div>
       <div id='approval-queue' class='stack-list'></div>
     </section>
 
+    <section class='card timeline-card' aria-labelledby='timeline-title'>
+      <div class='card-heading'>
+        <h2 id='timeline-title'>Runtime timeline</h2>
+        <span class='microcopy'>Latest 20 · snapshot order</span>
+      </div>
+      <ol id='timeline' class='event-list'></ol>
+    </section>
+
     <section class='card evidence-card' aria-labelledby='evidence-title'>
-      <h2 id='evidence-title'>Evidence</h2>
+      <div class='card-heading'>
+        <h2 id='evidence-title'>Evidence</h2>
+        <span class='read-only-label'>Metadata only</span>
+      </div>
       <div id='evidence' class='stack-list'></div>
     </section>
 
     <section class='card repository-card' aria-labelledby='repository-title'>
-      <h2 id='repository-title'>Repository</h2>
+      <h2 id='repository-title'>Repository status</h2>
       <dl id='repository' class='metrics'></dl>
     </section>
   </main>
 
   <footer>
-    <span>GET-only foundation</span>
-    <span>No approvals, execution, or mutations</span>
+    <span>GET/HEAD only · localhost only</span>
+    <span>No approvals, execution, evidence generation, or repository mutation</span>
   </footer>
 </body>
 </html>

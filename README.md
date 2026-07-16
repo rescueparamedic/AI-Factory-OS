@@ -195,6 +195,36 @@ python main.py scheduler list --limit 5
 python main.py dashboard live-build
 ```
 
+## AFDE-3.6 Live Web Dashboard
+
+Start the localhost operations console for one persisted runtime session:
+
+~~~powershell
+python -m afde.cli runtime-dashboard-web --session-id RWS-... --host 127.0.0.1 --port 8765 --poll-interval 1
+~~~
+
+Open `http://127.0.0.1:8765/`. The live dashboard shows runtime and current
+operation, five lifecycle stages, worker progress with provenance, pending
+approvals, the chronological timeline, evidence metadata, repository state,
+and connection/refresh status. A keyboard-accessible `Refresh now` button
+performs the same read-only GET as the automatic loop.
+
+The browser makes one non-overlapping `GET /runtime` per configured interval.
+On a temporary failure it keeps the last valid snapshot visible, reports the
+disconnect through an ARIA live region, retries, and reports recovery after a
+successful response. Polling is cancelled on page unload. Runtime values are
+written with safe DOM text APIs; no runtime value is interpreted as markup.
+
+Progress is labeled as `explicit_pipeline`, `explicit_session`,
+`lifecycle_derived`, or `unavailable`. Evidence remains metadata-only and is
+limited to available artifacts inside the selected runtime session directory;
+there is no arbitrary file-serving or preview route.
+
+The API routes and CLI commands documented below remain compatible with
+AFDE-3.3 through AFDE-3.5. The dashboard remains localhost-only and has no
+authentication, TLS, RBAC, WebSocket/SSE, remote access, or multi-session
+aggregation.
+
 ## AFDE-3.5 Web Dashboard Foundation
 
 Serve one persisted runtime session on localhost:

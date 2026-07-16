@@ -95,7 +95,7 @@ def build_dashboard_handler(
     }
 
     class DashboardRequestHandler(BaseHTTPRequestHandler):
-        server_version = 'AFDE-Dashboard/3.5'
+        server_version = 'AFDE-Dashboard/3.6'
 
         def do_GET(self) -> None:
             self._read(head_only=False)
@@ -202,6 +202,7 @@ def build_dashboard_handler(
                 f'img-src {quote}self{quote} data:; '
                 f'object-src {quote}none{quote}; '
                 f'base-uri {quote}none{quote}; '
+                f'form-action {quote}none{quote}; '
                 f'frame-ancestors {quote}none{quote}'
             )
             self.send_header('X-Content-Type-Options', 'nosniff')

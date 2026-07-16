@@ -1,5 +1,21 @@
 # Technical Debt
 
+## AFDE-3.6 Live Web Dashboard
+
+- Browser refresh still uses fixed-interval polling. Visibility-aware cadence,
+  exponential backoff, jitter, WebSocket, and SSE transports are deferred.
+- Evidence is intentionally metadata-only; safe content preview would require
+  an allowlisted content policy, size limits, MIME validation, and a dedicated
+  containment-tested endpoint.
+- The localhost server still lacks authentication, RBAC, TLS, CSRF/session
+  identity, audit identities, rate limiting, and production hardening.
+- The view remains single-session. Remote access and multi-session discovery,
+  authorization-aware aggregation, pagination, retention, and routing are not
+  implemented.
+- Browser coverage validates assets, control invariants, and Node syntax but
+  does not replace a future cross-browser assistive-technology certification
+  suite or visual-regression service.
+
 ## AFDE-3.5 Web Dashboard Foundation
 
 - The server is intended only for trusted localhost use and has no

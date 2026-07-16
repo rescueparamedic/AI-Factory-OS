@@ -288,7 +288,10 @@ def test_browser_skeleton_contains_all_required_cards(web_server):
     ):
         assert 'id=' + chr(39) + card + chr(39) in html
     assert '<form' not in html
-    assert '<button' not in html
+    assert html.count('<button') == 1
+    assert 'id=' + chr(39) + 'refresh-button' + chr(39) in html
+    for control in ('Approve', 'Reject', 'Execute', 'Delete'):
+        assert '>' + control + '<' not in html
 
 
 def test_browser_polling_uses_get_only_and_one_runtime_endpoint():
@@ -298,10 +301,11 @@ def test_browser_polling_uses_get_only_and_one_runtime_endpoint():
     )
     javascript = path.read_text(encoding='utf-8')
 
-    assert 'loadJson(' + chr(39) + '/config' + chr(39) + ')' in javascript
-    assert 'loadJson(endpoint)' in javascript
+    assert 'loadJson(' + chr(39) + '/config' + chr(39) in javascript
+    assert 'loadJson(state.endpoint' in javascript
     assert 'method: ' + chr(39) + 'GET' + chr(39) in javascript
-    assert 'window.setTimeout(refresh, interval)' in javascript
+    assert 'window.setTimeout(() => refresh(' + chr(39) + 'poll' in javascript
+    assert 'state.inFlight' in javascript
     assert 'innerHTML' not in javascript
     for mutation in ('POST', 'PUT', 'PATCH', 'DELETE'):
         pattern = 'method: ' + chr(39) + mutation + chr(39)
