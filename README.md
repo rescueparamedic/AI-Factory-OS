@@ -195,6 +195,31 @@ python main.py scheduler list --limit 5
 python main.py dashboard live-build
 ```
 
+## AFDE-3.7 Interactive Operations Dashboard
+
+The localhost dashboard now discovers existing persisted runtime sessions and
+allows switching without restarting the server:
+
+~~~powershell
+python -m afde.cli runtime-dashboard-web --session-id RWS-... --host 127.0.0.1 --port 8765 --poll-interval 1
+~~~
+
+`GET /sessions` returns safe summary data only. The browser requests a selected
+snapshot with `/runtime?session_id=RWS-...`; the server accepts only a valid ID
+that is present in current discovery results. Session paths are never returned.
+
+The browser adds global snapshot search, worker/approval/timeline/evidence
+filters, stable sorting, snapshot-derived statistics, sticky section
+navigation, and keyboard-accessible metadata detail dialogs. Active filters
+remain presentation state across polling updates. Timeline rendering is capped
+at 50 visible events and session discovery refreshes independently at a lower
+frequency with its own overlap guard.
+
+All interaction remains inspection-only. Details use safe DOM text, evidence
+is metadata-only, and there are no approval, execution, download, file-open,
+delete, or repository mutation controls. Existing AFDE-3.3 through AFDE-3.6
+CLI and API routes remain available.
+
 ## AFDE-3.6 Live Web Dashboard
 
 Start the localhost operations console for one persisted runtime session:

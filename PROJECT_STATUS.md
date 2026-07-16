@@ -1,5 +1,19 @@
 # AI Factory OS Project Status
 
+## AFDE-3.7 Interactive Operations Dashboard
+
+- Existing runtime session files are now discoverable through safe snapshot
+  summaries; no registry, analytics store, database, or session mutation exists.
+- Browser users can switch only among discovered session IDs, search the loaded
+  snapshot, filter and sort operational panels, inspect metadata details, and
+  view ephemeral snapshot-derived statistics.
+- Runtime polling remains one non-overlapping `/runtime` request. Session-list
+  refresh is a separate low-frequency discovery read with its own overlap guard.
+- DashboardAPI remains transport-neutral and RuntimePipeline remains the Single
+  Source of Truth; controllers do not access runtime execution logic.
+- Authentication/RBAC/TLS, remote access, WebSocket/SSE, production hosting,
+  and every dashboard mutation operation remain deferred.
+
 ## AFDE-3.6 Live Web Dashboard
 
 - The AFDE-3.5 browser foundation is now a practical localhost live operations

@@ -1,5 +1,18 @@
 # Technical Debt
 
+## AFDE-3.7 Interactive Operations Dashboard
+
+- Session discovery scans local session directories and projects each snapshot;
+  large retention sets need authorized pagination, caching, and indexing later.
+- Search/filter/sort is in-memory and single-snapshot. There is no server-side
+  query language, saved view, cross-session search, export, or analytics store.
+- Detail dialogs are metadata-only and have no evidence content preview,
+  download, localization, or formal assistive-technology certification.
+- Section navigation is sticky but does not use an observer-driven active
+  section marker; richer navigation must remain dependency-free and accessible.
+- WebSocket/SSE, authentication, RBAC, TLS, remote/multi-user operation,
+  production hosting, and all dashboard mutations remain unimplemented.
+
 ## AFDE-3.6 Live Web Dashboard
 
 - Browser refresh still uses fixed-interval polling. Visibility-aware cadence,

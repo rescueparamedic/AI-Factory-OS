@@ -146,7 +146,7 @@ def test_timeline_order_task_summary_and_visible_limit(tmp_path):
     assert timeline[0]['task'] == 'TASK-36'
     assert timeline[1]['summary'] == 'qa started'
     javascript = _javascript()
-    assert '.slice(-TIMELINE_LIMIT)' in javascript
+    assert '.slice(0, TIMELINE_LIMIT)' in javascript
     assert '.reverse()' not in javascript
 
 
@@ -200,12 +200,12 @@ def test_path_traversal_and_mutations_are_json_rejections(tmp_path):
 def test_single_polling_loop_preserves_last_snapshot_and_recovers():
     javascript = _javascript()
 
-    assert 'endpoint: ' + chr(39) + '/runtime' + chr(39) in javascript
-    assert 'if (state.stopped || state.inFlight)' in javascript
-    assert 'state.lastSnapshot = snapshot' in javascript
+    assert 'return ' + chr(39) + '/runtime?session_id=' + chr(39) in javascript
+    assert 'if (state.stopped || state.runtimeInFlight' in javascript
+    assert 'state.snapshot = snapshot' in javascript
     assert 'displaying last valid snapshot' in javascript
     assert 'retry scheduled' in javascript
-    assert 'state.controller.abort()' in javascript
+    assert 'state.runtimeController.abort()' in javascript
     catch_block = javascript.rsplit('} catch (error) {', 1)[-1]
     assert 'renderSnapshot(' not in catch_block.split('} finally {', 1)[0]
 
@@ -214,7 +214,7 @@ def test_manual_refresh_is_get_only_and_has_no_action_controls():
     html = _html()
     javascript = _javascript()
 
-    assert 'polling.refresh(' + chr(39) + 'manual' + chr(39) in javascript
+    assert 'controller.refreshRuntime(' + chr(39) + 'manual' + chr(39) in javascript
     assert 'method: ' + chr(39) + 'GET' + chr(39) in javascript
     assert 'inner' + 'HTML' not in javascript
     for method in ('POST', 'PUT', 'PATCH', 'DELETE'):

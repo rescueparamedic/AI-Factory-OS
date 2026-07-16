@@ -49,6 +49,8 @@ class RuntimeDashboard:
         repository = self.repository_status()
         result = {
             'session_id': session_id,
+            'created_at': str(session.get('created_at', 'unavailable')),
+            'updated_at': str(session.get('updated_at', 'unavailable')),
             'runtime_status': _runtime_status(session, pipeline),
             'current_stage': pipeline.state.value if pipeline else 'unavailable',
             'current_task': pipeline.task_id if pipeline else 'unavailable',
@@ -71,6 +73,50 @@ class RuntimeDashboard:
             'snapshot_timestamp': _now(),
         }
         return deepcopy(result)
+
+    def sessions(self) -> list[dict[str, Any]]:
+        '''Discover safe summaries from existing persisted session folders.'''
+        root = self.root / 'data' / 'runtime_sessions'
+        if not root.is_dir():
+            return []
+        summaries = []
+        for directory in sorted(root.iterdir(), key=lambda item: item.name):
+            if not directory.is_dir() or not _valid_session_id(directory.name):
+                continue
+            try:
+                snapshot = self.snapshot(directory.name)
+                progress = snapshot.get('progress', {})
+                if not isinstance(progress, Mapping):
+                    progress = {}
+                summaries.append({
+                    'session_id': directory.name,
+                    'runtime_status': snapshot.get('runtime_status', 'Unavailable'),
+                    'created_at': snapshot.get('created_at', 'unavailable'),
+                    'updated_at': snapshot.get('updated_at', 'unavailable'),
+                    'current_task': snapshot.get('current_task', 'unavailable'),
+                    'current_worker': snapshot.get('current_worker', 'unavailable'),
+                    'progress': progress.get('value'),
+                    'progress_source': progress.get('source', 'unavailable'),
+                    'approval_count': len(snapshot.get('approval_queue', [])),
+                    'evidence_count': len(snapshot.get('evidence', [])),
+                })
+            except (OSError, TypeError, ValueError, json.JSONDecodeError):
+                summaries.append({
+                    'session_id': directory.name,
+                    'runtime_status': 'Unavailable',
+                    'created_at': 'unavailable',
+                    'updated_at': 'unavailable',
+                    'current_task': 'unavailable',
+                    'current_worker': 'unavailable',
+                    'progress': None,
+                    'progress_source': 'unavailable',
+                    'approval_count': 0,
+                    'evidence_count': 0,
+                })
+        summaries.sort(key=lambda item: item['session_id'])
+        summaries.sort(key=lambda item: str(item['updated_at']), reverse=True)
+        summaries.sort(key=lambda item: item['updated_at'] == 'unavailable')
+        return summaries
 
     def repository_status(self) -> dict[str, str]:
         branch = self._git('branch', '--show-current')
@@ -182,6 +228,14 @@ def _runtime_status(session: Mapping[str, Any], pipeline: RuntimePipeline | None
 
 def _now() -> str:
     return datetime.now().astimezone().isoformat(timespec='seconds')
+
+
+def _valid_session_id(value: str) -> bool:
+    if not isinstance(value, str) or not 1 <= len(value) <= 128:
+        return False
+    return value[0].isalnum() and all(
+        character.isalnum() or character in {'-', '_'} for character in value
+    )
 
 
 def _progress(

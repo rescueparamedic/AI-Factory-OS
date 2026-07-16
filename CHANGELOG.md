@@ -1,5 +1,18 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-3.7 Interactive Operations Dashboard
+
+- Added `GET /sessions` discovery over existing persisted runtime sessions,
+  returning safe summaries without paths, a registry, or a database.
+- Added validated `session_id` query selection and browser session switching
+  without server restart or filesystem input.
+- Added global search, panel filters, stable sorting, session-aware URL state,
+  metadata detail dialogs, snapshot-derived statistics, and compact navigation.
+- Added independent low-frequency session-list refresh with overlap prevention,
+  retained one guarded runtime request per interval, and bounded timeline output.
+- Added keyboard/focus/Escape dialog behavior, ARIA result/session messaging,
+  responsive controls, and read-only/malformed/traversal/byte-invariance tests.
+
 ## AFDE-3.6 Live Web Dashboard
 
 - Upgraded the browser skeleton into a responsive live operations console
