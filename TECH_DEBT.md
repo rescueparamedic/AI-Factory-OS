@@ -1,5 +1,16 @@
 # Technical Debt
 
+## AFDE-3.3 Runtime Dashboard MVP
+
+- The CLI view is an on-demand local snapshot without a web UI, WebSocket
+  updates, refresh loop, authentication, or remote access.
+- Evidence availability depends on local artifact paths and has no preview,
+  pagination, content-type rendering, retention, or remote object storage.
+- The MVP shows one persisted runtime session and one pending approval; it
+  does not aggregate concurrent sessions or provide a global approval inbox.
+- Repository status uses local read-only Git subprocesses and does not expose
+  remote branch protection, CI, pull request, or deployment state.
+
 ## AFDE-3.2 Codex Automation Bridge
 
 - Local exclusive claim files prevent duplicate action IDs on one filesystem,
