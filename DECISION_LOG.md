@@ -1,5 +1,19 @@
 # Decision Log
 
+## 2026-07-16 - AFDE-3.5 Snapshot-Backed Web Boundary
+
+- `DashboardAPI` is the only web-facing data adapter and consumes
+  `RuntimeDashboard.snapshot`; HTTP handlers never access RuntimePipeline.
+- `/runtime` returns one complete snapshot so browser refresh does not
+  duplicate polling across cards. Component endpoints are additive views over
+  the same snapshot interface.
+- The embedded HTTP transport binds only to localhost and permits GET/HEAD;
+  mutation methods fail with JSON 405 responses.
+- Static HTML/CSS/JS remains dependency-free and treats API values as text,
+  with a same-origin Content Security Policy and no action controls.
+- The API remains transport-neutral so later WebSocket, SSE, authentication,
+  RBAC, remote, and multi-session adapters can wrap it without parsing HTML.
+
 ## 2026-07-16 - AFDE-3.4 Live Dashboard Separation
 
 - RuntimeDashboard remains the reusable read-only snapshot provider over

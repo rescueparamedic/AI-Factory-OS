@@ -12,7 +12,8 @@ from approval_guardian import ApprovalGuardian, ApprovalRequest
 from sprint_auto_runner import SprintAutoRunner
 from real_worker_runtime import (
     CodexAutomationBridge, LiveDashboardController, RealWorkerRuntime,
-    RuntimeDashboard, TerminalLiveDashboardRenderer,
+    RuntimeDashboard, RuntimeDashboardWebServer,
+    TerminalLiveDashboardRenderer,
 )
 from real_worker_runtime.openai_probe import OpenAIResponsesProbe
 from real_worker_runtime.raw_openai_probe import RawOpenAIResponsesProbe
@@ -204,6 +205,23 @@ def cmd_runtime_dashboard(args):
         print(dashboard.render(args.session_id))
 
 
+def cmd_runtime_dashboard_web(args):
+    dashboard = RuntimeDashboard(Path.cwd())
+    server = RuntimeDashboardWebServer(
+        dashboard, args.session_id,
+        host=args.host, port=args.port,
+        poll_interval=args.poll_interval,
+    )
+    print('AFDE Web Dashboard: {}'.format(server.url))
+    print('Read-only localhost server. Press Ctrl+C to exit.')
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print('\nWeb dashboard stopped.')
+    finally:
+        server.close()
+
+
 def _positive_float(value):
     try:
         number = float(value)
@@ -325,6 +343,16 @@ def build_parser():
     p.add_argument('--max-duration', type=_positive_float)
     p.add_argument('--no-clear', action='store_true')
     p.set_defaults(func=cmd_runtime_dashboard)
+
+    p = sub.add_parser(
+        'runtime-dashboard-web',
+        help='Serve the read-only Runtime Dashboard on localhost',
+    )
+    p.add_argument('--session-id', required=True)
+    p.add_argument('--host', default='127.0.0.1', choices=['127.0.0.1', 'localhost'])
+    p.add_argument('--port', type=int, default=8765)
+    p.add_argument('--poll-interval', type=_positive_float, default=1.0)
+    p.set_defaults(func=cmd_runtime_dashboard_web)
 
     return parser
 
