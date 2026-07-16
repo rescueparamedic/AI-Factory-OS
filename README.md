@@ -195,6 +195,47 @@ python main.py scheduler list --limit 5
 python main.py dashboard live-build
 ```
 
+## AFDE-3.5 Web Dashboard Foundation
+
+Serve one persisted runtime session on localhost:
+
+~~~powershell
+python -m afde.cli runtime-dashboard-web --session-id RWS-...
+~~~
+
+Configure the local port and browser polling interval:
+
+~~~powershell
+python -m afde.cli runtime-dashboard-web --session-id RWS-... --host 127.0.0.1 --port 8765 --poll-interval 1
+~~~
+
+Open `http://127.0.0.1:8765/` in a browser. The responsive dashboard shows
+Runtime, Workers, Timeline, Approval Queue, Evidence, and Repository cards.
+The browser performs one GET of `/runtime` per interval and updates all cards
+from that snapshot.
+
+Read-only JSON endpoints:
+
+- `GET /runtime`
+- `GET /session`
+- `GET /workers`
+- `GET /timeline`
+- `GET /approval-queue`
+- `GET /evidence`
+- `GET /repository`
+- `GET /config`
+
+`RuntimePipeline` remains the Single Source of Truth.
+`DashboardAPI` consumes only the AFDE-3.4 `RuntimeDashboard.snapshot`
+interface; HTTP controllers do not access pipeline state. The server permits
+GET and HEAD only. It has no approve, execute, modify, create, or delete
+operation, and polling never changes runtime, approval, or evidence state.
+
+AFDE-3.5 is intentionally localhost-only and has no authentication, database,
+external service, TLS, or cloud deployment. The transport-neutral API prepares
+for future WebSocket/SSE, authentication, RBAC, remote dashboard, and
+multi-session adapters without implementing them in this sprint.
+
 ## AFDE-3.4 Live Terminal Dashboard
 
 Refresh a persisted runtime session once per second until Ctrl+C:

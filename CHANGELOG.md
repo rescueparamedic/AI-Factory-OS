@@ -1,5 +1,18 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-3.5 Web Dashboard Foundation
+
+- Added a reusable read-only `DashboardAPI` with JSON runtime, session,
+  workers, timeline, approval queue, evidence, repository, and config views.
+- Added a standard-library, localhost-only embedded HTTP server with GET/HEAD
+  support, JSON 404/405 errors, security headers, and no mutation methods.
+- Added a responsive browser dashboard skeleton with Runtime, Workers,
+  Timeline, Approval Queue, Evidence, and Repository cards.
+- Added configurable single-endpoint browser polling over the AFDE-3.4
+  Dashboard Snapshot and a `runtime-dashboard-web` CLI command.
+- Added API, HTTP, serialization, polling, rendering, and byte-level
+  read-only coverage without introducing dependencies.
+
 ## AFDE-3.4 Live Terminal Dashboard
 
 - Added safely copied dashboard snapshots with current stage, task, worker,

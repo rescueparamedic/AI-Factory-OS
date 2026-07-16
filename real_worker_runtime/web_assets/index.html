@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang='en'>
+<head>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+  <title>AI Factory OS Runtime Dashboard</title>
+  <link rel='stylesheet' href='/dashboard.css'>
+  <script src='/dashboard.js' defer></script>
+</head>
+<body>
+  <header class='site-header'>
+    <div>
+      <p class='eyebrow'>AI Factory OS</p>
+      <h1>Runtime Dashboard</h1>
+      <p class='subtitle'>Read-only localhost projection</p>
+    </div>
+    <div class='refresh-panel' aria-live='polite'>
+      <span id='connection-status' class='status-badge'>Connecting</span>
+      <span id='refresh-time'>Waiting for snapshot</span>
+    </div>
+  </header>
+
+  <main class='dashboard-grid'>
+    <section class='card runtime-card' aria-labelledby='runtime-title'>
+      <h2 id='runtime-title'>Runtime</h2>
+      <dl id='runtime-summary' class='metrics'></dl>
+      <div class='progress-track' aria-label='Runtime progress'>
+        <div id='runtime-progress' class='progress-value'></div>
+      </div>
+      <p id='progress-source' class='card-note'></p>
+    </section>
+
+    <section class='card workers-card' aria-labelledby='workers-title'>
+      <h2 id='workers-title'>Workers</h2>
+      <div id='workers' class='table-wrap'></div>
+    </section>
+
+    <section class='card timeline-card' aria-labelledby='timeline-title'>
+      <h2 id='timeline-title'>Timeline</h2>
+      <ol id='timeline' class='event-list'></ol>
+    </section>
+
+    <section class='card approval-card' aria-labelledby='approval-title'>
+      <h2 id='approval-title'>Approval Queue</h2>
+      <div id='approval-queue' class='stack-list'></div>
+    </section>
+
+    <section class='card evidence-card' aria-labelledby='evidence-title'>
+      <h2 id='evidence-title'>Evidence</h2>
+      <div id='evidence' class='stack-list'></div>
+    </section>
+
+    <section class='card repository-card' aria-labelledby='repository-title'>
+      <h2 id='repository-title'>Repository</h2>
+      <dl id='repository' class='metrics'></dl>
+    </section>
+  </main>
+
+  <footer>
+    <span>GET-only foundation</span>
+    <span>No approvals, execution, or mutations</span>
+  </footer>
+</body>
+</html>

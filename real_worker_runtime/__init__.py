@@ -24,10 +24,13 @@ from .dashboard import RuntimeDashboard
 from .live_dashboard import (
     LiveDashboardController, LiveRefreshResult, TerminalLiveDashboardRenderer,
 )
+from .web_dashboard import DashboardAPI, RuntimeDashboardWebServer
 
 __all__ = [
+    'DashboardAPI',
     'LiveDashboardController', 'LiveRefreshResult',
     'RuntimeDashboard',
+    'RuntimeDashboardWebServer',
     'TerminalLiveDashboardRenderer',
     "AgentResultHandoff", "DeveloperExecutionResult", "DocumentationExecutionResult",
     "OrchestrationAction", "OrchestrationDecision", "PipelineState",

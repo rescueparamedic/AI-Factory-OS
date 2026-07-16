@@ -1,5 +1,19 @@
 # Technical Debt
 
+## AFDE-3.5 Web Dashboard Foundation
+
+- The server is intended only for trusted localhost use and has no
+  authentication, authorization, RBAC, TLS, CSRF framework, or remote-access
+  hardening.
+- Browser refresh uses HTTP polling; WebSocket and SSE transports, backoff,
+  visibility-aware refresh, and server-pushed deltas are deferred.
+- One server instance is bound to one runtime session. Session discovery,
+  multi-session routing, aggregation, pagination, and retention are deferred.
+- Static assets are served from the source tree without bundling,
+  fingerprinting, compression, localization, or accessibility certification.
+- The standard-library HTTP server has no production process manager,
+  observability pipeline, rate limiting, request IDs, or graceful drain API.
+
 ## AFDE-3.4 Live Terminal Dashboard
 
 - Polling reads local JSON files without filesystem notifications, locking,

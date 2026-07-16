@@ -43,9 +43,7 @@ class LiveDashboardController:
     ):
         self.provider = provider
         self.renderer = renderer
-        self.refresh_interval = _positive_float(
-            refresh_interval, 'refresh interval',
-        )
+        self.refresh_interval = validate_refresh_interval(refresh_interval)
         self.max_refreshes = _positive_int(max_refreshes, 'max refreshes')
         self.max_duration = (
             _positive_float(max_duration, 'maximum duration')
@@ -293,6 +291,11 @@ def _positive_float(value: Any, label: str) -> float:
     if number <= 0 or not math.isfinite(number):
         raise ValueError('{} must be a positive number'.format(label))
     return number
+
+
+def validate_refresh_interval(value: Any) -> float:
+    '''Shared positive finite polling interval validation.'''
+    return _positive_float(value, 'refresh interval')
 
 
 def _positive_int(value: Any, label: str) -> int | None:

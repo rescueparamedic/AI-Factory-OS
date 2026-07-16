@@ -1,5 +1,18 @@
 # AI Factory OS Project Status
 
+## AFDE-3.5 Web Dashboard Foundation
+
+- A localhost-only browser presentation layer now consumes the AFDE-3.4
+  Dashboard Snapshot through a reusable read-only JSON API.
+- RuntimePipeline remains the Single Source of Truth; HTTP controllers never
+  access it directly and browser polling uses one full snapshot endpoint.
+- The embedded server has no database, external service, cloud deployment,
+  authentication, or mutation route.
+- Browser cards cover runtime, workers, timeline, approval queue, evidence,
+  and repository status with configurable polling.
+- DashboardAPI is transport-neutral for later WebSocket/SSE adapters;
+  authentication, RBAC, remote access, and multi-session views are deferred.
+
 ## AFDE-3.4 Live Terminal Dashboard
 
 - RuntimePipeline remains the Single Source of Truth for dashboard lifecycle
