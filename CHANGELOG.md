@@ -1,5 +1,16 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-3.3 Runtime Dashboard MVP
+
+- Added a read-only persisted runtime dashboard with Running, Waiting,
+  Completed, and Failed status projection.
+- Added Development, QA, Documentation, Approval, and Release worker rows with
+  current task and progress derived from the existing RuntimePipeline.
+- Added pending approval, chronological event, available evidence, and Git
+  repository views plus text and JSON CLI output.
+- Added completed, waiting-approval, failed, rendering, evidence, event, and
+  CLI dashboard coverage.
+
 ## AFDE-3.2 Codex Automation Bridge
 
 - Added the strict structured `ToolAction` contract and deterministic action

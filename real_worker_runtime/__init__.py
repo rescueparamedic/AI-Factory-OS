@@ -20,8 +20,10 @@ from .runtime_lifecycle import (
 from .worker_context import WorkerContext
 from .tool_actions import ToolAction, ToolActionType, ToolExecutionResult
 from .automation_bridge import CodexAutomationBridge
+from .dashboard import RuntimeDashboard
 
 __all__ = [
+    'RuntimeDashboard',
     "AgentResultHandoff", "DeveloperExecutionResult", "DocumentationExecutionResult",
     "OrchestrationAction", "OrchestrationDecision", "PipelineState",
     "PlannerExecutionResult", "QAExecutionResult", "QARevisionDecision",

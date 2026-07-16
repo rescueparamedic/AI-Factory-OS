@@ -195,6 +195,26 @@ python main.py scheduler list --limit 5
 python main.py dashboard live-build
 ```
 
+## AFDE-3.3 Runtime Dashboard
+
+Show a persisted runtime session as a human-readable snapshot:
+
+~~~powershell
+python -m afde.cli runtime-dashboard --session-id RWS-...
+~~~
+
+Use JSON for automation:
+
+~~~powershell
+python -m afde.cli runtime-dashboard --session-id RWS-... --json
+~~~
+
+The view reports runtime status; Development, QA, Documentation, Approval, and
+Release status/current task/progress; pending approvals; chronological runtime
+events; available evidence artifacts; and current Git branch, tree state, and
+latest commit. It reads the existing RuntimePipeline and persisted runtime
+records and does not perform transitions or side effects.
+
 ## AFDE-2.7 approval pause and resume
 
 An existing-file `FILE_WRITE` is never auto-approved. Runtime persists the exact

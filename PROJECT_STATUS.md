@@ -1,5 +1,15 @@
 # AI Factory OS Project Status
 
+## AFDE-3.3 Runtime Dashboard MVP
+
+- Runtime Dashboard is available through the AFDE CLI in text or JSON form.
+- The dashboard reads persisted RuntimeSession and RuntimePipeline snapshots;
+  it does not own transitions, execute work, or duplicate orchestration.
+- Runtime status, five delivery worker rows, pending approval, timeline,
+  evidence artifacts, and repository status are included.
+- The MVP is a local on-demand view; live web updates and multi-session
+  aggregation remain outside this increment.
+
 ## AFDE-3.2 Codex Automation Bridge
 
 - Structured `ToolAction` output is the canonical runtime automation path.

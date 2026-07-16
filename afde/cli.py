@@ -9,7 +9,7 @@ from pathlib import Path
 
 from approval_guardian import ApprovalGuardian, ApprovalRequest
 from sprint_auto_runner import SprintAutoRunner
-from real_worker_runtime import CodexAutomationBridge, RealWorkerRuntime
+from real_worker_runtime import CodexAutomationBridge, RealWorkerRuntime, RuntimeDashboard
 from real_worker_runtime.openai_probe import OpenAIResponsesProbe
 from real_worker_runtime.raw_openai_probe import RawOpenAIResponsesProbe
 from real_worker_runtime.http_boundary_probe import HTTPBoundaryDiagnostic
@@ -181,6 +181,14 @@ def cmd_runtime_report(args): print(RealWorkerRuntime(Path.cwd()).report(args.se
 def cmd_runtime_cancel(args): _print_json(RealWorkerRuntime(Path.cwd()).cancel(args.session_id))
 
 
+def cmd_runtime_dashboard(args):
+    dashboard = RuntimeDashboard(Path.cwd())
+    if args.json:
+        _print_json(dashboard.snapshot(args.session_id))
+    else:
+        print(dashboard.render(args.session_id))
+
+
 def cmd_tool_action_demo(args):
     session = RealWorkerRuntime(Path.cwd()).run(
         f"[tool-action-{args.path}] AFDE-3.2 structured action demo",
@@ -272,6 +280,11 @@ def build_parser():
     p=sub.add_parser("runtime-cancel"); p.add_argument("--session-id",required=True); p.set_defaults(func=cmd_runtime_cancel)
     p=sub.add_parser("tool-action-demo",help="Run the deterministic AFDE-3.2 structured action demo"); p.add_argument("--path",choices=["auto","ask","deny"],default="auto"); p.set_defaults(func=cmd_tool_action_demo)
     p=sub.add_parser("tool-action-status",help="Show persisted evidence for one structured action"); p.add_argument("--action-id",required=True); p.set_defaults(func=cmd_tool_action_status)
+
+    p = sub.add_parser('runtime-dashboard', help='Show the persisted Runtime Dashboard')
+    p.add_argument('--session-id', required=True)
+    p.add_argument('--json', action='store_true')
+    p.set_defaults(func=cmd_runtime_dashboard)
 
     return parser
 

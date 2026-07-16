@@ -1,5 +1,16 @@
 # Decision Log
 
+## 2026-07-16 - AFDE-3.3 Read-Only Runtime Dashboard
+
+- RuntimePipeline remains the authoritative delivery-stage state; dashboard
+  worker status is a projection and cannot transition the pipeline.
+- Existing session approval, event-stream, and artifact references are reused
+  for queue, timeline, and evidence views.
+- The MVP uses an on-demand CLI snapshot in text or JSON and invokes only
+  read-only Git commands for repository status.
+- Approval and Release are display stages only; no new runtime worker,
+  approval policy, or release execution authority is introduced.
+
 ## 2026-07-15 - AFDE-3.2 Structured Automation Boundary
 
 - `ToolAction` is the canonical worker-to-runtime automation contract; raw
