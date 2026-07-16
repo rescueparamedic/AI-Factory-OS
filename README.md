@@ -195,6 +195,38 @@ python main.py scheduler list --limit 5
 python main.py dashboard live-build
 ```
 
+## AFDE-3.4 Live Terminal Dashboard
+
+Refresh a persisted runtime session once per second until Ctrl+C:
+
+~~~powershell
+python -m afde.cli runtime-dashboard --session-id RWS-... --live
+~~~
+
+Bounded no-clear output is suitable for scripts, redirected logs, tests, and
+terminals without reliable ANSI clearing:
+
+~~~powershell
+python -m afde.cli runtime-dashboard --session-id RWS-... --live --refresh-interval 0.5 --max-refreshes 5 --no-clear
+~~~
+
+`--max-duration <seconds>` provides an optional time bound. Refresh interval,
+refresh count, and duration must be positive. `--live` and `--json` are
+mutually exclusive; use the existing non-live `--json` command for one
+machine-readable snapshot.
+
+The live view polls the existing read-only Runtime Dashboard projection.
+`RuntimePipeline` remains the Single Source of Truth. Polling never executes
+work, transitions state, produces evidence, or approves, rejects, consumes, or
+dismisses approvals. Progress is labeled `explicit_pipeline`,
+`explicit_session`, `lifecycle_derived`, or `unavailable`; derived
+progress is a deterministic lifecycle indicator, not a time estimate.
+
+ANSI clearing is used only when supported. Redirected and unsupported output
+falls back safely without clearing, and `--no-clear` forces that behavior.
+The provider/controller/renderer interfaces are reusable by a later Web
+Dashboard, which is not implemented in AFDE-3.4.
+
 ## AFDE-3.3 Runtime Dashboard
 
 Show a persisted runtime session as a human-readable snapshot:

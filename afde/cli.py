@@ -5,11 +5,15 @@ from __future__ import annotations
 import argparse
 from dataclasses import asdict
 import json
+import math
 from pathlib import Path
 
 from approval_guardian import ApprovalGuardian, ApprovalRequest
 from sprint_auto_runner import SprintAutoRunner
-from real_worker_runtime import CodexAutomationBridge, RealWorkerRuntime, RuntimeDashboard
+from real_worker_runtime import (
+    CodexAutomationBridge, LiveDashboardController, RealWorkerRuntime,
+    RuntimeDashboard, TerminalLiveDashboardRenderer,
+)
 from real_worker_runtime.openai_probe import OpenAIResponsesProbe
 from real_worker_runtime.raw_openai_probe import RawOpenAIResponsesProbe
 from real_worker_runtime.http_boundary_probe import HTTPBoundaryDiagnostic
@@ -183,10 +187,41 @@ def cmd_runtime_cancel(args): _print_json(RealWorkerRuntime(Path.cwd()).cancel(a
 
 def cmd_runtime_dashboard(args):
     dashboard = RuntimeDashboard(Path.cwd())
-    if args.json:
+    if args.live:
+        renderer = TerminalLiveDashboardRenderer(no_clear=args.no_clear)
+        controller = LiveDashboardController(
+            dashboard, renderer,
+            refresh_interval=args.refresh_interval,
+            max_refreshes=args.max_refreshes,
+            max_duration=args.max_duration,
+        )
+        result = controller.run(args.session_id)
+        if result.interrupted:
+            print('\nLive dashboard stopped.')
+    elif args.json:
         _print_json(dashboard.snapshot(args.session_id))
     else:
         print(dashboard.render(args.session_id))
+
+
+def _positive_float(value):
+    try:
+        number = float(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError('value must be a positive number') from exc
+    if number <= 0 or not math.isfinite(number):
+        raise argparse.ArgumentTypeError('value must be a positive number')
+    return number
+
+
+def _positive_int(value):
+    try:
+        number = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError('value must be a positive integer') from exc
+    if number <= 0:
+        raise argparse.ArgumentTypeError('value must be a positive integer')
+    return number
 
 
 def cmd_tool_action_demo(args):
@@ -284,6 +319,11 @@ def build_parser():
     p = sub.add_parser('runtime-dashboard', help='Show the persisted Runtime Dashboard')
     p.add_argument('--session-id', required=True)
     p.add_argument('--json', action='store_true')
+    p.add_argument('--live', action='store_true')
+    p.add_argument('--refresh-interval', type=_positive_float, default=1.0)
+    p.add_argument('--max-refreshes', type=_positive_int)
+    p.add_argument('--max-duration', type=_positive_float)
+    p.add_argument('--no-clear', action='store_true')
     p.set_defaults(func=cmd_runtime_dashboard)
 
     return parser
@@ -292,6 +332,8 @@ def build_parser():
 def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
+    if getattr(args, 'live', False) and getattr(args, 'json', False):
+        parser.error('--live cannot be combined with --json')
     return args.func(args)
 
 

@@ -1,5 +1,18 @@
 # AI Factory OS Project Status
 
+## AFDE-3.4 Live Terminal Dashboard
+
+- RuntimePipeline remains the Single Source of Truth for dashboard lifecycle
+  and task projection.
+- Live Dashboard polls read-only snapshots and never executes work, changes
+  pipeline state, or consumes or alters approvals.
+- Snapshot provider, polling controller, and terminal renderer are separated
+  so a future Web Dashboard can consume the same structured projection.
+- Progress is labeled as explicit pipeline/session state,
+  lifecycle-derived state, or unavailable.
+- Terminal live refresh supports bounded scripted use, Ctrl+C, and safe
+  no-clear fallback without new dependencies.
+
 ## AFDE-3.3 Runtime Dashboard MVP
 
 - Runtime Dashboard is available through the AFDE CLI in text or JSON form.

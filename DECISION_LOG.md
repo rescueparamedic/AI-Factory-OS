@@ -1,5 +1,19 @@
 # Decision Log
 
+## 2026-07-16 - AFDE-3.4 Live Dashboard Separation
+
+- RuntimeDashboard remains the reusable read-only snapshot provider over
+  RuntimePipeline; polling and terminal presentation cannot mutate runtime.
+- LiveDashboardController owns interval validation, bounds, sleeping,
+  interruption, and last-valid-snapshot recovery without owning state.
+- TerminalLiveDashboardRenderer consumes structured snapshots and is not an
+  execution or persistence layer.
+- Progress prefers an explicit RuntimePipeline value, then existing explicit
+  RuntimeSession progress, then a documented deterministic lifecycle mapping;
+  absent state is reported as unavailable.
+- The standard library is sufficient. A browser/WebSocket dashboard,
+  authentication, and remote aggregation are deferred.
+
 ## 2026-07-16 - AFDE-3.3 Read-Only Runtime Dashboard
 
 - RuntimePipeline remains the authoritative delivery-stage state; dashboard
