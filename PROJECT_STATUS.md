@@ -1,5 +1,18 @@
 # AI Factory OS Project Status
 
+## AFDE-3.9 Runtime History Foundation
+
+- Runtime events now carry required IDs, session identity, canonical event type,
+  actor, status, optional worker, and metadata through the existing EventStream.
+- Existing session `events.jsonl` files are the append-only history ledger; no
+  database, dependency, second event engine, or state mutation path was added.
+- RuntimeHistoryStore provides validated per-session reads, timezone-safe stable
+  ordering, event/actor/status/worker/time filtering, summaries, and CSV export.
+- Dashboard Snapshot and DashboardAPI expose read-only history and error events,
+  while CLI users can inspect or export history without changing runtime state.
+- Historical legacy rows remain byte-identical and receive deterministic
+  read-time IDs and canonical fields only in the projection.
+
 ## AFDE-3.8 Operations Center
 
 - OperationsAnalytics derives ephemeral multi-session comparisons and KPIs

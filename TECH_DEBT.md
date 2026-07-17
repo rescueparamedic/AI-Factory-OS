@@ -1,5 +1,18 @@
 # Technical Debt
 
+## AFDE-3.9 Runtime History Foundation
+
+- JSONL append is local and lightweight but has no multi-process lock,
+  transaction, signature, tamper-evident chain, rotation, or retention policy.
+- Legacy event IDs are deterministic read-time projections because historical
+  rows predate event IDs; no migration rewrites those files.
+- Canonical type/status mapping is rule-based and retains each original event
+  name for audit context. A formal schema-version registry remains future work.
+- History reads load one session ledger in memory. Pagination and streaming are
+  deferred until retention volume justifies them.
+- CLI export is stdout-only, and Dashboard history remains localhost read-only;
+  server-side archives, remote history, RBAC, and multi-user access are deferred.
+
 ## AFDE-3.8 Operations Center
 
 - Analytics is intentionally point-in-time. There is no persistent history,
