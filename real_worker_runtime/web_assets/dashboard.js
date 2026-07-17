@@ -4,6 +4,7 @@ const byId = (id) => document.getElementById(id);
 const STATUS_VALUES = new Set(['Running', 'Waiting', 'Completed', 'Failed']);
 const LIFECYCLE_NAMES = ['Development', 'QA', 'Documentation', 'Approval', 'Release'];
 const TIMELINE_LIMIT = 50;
+const OPERATIONS_FINDING_LIMIT = 100;
 const SESSION_REFRESH_INTERVAL = 30000;
 
 function safeText(value, fallback = 'unavailable') {
@@ -384,6 +385,185 @@ function renderSnapshot(snapshot, lastSuccess) {
     : 'No results match the active search and filters';
 }
 
+function formatDuration(value) {
+  const seconds = Number(value);
+  if (!Number.isFinite(seconds) || seconds < 0) return 'unavailable';
+  if (seconds < 60) return String(Math.round(seconds)) + ' seconds';
+  if (seconds < 3600) return String(Math.round(seconds / 60)) + ' minutes';
+  return String(Math.round((seconds / 3600) * 10) / 10) + ' hours';
+}
+
+function tableCell(row, value) {
+  const cell = document.createElement('td');
+  cell.textContent = safeText(value);
+  row.appendChild(cell);
+}
+
+function syncFindingOptions(id, values) {
+  const selector = byId(id); const previous = selector.value;
+  replaceChildren(selector);
+  const all = document.createElement('option'); all.value = ''; all.textContent = 'All'; selector.appendChild(all);
+  Array.from(new Set(values.filter(Boolean))).sort().forEach((value) => {
+    const option = document.createElement('option'); option.value = value; option.textContent = value;
+    selector.appendChild(option);
+  });
+  selector.value = Array.from(selector.options).some((option) => option.value === previous) ? previous : '';
+}
+
+function renderFindings(operations) {
+  const source = safeRows(operations.findings);
+  syncFindingOptions('finding-session-filter', source.map((row) => safeText(row.session_id, '')));
+  syncFindingOptions('finding-type-filter', source.map((row) => safeText(row.finding_type, '')));
+  syncFindingOptions('finding-stage-filter', source.map((row) => safeText(row.stage, '')));
+  const session = inputValue('finding-session-filter'); const severity = inputValue('finding-severity-filter');
+  const type = inputValue('finding-type-filter'); const stage = inputValue('finding-stage-filter');
+  const query = inputValue('finding-text-filter'); const sort = byId('finding-sort').value;
+  let rows = source.filter((row) => (
+    (!session || safeText(row.session_id, '').toLowerCase() === session)
+    && (!severity || safeText(row.severity, '').toLowerCase() === severity)
+    && (!type || safeText(row.finding_type, '').toLowerCase() === type)
+    && (!stage || safeText(row.stage, '').toLowerCase() === stage)
+    && containsText(row, query)
+  ));
+  const severityRank = {critical: 3, warning: 2, info: 1};
+  if (sort === 'duration') rows = stableSort(rows, (row) => Number(row.duration_seconds), 'desc');
+  else if (sort === 'timestamp') rows = stableSort(rows, (row) => row.timestamp || '', 'desc');
+  else rows = stableSort(rows, (row) => severityRank[safeText(row.severity, '').toLowerCase()] || 0, 'desc');
+  rows = rows.slice(0, OPERATIONS_FINDING_LIMIT);
+  const target = byId('bottleneck-findings'); replaceChildren(target);
+  if (!rows.length) { target.appendChild(emptyState('No findings match the active filters')); return 0; }
+  rows.forEach((finding) => {
+    const item = document.createElement('article'); const title = document.createElement('h4');
+    const severityValue = safeText(finding.severity, 'info').toLowerCase();
+    item.className = 'stack-item severity-' + severityValue;
+    title.textContent = safeText(finding.finding_type, 'Finding') + ' · ' + severityValue;
+    item.appendChild(title); appendMeta(item, 'Session', finding.session_id); appendMeta(item, 'Stage', finding.stage);
+    appendMeta(item, 'Duration', formatDuration(finding.duration_seconds)); appendMeta(item, 'Reason', finding.reason);
+    appendMeta(item, 'Provenance', finding.confidence_provenance);
+    appendMeta(item, 'Evidence fields', Array.isArray(finding.evidence_fields) ? finding.evidence_fields.join(', ') : 'unavailable');
+    item.appendChild(inspectButton('Operations finding detail', finding)); target.appendChild(item);
+  });
+  return rows.length;
+}
+
+function renderOperations(operations) {
+  const safe = operations && typeof operations === 'object' ? operations : {};
+  const kpis = safe.kpis && typeof safe.kpis === 'object' ? safe.kpis : {};
+  const kpiTarget = byId('operations-kpis'); replaceChildren(kpiTarget);
+  [
+    ['Discovered sessions', kpis.discovered_session_count], ['Selected sessions', kpis.selected_comparison_session_count],
+    ['Running', kpis.running_session_count], ['Waiting', kpis.waiting_session_count],
+    ['Completed', kpis.completed_session_count], ['Failed', kpis.failed_session_count],
+    ['Average elapsed', formatDuration(kpis.average_elapsed_seconds)], ['Median elapsed', formatDuration(kpis.median_elapsed_seconds)],
+    ['Duration denominator', kpis.elapsed_duration_denominator], ['Total workers', kpis.total_worker_count],
+    ['Failed workers', kpis.failed_worker_count], ['Pending approvals', kpis.pending_approval_count],
+    ['Evidence metadata', kpis.total_evidence_count], ['Explicit progress', kpis.explicit_progress_count],
+    ['Lifecycle-derived progress', kpis.lifecycle_derived_progress_count], ['Unavailable progress', kpis.unavailable_progress_count],
+  ].forEach((item) => metric(kpiTarget, item[0], item[1]));
+
+  const body = byId('comparison-table').querySelector('tbody'); replaceChildren(body);
+  safeRows(safe.comparisons).forEach((item) => {
+    const row = document.createElement('tr');
+    [item.session_id, item.runtime_status, item.current_stage, item.current_task, item.current_worker,
+      formatDuration(item.elapsed_seconds), item.worker_count, item.failed_worker_count,
+      item.pending_approval_count, item.evidence_count,
+      item.overall_progress === null ? 'unavailable' : safeText(item.overall_progress) + '%',
+      item.progress_source, item.repository_branch, item.repository_working_tree,
+      item.staleness && item.staleness.state].forEach((value) => tableCell(row, value));
+    body.appendChild(row);
+  });
+  if (!body.firstChild) {
+    const row = document.createElement('tr'); const cell = document.createElement('td');
+    cell.colSpan = 15; cell.textContent = 'No comparison data available'; row.appendChild(cell); body.appendChild(row);
+  }
+
+  const stageTarget = byId('stage-duration-panel'); replaceChildren(stageTarget);
+  const stages = safe.stage_durations && typeof safe.stage_durations === 'object' ? safe.stage_durations : {};
+  Object.keys(stages).sort().forEach((sessionId) => {
+    safeRows(stages[sessionId]).forEach((stage) => {
+      if (stage.duration_seconds === null && stage.provenance === 'unavailable') return;
+      const item = document.createElement('article'); item.className = 'stack-item';
+      const title = document.createElement('h4'); title.textContent = sessionId + ' · ' + safeText(stage.stage);
+      item.appendChild(title); appendMeta(item, 'Duration', formatDuration(stage.duration_seconds));
+      appendMeta(item, 'Provenance', stage.provenance); stageTarget.appendChild(item);
+    });
+  });
+  if (!stageTarget.firstChild) stageTarget.appendChild(emptyState('Stage durations unavailable'));
+
+  const approvalTarget = byId('approval-delay-panel'); replaceChildren(approvalTarget);
+  const approvals = safe.approval_delays && typeof safe.approval_delays === 'object' ? safe.approval_delays : {};
+  Object.keys(approvals).sort().forEach((sessionId) => {
+    const value = approvals[sessionId]; if (!value || !value.pending_count) return;
+    const item = document.createElement('article'); item.className = 'stack-item approval-pending';
+    const title = document.createElement('h4'); title.textContent = sessionId + ' · pending approvals'; item.appendChild(title);
+    appendMeta(item, 'Pending', value.pending_count); appendMeta(item, 'Oldest age', formatDuration(value.oldest_pending_age_seconds));
+    appendMeta(item, 'Median age', formatDuration(value.median_pending_age_seconds));
+    appendMeta(item, 'Age denominator', value.available_age_denominator); approvalTarget.appendChild(item);
+  });
+  if (!approvalTarget.firstChild) approvalTarget.appendChild(emptyState('No pending approvals in selected sessions'));
+
+  const failureTarget = byId('failure-summary-panel'); replaceChildren(failureTarget);
+  const failures = safe.failure_summaries && typeof safe.failure_summaries === 'object' ? safe.failure_summaries : {};
+  Object.keys(failures).sort().forEach((sessionId) => {
+    const value = failures[sessionId]; if (!value || (!value.failed_worker_count && !value.failure_event_count)) return;
+    const item = document.createElement('article'); item.className = 'stack-item severity-critical';
+    const title = document.createElement('h4'); title.textContent = sessionId + ' · reported failure signals'; item.appendChild(title);
+    appendMeta(item, 'Failed workers', value.failed_worker_count); appendMeta(item, 'Failure events', value.failure_event_count);
+    appendMeta(item, 'Most recent', detailText(value.most_recent_failure)); appendMeta(item, 'Limitation', value.interpretation);
+    failureTarget.appendChild(item);
+  });
+  if (!failureTarget.firstChild) failureTarget.appendChild(emptyState('No reported failure signals in selected sessions'));
+
+  const count = renderFindings(safe);
+  byId('operations-result-status').textContent = String(safeRows(safe.comparisons).length)
+    + ' sessions compared · ' + String(count) + ' visible findings · snapshot-derived';
+  byId('export-json').disabled = false; byId('export-csv').disabled = false;
+}
+
+function reportFilename(operations, extension) {
+  const ids = Array.isArray(operations.selected_session_ids) ? operations.selected_session_ids : [];
+  const safeIds = ids.map((value) => safeText(value, '').replace(/[^A-Za-z0-9_-]+/g, '-').slice(0, 40)).filter(Boolean);
+  return ('afde-operations-' + safeIds.join('-')).slice(0, 180).replace(/-+$/g, '') + '.' + extension;
+}
+
+function csvCell(value) {
+  let text = value === null || value === undefined ? '' : String(value);
+  if (/^[=+\-@]/.test(text)) text = String.fromCharCode(39) + text;
+  return String.fromCharCode(34) + text.replaceAll(String.fromCharCode(34), String.fromCharCode(34) + String.fromCharCode(34)) + String.fromCharCode(34);
+}
+
+function comparisonCsv(operations) {
+  const fields = ['record_type', 'key', 'value', 'provenance', 'session_id',
+    'runtime_status', 'current_stage', 'current_task', 'current_worker', 'created_at',
+    'updated_at', 'elapsed_seconds', 'worker_count', 'failed_worker_count', 'pending_approval_count',
+    'evidence_count', 'overall_progress', 'progress_source', 'repository_branch', 'repository_working_tree'];
+  const lines = [fields.map(csvCell).join(',')];
+  const append = (row) => lines.push(fields.map((field) => csvCell(row[field])).join(','));
+  append({record_type: 'metadata', key: 'generated_at', value: operations.generated_at});
+  append({record_type: 'metadata', key: 'selected_session_ids', value: JSON.stringify(operations.selected_session_ids || [])});
+  append({record_type: 'metadata', key: 'known_unavailable_fields', value: JSON.stringify(operations.known_unavailable_fields || [])});
+  const definitions = operations.kpi_definitions && typeof operations.kpi_definitions === 'object'
+    ? operations.kpi_definitions : {};
+  Object.keys(definitions).sort().forEach((key) => append({
+    record_type: 'kpi_definition', key, value: definitions[key], provenance: 'snapshot_derived',
+  }));
+  safeRows(operations.comparisons).forEach((row) => append({record_type: 'comparison', ...row}));
+  safeRows(operations.findings).forEach((row) => append({
+    record_type: 'finding', key: row.finding_type, value: row.reason,
+    provenance: row.confidence_provenance, session_id: row.session_id,
+  }));
+  return lines.join('\r\n') + '\r\n';
+}
+
+function downloadReport(operations, format) {
+  if (!operations) return;
+  const json = format === 'json'; const content = json ? JSON.stringify(operations, null, 2) : comparisonCsv(operations);
+  const blob = new Blob([content], {type: json ? 'application/json' : 'text/csv'});
+  const link = document.createElement('a'); const url = URL.createObjectURL(blob);
+  link.href = url; link.download = reportFilename(operations, format); link.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
 function setConnection(label, stateClass, detail) {
   const badge = byId('connection-status'); badge.textContent = label;
   badge.className = 'status-badge ' + stateClass; byId('refresh-status').textContent = detail;
@@ -398,14 +578,26 @@ async function loadJson(path, signal) {
 function createDashboardController() {
   const state = {
     interval: 1000, runtimeTimer: null, sessionTimer: null,
-    runtimeInFlight: false, sessionsInFlight: false, stopped: false,
-    runtimeController: null, sessionsController: null, snapshot: null,
+    runtimeInFlight: false, sessionsInFlight: false, operationsInFlight: false, stopped: false,
+    runtimeController: null, sessionsController: null, operationsController: null, snapshot: null,
     sessions: [], sessionId: '', lastSuccess: 'unavailable',
-    pendingSessionRefresh: false,
+    pendingSessionRefresh: false, pendingOperationsRefresh: false,
+    comparisonIds: [], operations: null, operationsGeneration: 0,
   };
 
   function runtimePath(sessionId = state.sessionId) {
     return '/runtime?session_id=' + encodeURIComponent(sessionId);
+  }
+
+  function comparisonPath() {
+    return '/compare?' + state.comparisonIds.map((id) => 'session_id=' + encodeURIComponent(id)).join('&');
+  }
+
+  function updateUrl() {
+    const query = new URLSearchParams();
+    if (state.sessionId) query.set('session_id', state.sessionId);
+    state.comparisonIds.forEach((id) => query.append('compare', id));
+    window.history.replaceState(null, '', '?' + query.toString());
   }
 
   function scheduleRuntime() {
@@ -427,6 +619,7 @@ function createDashboardController() {
       state.snapshot = snapshot; state.lastSuccess = new Date().toLocaleString();
       renderSnapshot(snapshot, state.lastSuccess);
       setConnection('Connected · read only', 'connection-ok', 'Last successful refresh: ' + state.lastSuccess);
+      if (state.comparisonIds.length >= 2) void refreshOperations('runtime-poll');
       return true;
     } catch (error) {
       if (!state.pendingSessionRefresh) {
@@ -462,6 +655,83 @@ function createDashboardController() {
       : state.sessions.length ? safeText(state.sessions[0].session_id, '') : '';
     selector.value = state.sessionId;
     selector.disabled = state.sessions.length === 0;
+    renderComparisonSessions();
+  }
+
+  function renderComparisonSessions() {
+    const selector = byId('comparison-sessions');
+    const available = new Set(state.sessions.map((item) => item.session_id));
+    if (!state.comparisonIds.length) state.comparisonIds = new URLSearchParams(window.location.search).getAll('compare');
+    const removed = state.comparisonIds.filter((id) => !available.has(id));
+    state.comparisonIds = Array.from(new Set(state.comparisonIds.filter((id) => available.has(id)))).slice(0, 5);
+    replaceChildren(selector);
+    state.sessions.forEach((session) => {
+      const option = document.createElement('option'); option.value = safeText(session.session_id, '');
+      option.textContent = option.value + ' · ' + safeText(session.runtime_status, 'Unavailable');
+      option.selected = state.comparisonIds.includes(option.value); selector.appendChild(option);
+    });
+    selector.disabled = state.sessions.length < 2;
+    if (removed.length) {
+      state.operationsGeneration += 1;
+      state.operations = null;
+      if (state.operationsController) {
+        state.pendingOperationsRefresh = state.comparisonIds.length >= 2;
+        state.operationsController.abort();
+      } else if (state.comparisonIds.length >= 2) {
+        void refreshOperations('discovery-change');
+      } else {
+        byId('export-json').disabled = true; byId('export-csv').disabled = true;
+      }
+      byId('operations-result-status').textContent = 'Removed inaccessible sessions: ' + removed.join(', ');
+      updateUrl();
+    }
+  }
+
+  async function refreshOperations(source = 'manual') {
+    if (state.stopped || state.operationsInFlight || state.comparisonIds.length < 2) return false;
+    state.operationsInFlight = true; state.operationsController = new AbortController();
+    const generation = state.operationsGeneration; byId('compare-button').disabled = true;
+    if (source === 'manual') byId('operations-result-status').textContent = 'Loading read-only comparison';
+    try {
+      const operations = await loadJson(comparisonPath(), state.operationsController.signal);
+      if (generation !== state.operationsGeneration) return false;
+      state.operations = operations; renderOperations(operations); return true;
+    } catch (error) {
+      if (!state.pendingOperationsRefresh && generation === state.operationsGeneration) {
+        byId('operations-result-status').textContent = 'Comparison unavailable; previous valid result preserved';
+      }
+      return false;
+    } finally {
+      state.operationsInFlight = false; state.operationsController = null; byId('compare-button').disabled = false;
+      if (state.pendingOperationsRefresh) {
+        state.pendingOperationsRefresh = false;
+        window.setTimeout(() => refreshOperations('selection-change'), 0);
+      }
+    }
+  }
+
+  function setComparison(sessionIds) {
+    const available = new Set(state.sessions.map((item) => item.session_id));
+    const selected = Array.from(new Set(sessionIds.filter((id) => available.has(id))));
+    if (selected.length < 2 || selected.length > 5) {
+      byId('operations-result-status').textContent = 'Select between 2 and 5 discovered sessions'; return false;
+    }
+    state.comparisonIds = selected; state.operationsGeneration += 1; updateUrl();
+    if (state.operationsInFlight) {
+      state.pendingOperationsRefresh = true;
+      if (state.operationsController) state.operationsController.abort();
+      return true;
+    }
+    void refreshOperations('manual'); return true;
+  }
+
+  function clearComparison() {
+    state.comparisonIds = []; state.operations = null; state.operationsGeneration += 1;
+    state.pendingOperationsRefresh = false;
+    if (state.operationsController) state.operationsController.abort();
+    Array.from(byId('comparison-sessions').options).forEach((option) => { option.selected = false; });
+    updateUrl(); byId('operations-result-status').textContent = 'Comparison cleared; select 2 to 5 sessions';
+    byId('export-json').disabled = true; byId('export-csv').disabled = true;
   }
 
   async function refreshSessions() {
@@ -489,7 +759,7 @@ function createDashboardController() {
       byId('result-status').textContent = 'Unknown session selection rejected'; return false;
     }
     state.sessionId = sessionId; state.snapshot = null;
-    window.history.replaceState(null, '', '?session_id=' + encodeURIComponent(sessionId));
+    updateUrl();
     byId('result-status').textContent = 'Session changed to ' + sessionId + '; loading snapshot';
     if (state.runtimeInFlight) {
       state.pendingSessionRefresh = true;
@@ -511,9 +781,13 @@ function createDashboardController() {
     state.stopped = true; window.clearTimeout(state.runtimeTimer); window.clearTimeout(state.sessionTimer);
     if (state.runtimeController) state.runtimeController.abort();
     if (state.sessionsController) state.sessionsController.abort();
+    if (state.operationsController) state.operationsController.abort();
   }
 
-  return {configure, refreshRuntime, refreshSessions, selectSession, state, stop};
+  return {
+    clearComparison, configure, refreshOperations, refreshRuntime, refreshSessions,
+    selectSession, setComparison, state, stop,
+  };
 }
 
 function setupDialog() {
@@ -553,6 +827,28 @@ function setupPresentationControls(controller) {
   });
   byId('refresh-button').addEventListener('click', () => controller.refreshRuntime('manual'));
   byId('session-selector').addEventListener('change', (event) => controller.selectSession(event.target.value));
+  byId('compare-button').addEventListener('click', () => {
+    const selected = Array.from(byId('comparison-sessions').selectedOptions).map((option) => option.value);
+    controller.setComparison(selected);
+  });
+  byId('clear-comparison').addEventListener('click', controller.clearComparison);
+  byId('export-json').addEventListener('click', () => downloadReport(controller.state.operations, 'json'));
+  byId('export-csv').addEventListener('click', () => downloadReport(controller.state.operations, 'csv'));
+  const findingFilters = [
+    'finding-session-filter', 'finding-severity-filter', 'finding-type-filter',
+    'finding-stage-filter', 'finding-text-filter', 'finding-sort',
+  ];
+  findingFilters.forEach((id) => {
+    const control = byId(id); const eventName = control.tagName === 'SELECT' ? 'change' : 'input';
+    control.addEventListener(eventName, () => {
+      if (controller.state.operations) renderFindings(controller.state.operations);
+    });
+  });
+  byId('finding-reset').addEventListener('click', () => {
+    findingFilters.forEach((id) => { byId(id).value = ''; }); byId('finding-sort').value = 'severity';
+    if (controller.state.operations) renderFindings(controller.state.operations);
+    byId('finding-text-filter').focus();
+  });
   document.querySelector('[data-detail-kind=' + String.fromCharCode(39) + 'session' + String.fromCharCode(39) + ']')
     .addEventListener('click', (event) => {
       const summary = controller.state.sessions.find((item) => item.session_id === controller.state.sessionId)
@@ -576,7 +872,8 @@ async function startDashboard() {
 }
 
 window.AFDEDashboard = Object.freeze({
-  collectText, containsText, createDashboardController, normalizeProgress,
-  normalizedStatus, progressSourceLabel, renderSnapshot, stableSort, statusClass,
+  collectText, comparisonCsv, containsText, createDashboardController, normalizeProgress,
+  normalizedStatus, progressSourceLabel, renderFindings, renderOperations,
+  renderSnapshot, stableSort, statusClass,
 });
 window.addEventListener('DOMContentLoaded', startDashboard);

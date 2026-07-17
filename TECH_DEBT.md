@@ -1,5 +1,21 @@
 # Technical Debt
 
+## AFDE-3.8 Operations Center
+
+- Analytics is intentionally point-in-time. There is no persistent history,
+  trend store, telemetry ingestion, background aggregation, or cross-host view.
+- Stage inference depends on timestamps and recognizable stage signals already
+  present in snapshots; missing boundaries remain unavailable.
+- Bottleneck rules are deterministic heuristics, not service-level objectives
+  or root-cause analysis. Threshold tuning is code/configuration work and is not
+  learned from historical data.
+- Only the current pending approval projection is generally available; broad
+  approved/rejected timing history is not fabricated.
+- JSON/CSV reports are local snapshot representations. PDF, scheduled reports,
+  server-side file archives, and unrestricted downloads are deferred.
+- Authentication, RBAC, TLS, remote access, production hosting, WebSocket/SSE,
+  multi-user coordination, and all dashboard mutations remain deferred.
+
 ## AFDE-3.7 Interactive Operations Dashboard
 
 - Session discovery scans local session directories and projects each snapshot;

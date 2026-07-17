@@ -1,5 +1,20 @@
 # AI Factory OS Project Status
 
+## AFDE-3.8 Operations Center
+
+- OperationsAnalytics derives ephemeral multi-session comparisons and KPIs
+  only from copied Dashboard Snapshots; RuntimePipeline remains authoritative.
+- The API accepts 2 to 5 unique validated discovered IDs, degrades malformed
+  sessions to Unavailable, and never accepts filesystem paths.
+- Duration, approval, failure, and staleness analysis uses documented
+  measured/inferred/heuristic/unavailable provenance and does not fabricate
+  timestamps or claim root cause.
+- Browser comparison refresh is consolidated, guarded against overlap and stale
+  responses, preserves URL-only selection, and provides accessible client-side
+  JSON/CSV export without server filesystem writes.
+- Authentication/RBAC/TLS, remote access, WebSocket/SSE, persistent history,
+  AI root-cause analysis, and every dashboard mutation remain deferred.
+
 ## AFDE-3.7 Interactive Operations Dashboard
 
 - Existing runtime session files are now discoverable through safe snapshot

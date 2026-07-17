@@ -1,5 +1,19 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-3.8 Operations Center
+
+- Added pure `OperationsAnalytics` projections for deterministic comparison,
+  KPIs, stage duration provenance, approval delays, failure summaries,
+  staleness, and explainable advisory bottleneck findings.
+- Added validated JSON `/operations`, `/compare`, and `/operations-report`
+  routes for 2 to 5 discovered sessions with safe malformed-session fallback.
+- Added an accessible responsive Operations Center with URL-only multi-session
+  selection, consolidated refresh, stale-response rejection, filtering,
+  sorting, visible limits, and JSON/CSV Blob export.
+- Preserved RuntimePipeline/Dashboard Snapshot authority, GET/HEAD-only
+  localhost security, evidence metadata containment, and all existing dashboard
+  and CLI behavior without a database, dependency, or mutation boundary.
+
 ## AFDE-3.7 Interactive Operations Dashboard
 
 - Added `GET /sessions` discovery over existing persisted runtime sessions,
