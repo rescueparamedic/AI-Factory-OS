@@ -19,6 +19,7 @@ API_ROUTES = frozenset({
     '/runtime', '/session', '/workers', '/timeline',
     '/approval-queue', '/evidence', '/repository', '/config', '/sessions',
     '/operations', '/compare', '/operations-report',
+    '/history', '/error-events',
 })
 LOCAL_HOSTS = frozenset({'127.0.0.1', 'localhost'})
 SESSION_ID_PATTERN = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$')
@@ -208,6 +209,8 @@ class DashboardAPI:
         field = {
             '/workers': 'workers',
             '/timeline': 'timeline',
+            '/history': 'event_history',
+            '/error-events': 'error_events',
             '/approval-queue': 'approval_queue',
             '/evidence': 'evidence',
             '/repository': 'repository',

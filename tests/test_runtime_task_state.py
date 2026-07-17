@@ -98,6 +98,13 @@ def test_runtime_event_records_task_identity_state_and_payload(tmp_path):
 
     assert event.task_id == "TASK-test"
     assert event.state == "planning"
+    full_persisted = persisted
+    persisted = {
+        key: persisted[key] for key in (
+            'event', 'timestamp', 'worker_id', 'detail',
+            'task_id', 'state', 'payload',
+        )
+    }
     assert persisted == {
         "event": "TASK_CREATED",
         "timestamp": event.timestamp,
@@ -107,6 +114,12 @@ def test_runtime_event_records_task_identity_state_and_payload(tmp_path):
         "state": "planning",
         "payload": {"priority": 1},
     }
+    assert full_persisted['event_id'].startswith('EVT-')
+    assert full_persisted['session_id'] == 'RWS-event-test'
+    assert full_persisted['event_type'] == 'TASK_CREATED'
+    assert full_persisted['actor'] == 'development_worker'
+    assert full_persisted['status'] == 'running'
+    assert full_persisted['metadata'] == {'priority': 1}
 
 
 def test_planner_creates_task_and_developer_receives_running_task(tmp_path, monkeypatch):

@@ -1,5 +1,18 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-3.9 Runtime History Foundation
+
+- Extended the existing RuntimeEvent and EventStream path with required event
+  identity, session, type, actor, status, worker, and metadata fields while
+  preserving legacy event fields.
+- Added a lightweight append-only RuntimeHistoryStore over each session's
+  existing `events.jsonl`, with stable chronological reads, session validation,
+  filters, safe copies, legacy normalization, and JSON/CSV representation.
+- Added read-only Dashboard history/error projections and `runtime-history`,
+  `runtime-events`, and `runtime-export` CLI commands.
+- Reused existing Runtime lifecycle event calls without changing RuntimePipeline,
+  approval policy, Controlled Execution, or runtime state transitions.
+
 ## AFDE-3.8 Operations Center
 
 - Added pure `OperationsAnalytics` projections for deterministic comparison,

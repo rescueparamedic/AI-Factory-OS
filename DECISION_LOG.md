@@ -1,5 +1,19 @@
 # Decision Log
 
+## 2026-07-18 - AFDE-3.9 Reuse the Existing Event Ledger
+
+- Keep session `events.jsonl` as the single append-only event ledger instead of
+  adding a database, parallel history file, event bus, or analytics store.
+- Extend RuntimeEvent additively and preserve `event`, `detail`, `task_id`,
+  `state`, and `payload` for Runtime and Dashboard compatibility.
+- Route EventStream writes through RuntimeHistoryStore so all existing Session,
+  Worker, Approval, QA, failure, and completion emissions gain the new model
+  without changing RuntimePipeline transitions or approval execution behavior.
+- Normalize legacy records only when read. Deterministic `EVT-LEGACY-*` IDs and
+  canonical types are projections and never rewrite historical bytes.
+- Keep history CLI exports on stdout and Dashboard access read-only; history
+  does not become authority for current runtime state.
+
 ## 2026-07-17 - AFDE-3.8 Pure Snapshot Operations Analytics
 
 - Adopted `OperationsAnalytics` as a deterministic transport-neutral projection

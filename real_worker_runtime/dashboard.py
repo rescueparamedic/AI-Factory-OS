@@ -8,6 +8,7 @@ import subprocess
 from typing import Any, Mapping
 
 from .runtime_pipeline import PipelineState, RuntimePipeline
+from .runtime_history import RuntimeHistoryStore
 
 WORKERS = ('Development', 'QA', 'Documentation', 'Approval', 'Release')
 STAGES = {
@@ -47,6 +48,10 @@ class RuntimeDashboard:
         progress = _progress(session, pipeline, raw_pipeline)
         workers = _workers(session, pipeline, progress)
         repository = self.repository_status()
+        history = RuntimeHistoryStore(self.root).events(session_id)
+        error_events = [
+            item for item in history if item.get('event_type') == 'ERROR_OCCURRED'
+        ]
         result = {
             'session_id': session_id,
             'created_at': str(session.get('created_at', 'unavailable')),
@@ -64,7 +69,20 @@ class RuntimeDashboard:
             'approval_status': workers[3]['status'],
             'release_status': workers[4]['status'],
             'approval_queue': _approvals(session),
-            'timeline': _timeline(directory, pipeline),
+            'timeline': _timeline(pipeline, history),
+            'event_history': history,
+            'error_events': error_events,
+            'history_summary': {
+                'event_count': len(history),
+                'error_event_count': len(error_events),
+                'first_event_at': (
+                    history[0]['timestamp'] if history else 'unavailable'
+                ),
+                'last_event_at': (
+                    history[-1]['timestamp'] if history else 'unavailable'
+                ),
+                'read_only': True,
+            },
             'evidence': _evidence(session, directory),
             'repository': repository,
             'repository_branch': repository['current_branch'],
@@ -343,33 +361,37 @@ def _approvals(session: Mapping[str, Any]) -> list[dict[str, str]]:
     }]
 
 
-def _timeline(directory: Path, pipeline: RuntimePipeline | None) -> list[dict[str, str]]:
-    path = directory / 'events.jsonl'
-    if path.is_file():
-        source = []
-        for line in path.read_text(encoding='utf-8').splitlines():
-            try:
-                item = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            if isinstance(item, Mapping):
-                source.append(item)
+def _timeline(
+    pipeline: RuntimePipeline | None,
+    history: list[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    if history:
         rows = [{
+            'event_id': str(item.get('event_id', '')),
             'timestamp': str(item.get('timestamp', '')),
             'event': str(item.get('event', '')),
-            'worker': str(item.get('worker_id', '')),
+            'event_type': str(item.get('event_type', '')),
+            'actor': str(item.get('actor', '')),
+            'status': str(item.get('status', '')),
+            'worker': str(item.get('worker_id') or ''),
             'task': str(item.get('task_id', '')),
             'detail': str(item.get('detail', '')),
             'summary': str(item.get('summary') or item.get('detail', '')),
-        } for item in source]
+            'metadata': deepcopy(item.get('metadata', {})),
+        } for item in history]
     else:
         rows = [{
+            'event_id': '',
             'timestamp': str(item.get('timestamp', '')),
             'event': 'PipelineTransition',
+            'event_type': 'PIPELINE_TRANSITION',
+            'actor': str(item.get('worker', '') or 'runtime'),
+            'status': str(item.get('to', 'recorded')),
             'worker': str(item.get('worker', '')),
             'task': pipeline.task_id if pipeline else '',
             'detail': str(item.get('reason', '')),
             'summary': str(item.get('reason', '')),
+            'metadata': {},
         } for item in (pipeline.history if pipeline else [])]
     unique = {}
     for item in rows:

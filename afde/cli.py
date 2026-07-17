@@ -12,9 +12,10 @@ from approval_guardian import ApprovalGuardian, ApprovalRequest
 from sprint_auto_runner import SprintAutoRunner
 from real_worker_runtime import (
     CodexAutomationBridge, LiveDashboardController, RealWorkerRuntime,
-    RuntimeDashboard, RuntimeDashboardWebServer,
+    RuntimeDashboard, RuntimeDashboardWebServer, RuntimeHistoryStore,
     TerminalLiveDashboardRenderer,
 )
+from real_worker_runtime.runtime_history import history_csv
 from real_worker_runtime.openai_probe import OpenAIResponsesProbe
 from real_worker_runtime.raw_openai_probe import RawOpenAIResponsesProbe
 from real_worker_runtime.http_boundary_probe import HTTPBoundaryDiagnostic
@@ -222,6 +223,78 @@ def cmd_runtime_dashboard_web(args):
         server.close()
 
 
+def _history_filters(args):
+    return {
+        'event_type': args.event_type,
+        'actor': args.actor,
+        'status': args.status,
+        'worker_id': args.worker_id,
+        'since': args.since,
+        'until': args.until,
+        'limit': args.limit,
+    }
+
+
+def _print_history_events(events):
+    if not events:
+        print('No runtime history events')
+        return
+    for item in events:
+        print(
+            '{timestamp} | {event_type} | actor={actor} | status={status} | '
+            'worker={worker}'.format(
+                timestamp=item.get('timestamp', 'unavailable'),
+                event_type=item.get('event_type', 'RUNTIME_EVENT'),
+                actor=item.get('actor', 'runtime'),
+                status=item.get('status', 'recorded'),
+                worker=item.get('worker_id') or '-',
+            )
+        )
+
+
+def cmd_runtime_history(args):
+    summary = RuntimeHistoryStore(Path.cwd()).summary(
+        args.session_id, **_history_filters(args),
+    )
+    if args.json:
+        _print_json(summary)
+        return
+    print('AI Factory OS - Runtime History')
+    print('Session: {}'.format(summary['session_id']))
+    print('Events: {} | Errors: {}'.format(
+        summary['event_count'], summary['error_event_count'],
+    ))
+    print('Range: {} -> {}'.format(
+        summary['first_event_at'], summary['last_event_at'],
+    ))
+    _print_history_events(summary['events'])
+
+
+def cmd_runtime_events(args):
+    events = RuntimeHistoryStore(Path.cwd()).events(
+        args.session_id, **_history_filters(args),
+    )
+    if args.json:
+        _print_json({
+            'session_id': args.session_id,
+            'events': events,
+            'event_count': len(events),
+            'read_only': True,
+        })
+        return
+    _print_history_events(events)
+
+
+def cmd_runtime_export(args):
+    summary = RuntimeHistoryStore(Path.cwd()).summary(
+        args.session_id, **_history_filters(args),
+    )
+    if args.format == 'csv':
+        print(history_csv(summary), end='')
+    else:
+        _print_json(summary)
+
+
 def _positive_float(value):
     try:
         number = float(value)
@@ -353,6 +426,26 @@ def build_parser():
     p.add_argument('--port', type=int, default=8765)
     p.add_argument('--poll-interval', type=_positive_float, default=1.0)
     p.set_defaults(func=cmd_runtime_dashboard_web)
+
+    for command, help_text, function in (
+        ('runtime-history', 'Show a runtime session history summary', cmd_runtime_history),
+        ('runtime-events', 'List filtered runtime history events', cmd_runtime_events),
+        ('runtime-export', 'Export runtime history to stdout', cmd_runtime_export),
+    ):
+        p = sub.add_parser(command, help=help_text)
+        p.add_argument('--session-id', required=True)
+        p.add_argument('--event-type', action='append')
+        p.add_argument('--actor')
+        p.add_argument('--status')
+        p.add_argument('--worker-id')
+        p.add_argument('--since')
+        p.add_argument('--until')
+        p.add_argument('--limit', type=_positive_int)
+        if command == 'runtime-export':
+            p.add_argument('--format', choices=['json', 'csv'], default='json')
+        else:
+            p.add_argument('--json', action='store_true')
+        p.set_defaults(func=function)
 
     return parser
 

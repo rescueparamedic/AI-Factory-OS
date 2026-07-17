@@ -203,6 +203,8 @@ function renderStatistics(snapshot) {
     'Failed workers': workers.filter((row) => row.status === 'Failed').length,
     'Pending approvals': approvals.filter((row) => safeText(row.status, '').toLowerCase() === 'pending').length,
     'Timeline events': safeRows(snapshot.timeline).length,
+    'History events': safeRows(snapshot.event_history).length,
+    'Error events': safeRows(snapshot.error_events).length,
     'Evidence items': safeRows(snapshot.evidence).length,
     'Explicit progress': sources.filter((source) => source.startsWith('explicit_')).length,
     'Derived progress': sources.filter((source) => source === 'lifecycle_derived').length,
@@ -319,7 +321,7 @@ function renderTimeline(snapshot, globalQuery) {
   const task = inputValue('timeline-task-filter'); const status = inputValue('timeline-status-filter');
   const text = inputValue('timeline-text-filter');
   let rows = safeRows(snapshot.timeline).filter((row) => (
-    fieldMatches(row, 'event', event) && containsText([row.worker, row.actor], actor)
+    containsText([row.event, row.event_type], event) && containsText([row.worker, row.actor], actor)
     && containsText([row.task, row.task_id], task) && fieldMatches(row, 'status', status)
     && containsText(row, text) && containsText(row, globalQuery)
   ));
@@ -328,10 +330,14 @@ function renderTimeline(snapshot, globalQuery) {
   if (!rows.length) { target.appendChild(emptyState('No timeline events match the active filters')); return 0; }
   rows.forEach((row) => {
     const item = document.createElement('li'); const title = document.createElement('h3');
-    title.textContent = safeText(row.event || row.type, 'Runtime event'); item.appendChild(title);
+    if (safeText(row.event_type, '') === 'ERROR_OCCURRED') item.className = 'severity-critical';
+    title.textContent = safeText(row.event_type || row.event || row.type, 'Runtime event'); item.appendChild(title);
+    appendMeta(item, 'Event ID', row.event_id);
+    appendMeta(item, 'Source event', row.event);
     appendMeta(item, 'Time', row.timestamp); appendMeta(item, 'Actor', row.worker || row.actor);
     appendMeta(item, 'Task', row.task || row.task_id); appendMeta(item, 'Status', row.status);
     appendMeta(item, 'Summary', row.summary || row.detail);
+    appendMeta(item, 'Metadata', detailText(row.metadata));
     item.appendChild(inspectButton('Timeline event detail', row)); target.appendChild(item);
   });
   return rows.length;
