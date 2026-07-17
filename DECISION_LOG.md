@@ -1,5 +1,21 @@
 # Decision Log
 
+## 2026-07-17 - AFDE-3.8 Pure Snapshot Operations Analytics
+
+- Adopted `OperationsAnalytics` as a deterministic transport-neutral projection
+  over copied Dashboard Snapshots; it has no RuntimePipeline dependency, cache,
+  database, ingestion path, background job, or persistence.
+- Limited comparison to 2 through 5 unique IDs from validated session discovery;
+  malformed discovered sessions remain visible as Unavailable.
+- Required honest duration provenance (`measured`, `inferred`, `unavailable`),
+  explicit KPI denominators, centralized thresholds, and explainable advisory
+  findings rather than opaque scores or AI-generated root-cause claims.
+- Kept comparison selection in URL presentation state and coupled consolidated
+  analytics refresh to the existing runtime poll cycle with overlap and stale
+  response guards.
+- Kept reports read-only and data-equivalent to Operations APIs; Blob downloads
+  are browser-local and the HTTP server writes no export file.
+
 ## 2026-07-16 - AFDE-3.7 Validated Session Discovery and Presentation Tools
 
 - Discover sessions directly from existing runtime-session directories and

@@ -3,7 +3,7 @@
 <head>
   <meta charset='utf-8'>
   <meta name='viewport' content='width=device-width, initial-scale=1'>
-  <title>AI Factory OS Interactive Operations Dashboard</title>
+  <title>AI Factory OS Operations Center</title>
   <link rel='stylesheet' href='/dashboard.css'>
   <script src='/dashboard.js' defer></script>
 </head>
@@ -12,8 +12,8 @@
   <header class='site-header'>
     <div>
       <p class='eyebrow'>AI Factory OS · Read-only operations</p>
-      <h1>Interactive Operations Dashboard</h1>
-      <p class='subtitle'>Discover, filter, sort, and inspect snapshot data safely.</p>
+      <h1>Operations Center</h1>
+      <p class='subtitle'>Interactive Operations Dashboard for read-only comparison and snapshot-derived analytics.</p>
     </div>
     <div class='connection-panel' aria-label='Connection and refresh status'>
       <div class='connection-line'>
@@ -27,6 +27,7 @@
 
   <nav class='section-nav' aria-label='Dashboard sections'>
     <a href='#overview'>Overview</a>
+    <a href='#operations-center'>Operations Center</a>
     <a href='#workers-panel'>Workers</a>
     <a href='#approvals-panel'>Approvals</a>
     <a href='#timeline-panel'>Timeline</a>
@@ -48,6 +49,62 @@
   </section>
 
   <main id='dashboard' class='dashboard-grid'>
+    <section id='operations-center' class='card operations-center-card' aria-labelledby='operations-center-title'>
+      <div class='card-heading'>
+        <div><p class='eyebrow'>Snapshot-derived · advisory only</p><h2 id='operations-center-title'>Session comparison</h2></div>
+        <span class='read-only-label'>Read only</span>
+      </div>
+      <div class='comparison-controls'>
+        <label for='comparison-sessions'>Compare 2 to 5 discovered sessions</label>
+        <select id='comparison-sessions' multiple size='5' aria-describedby='comparison-help'></select>
+        <p id='comparison-help' class='microcopy'>Use Ctrl or Command with arrow keys to select multiple sessions. Selection is stored only in the page URL.</p>
+        <div class='button-row'>
+          <button id='compare-button' type='button'>Compare selected</button>
+          <button id='clear-comparison' type='button'>Clear comparison</button>
+          <button id='export-json' type='button' disabled>Export JSON</button>
+          <button id='export-csv' type='button' disabled>Export CSV</button>
+        </div>
+        <p id='operations-result-status' class='result-status' role='status' aria-live='polite'>Select 2 to 5 sessions for comparison</p>
+      </div>
+
+      <section aria-labelledby='operations-kpi-title'>
+        <h3 id='operations-kpi-title'>Snapshot-derived KPIs</h3>
+        <dl id='operations-kpis' class='statistics-grid'></dl>
+        <p class='card-note'>Durations use only valid timezone-aware timestamps. Denominators and unavailable values are included in the report.</p>
+      </section>
+
+      <section class='operations-panel' aria-labelledby='comparison-table-title'>
+        <h3 id='comparison-table-title'>Comparison table</h3>
+        <div class='table-scroll'>
+          <table id='comparison-table'>
+            <caption>Selected runtime session comparison</caption>
+            <thead><tr><th scope='col'>Session</th><th scope='col'>Status</th><th scope='col'>Stage</th><th scope='col'>Task</th><th scope='col'>Worker</th><th scope='col'>Elapsed</th><th scope='col'>Workers</th><th scope='col'>Failed</th><th scope='col'>Approvals</th><th scope='col'>Evidence</th><th scope='col'>Progress</th><th scope='col'>Source</th><th scope='col'>Branch</th><th scope='col'>Tree</th><th scope='col'>Staleness</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class='operations-subgrid'>
+        <section class='operations-panel' aria-labelledby='stage-duration-title'><h3 id='stage-duration-title'>Stage durations</h3><div id='stage-duration-panel' class='stack-list'></div></section>
+        <section class='operations-panel approval-emphasis' aria-labelledby='approval-delay-title'><h3 id='approval-delay-title'>Approval delays</h3><div id='approval-delay-panel' class='stack-list'></div></section>
+        <section class='operations-panel' aria-labelledby='failure-summary-title'><h3 id='failure-summary-title'>Failure summaries</h3><div id='failure-summary-panel' class='stack-list'></div></section>
+      </div>
+
+      <section class='operations-panel' aria-labelledby='findings-title'>
+        <div class='card-heading'><h3 id='findings-title'>Bottleneck findings</h3><span class='microcopy'>Maximum 100 visible</span></div>
+        <div class='filter-bar' aria-label='Operations finding filters'>
+          <label>Session<select id='finding-session-filter'><option value=''>All</option></select></label>
+          <label>Severity<select id='finding-severity-filter'><option value=''>All</option><option value='critical'>Critical</option><option value='warning'>Warning</option><option value='info'>Info</option></select></label>
+          <label>Finding type<select id='finding-type-filter'><option value=''>All</option></select></label>
+          <label>Stage<select id='finding-stage-filter'><option value=''>All</option></select></label>
+          <label>Search<input id='finding-text-filter' type='search' autocomplete='off'></label>
+          <label>Sort<select id='finding-sort'><option value='severity'>Severity</option><option value='duration'>Duration</option><option value='timestamp'>Timestamp</option></select></label>
+          <button id='finding-reset' type='button'>Reset finding filters</button>
+        </div>
+        <div id='bottleneck-findings' class='stack-list'></div>
+      </section>
+    </section>
+
     <section id='overview' class='card runtime-card' aria-labelledby='runtime-title'>
       <div class='card-heading'>
         <h2 id='runtime-title'>Runtime overview</h2>

@@ -195,6 +195,47 @@ python main.py scheduler list --limit 5
 python main.py dashboard live-build
 ```
 
+## AFDE-3.8 Operations Center
+
+The localhost Web Dashboard now compares 2 to 5 validated discovered sessions
+through one consolidated read-only request. `OperationsAnalytics` is a pure,
+transport-neutral projection over safely copied Runtime Dashboard snapshots;
+it does not access `RuntimePipeline`, persist analytics, or mutate session data.
+
+Read-only endpoints are:
+
+- `GET /operations` for the selected primary session.
+- `GET /compare?session_id=RWS-...&session_id=RWS-...` for 2 to 5 unique
+  discovered sessions.
+- `GET /operations-report?...` for JSON report data plus a safely escaped CSV
+  representation and sanitized filenames. The browser also exports the current
+  exposed projection with a client-side Blob; the server writes no report file.
+
+The Operations Center presents snapshot-derived status counts, worker and
+approval totals, evidence totals, progress-source counts, and average/median
+elapsed duration. Elapsed duration includes only sessions with valid,
+timezone-aware, non-negative start/end timestamps, and the API reports the
+duration denominator. Missing values remain `null`/unavailable.
+
+Stage durations are `measured` only when an explicit non-negative duration is
+present, `inferred` from defensible timeline transitions or an active stage
+start, and otherwise `unavailable`; measured values take precedence. Advisory
+findings use centralized deterministic rules: longest available stage, Waiting
+with pending approval, approval age (warning at 30 minutes, critical at 2
+hours), failed workers, repeated failure category, and active-session aging
+(30 minutes) or staleness (2 hours). Completed and failed sessions are excluded
+from active staleness warnings. Failure summaries report available errors and
+correlated evidence identifiers but never claim root cause.
+
+Comparison selection is URL-only presentation state, survives polling, and is
+revalidated after lower-frequency discovery. Operations requests cannot
+overlap, stale responses are discarded after selection changes, findings are
+capped at 100 visible rows, and all filters/sorts operate on copies. Rendering
+uses `textContent`, semantic tables, labeled controls, ARIA live status, visible
+focus, reduced-motion support, and responsive overflow. The boundary remains
+localhost-only, GET/HEAD-only, metadata-only for evidence, and contains no
+approval, execution, runtime, repository, or filesystem mutation operation.
+
 ## AFDE-3.7 Interactive Operations Dashboard
 
 The localhost dashboard now discovers existing persisted runtime sessions and

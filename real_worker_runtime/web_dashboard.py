@@ -9,11 +9,16 @@ from typing import Any, Mapping
 from urllib.parse import parse_qs, urlsplit
 
 from .live_dashboard import SnapshotProvider, validate_refresh_interval
+from .operations_analytics import (
+    MAX_COMPARE_SESSIONS, MIN_COMPARE_SESSIONS, OperationsAnalytics,
+    export_filename, report_csv,
+)
 
 
 API_ROUTES = frozenset({
     '/runtime', '/session', '/workers', '/timeline',
     '/approval-queue', '/evidence', '/repository', '/config', '/sessions',
+    '/operations', '/compare', '/operations-report',
 })
 LOCAL_HOSTS = frozenset({'127.0.0.1', 'localhost'})
 SESSION_ID_PATTERN = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$')
@@ -31,6 +36,10 @@ class DashboardSessionNotFound(LookupError):
     pass
 
 
+class DashboardComparisonInvalid(ValueError):
+    pass
+
+
 class DashboardAPI:
     '''Read-only JSON views over one reusable dashboard snapshot provider.'''
 
@@ -43,6 +52,7 @@ class DashboardAPI:
         self.provider = provider
         self.session_id = session_id
         self.poll_interval = validate_refresh_interval(poll_interval)
+        self.analytics = OperationsAnalytics()
 
     def get(self, route: str) -> dict[str, Any]:
         parsed = urlsplit(route)
@@ -54,6 +64,8 @@ class DashboardAPI:
                 'sessions': deepcopy(self._sessions()),
                 'read_only': True,
             }
+        if path in {'/operations', '/compare', '/operations-report'}:
+            return self._operations(path, parsed.query)
         selected_session = self._selected_session(parsed.query)
         if path == '/config':
             return {
@@ -68,6 +80,73 @@ class DashboardAPI:
         if not isinstance(snapshot, Mapping):
             raise TypeError('dashboard snapshot must be a mapping')
         return deepcopy(self._view(path, snapshot))
+
+    def _operations(self, path: str, query: str) -> dict[str, Any]:
+        minimum = MIN_COMPARE_SESSIONS if path in {'/compare', '/operations-report'} else 1
+        summaries = self._sessions()
+        session_ids = self._comparison_ids(query, minimum, summaries)
+        by_id = {
+            str(item.get('session_id')): item for item in summaries
+            if isinstance(item.get('session_id'), str)
+        }
+        snapshots = []
+        for session_id in session_ids:
+            try:
+                snapshot = self.provider.snapshot(session_id)
+                if not isinstance(snapshot, Mapping):
+                    raise TypeError('dashboard snapshot must be a mapping')
+                snapshots.append(dict(snapshot))
+            except (FileNotFoundError, OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+                summary = by_id.get(session_id, {})
+                snapshots.append({
+                    'session_id': session_id,
+                    'runtime_status': 'Unavailable',
+                    'created_at': summary.get('created_at', 'unavailable'),
+                    'updated_at': summary.get('updated_at', 'unavailable'),
+                    'snapshot_timestamp': 'unavailable',
+                    'error': type(exc).__name__,
+                })
+        projection = self.analytics.project(
+            snapshots, discovered_session_count=len(summaries),
+        )
+        if path != '/operations-report':
+            return projection
+        return {
+            'report': projection,
+            'csv': report_csv(projection),
+            'filenames': {
+                'json': export_filename(session_ids, 'json'),
+                'csv': export_filename(session_ids, 'csv'),
+            },
+            'read_only': True,
+        }
+
+    def _comparison_ids(
+        self, query: str, minimum: int,
+        summaries: list[Mapping[str, Any]],
+    ) -> list[str]:
+        values = parse_qs(query, keep_blank_values=True).get('session_id', [])
+        if not values and minimum == 1:
+            values = [self.session_id]
+        if any(not SESSION_ID_PATTERN.fullmatch(value) for value in values):
+            raise DashboardSessionInvalid('invalid session ID')
+        unique = list(dict.fromkeys(values))
+        if len(unique) < minimum:
+            raise DashboardComparisonInvalid(
+                f'select between {minimum} and {MAX_COMPARE_SESSIONS} sessions',
+            )
+        if len(unique) > MAX_COMPARE_SESSIONS:
+            raise DashboardComparisonInvalid(
+                f'at most {MAX_COMPARE_SESSIONS} sessions may be compared',
+            )
+        discovered = {
+            item.get('session_id') for item in summaries
+            if isinstance(item, Mapping)
+        }
+        unknown = next((item for item in unique if item not in discovered), None)
+        if unknown is not None:
+            raise DashboardSessionNotFound(unknown)
+        return unique
 
     def _selected_session(self, query: str) -> str:
         if not query:
@@ -153,7 +232,7 @@ def build_dashboard_handler(
     }
 
     class DashboardRequestHandler(BaseHTTPRequestHandler):
-        server_version = 'AFDE-Dashboard/3.7'
+        server_version = 'AFDE-Dashboard/3.8'
 
         def do_GET(self) -> None:
             self._read(head_only=False)
@@ -202,6 +281,12 @@ def build_dashboard_handler(
             except DashboardSessionInvalid:
                 self._json(
                     400, {'error': 'invalid_session_id'},
+                    head_only=head_only,
+                )
+                return
+            except DashboardComparisonInvalid as exc:
+                self._json(
+                    400, {'error': 'invalid_comparison', 'detail': str(exc)},
                     head_only=head_only,
                 )
                 return
