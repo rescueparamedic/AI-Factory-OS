@@ -1,4 +1,6 @@
 from .runtime import RealWorkerRuntime
+from .execution_adapter import SingleWorkerExecutionAdapter
+from .models import ExecutionInput, WorkerExecutionResult
 from .role_execution import (
     DeveloperExecutionResult, DocumentationExecutionResult, PlannerExecutionResult,
     QAExecutionResult, RoleExecutionRequest, RoleExecutionResult,
@@ -34,6 +36,7 @@ __all__ = [
     'RuntimeDashboardWebServer',
     'RuntimeHistoryStore',
     'TerminalLiveDashboardRenderer',
+    "ExecutionInput", "SingleWorkerExecutionAdapter", "WorkerExecutionResult",
     "AgentResultHandoff", "DeveloperExecutionResult", "DocumentationExecutionResult",
     "OrchestrationAction", "OrchestrationDecision", "PipelineState",
     "PlannerExecutionResult", "QAExecutionResult", "QARevisionDecision",
