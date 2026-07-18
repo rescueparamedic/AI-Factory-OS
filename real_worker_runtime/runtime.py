@@ -50,14 +50,25 @@ class RealWorkerRuntime:
         enable_controlled_execution=False,
     ):
         selected = ProviderBridge(self.root, model, allow_live_api, openai_client)
-        selected.select(provider)
+        selection = selected.select(provider)
         sid = f"RWS-{datetime.now().strftime('%Y%m%d-%H%M%S')}-{uuid4().hex[:6]}"
         sprint = f"DEMO-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
         workers = {item.worker_id: ("queued" if item.order == 1 else "waiting") for item in WorkerRegistry().list()}
         session = RuntimeSession(sid, sprint, request, provider, "running", _now(), _now(), workers)
+        provider_evidence = {
+            "provider": selection["provider"],
+            "model": selection.get("model") or "deterministic-mock-v1",
+            "execution_mode": selection["mode"],
+        }
+        session.execution_verification.update(provider_evidence)
         store = ArtifactStore(self.root, sid)
         store.json("session.json", session.to_dict())
-        EventStream(store).emit("RUNTIME_CREATED", detail=request)
+        events = EventStream(store)
+        events.emit("RUNTIME_CREATED", detail=request)
+        events.emit(
+            "PROVIDER_SELECTED", detail=selection["provider"],
+            payload=provider_evidence,
+        )
         settings = {
             "model": model, "allow_live_api": allow_live_api,
             "enable_controlled_execution": enable_controlled_execution,

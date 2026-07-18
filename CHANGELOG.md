@@ -1,5 +1,16 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-3.12 Real AI Provider Integration
+
+- Added a minimal immutable provider contract and deterministic mock provider.
+- Added an explicit-opt-in OpenAI Responses provider with environment-based
+  credentials and normalized response metadata.
+- Added exact provider factory selection without fallback or provider routing.
+- Preserved the existing structured Worker Runtime adapter while recording
+  provider, model, and execution mode in Runtime evidence and history.
+- Added provider model, mock, factory, CLI selection, and live API protection
+  tests without introducing autonomous behavior or UI changes.
+
 ## AFDE-3.11 Execution Planner MVP
 
 - Added deterministic rule-based Goal to ExecutionPlan to ExecutionTask
