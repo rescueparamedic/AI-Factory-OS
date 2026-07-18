@@ -1,5 +1,17 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-3.11 Execution Planner MVP
+
+- Added deterministic rule-based Goal to ExecutionPlan to ExecutionTask
+  generation with no AI provider usage.
+- Added persisted plan create/show services, JSON serialization, and minimal
+  duplicate ID, missing dependency, and cycle validation.
+- Added nested `plan create` and `plan show` CLI commands with JSON output.
+- Added a read-only Runtime Dashboard Execution Plan Summary for the latest
+  valid persisted plan.
+- Added focused model, planner, validation, CLI, and Dashboard tests plus the
+  Planner MVP product guide.
+
 ## AFDE-3.10 Operator Workflow MVP
 
 - Added a thin `afde.operator` application layer that delegates to the existing
