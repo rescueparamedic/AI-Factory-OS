@@ -27,6 +27,7 @@
 
   <nav class='section-nav' aria-label='Dashboard sections'>
     <a href='#overview'>Overview</a>
+    <a href='#execution-plan-panel'>Execution Plan</a>
     <a href='#operations-center'>Operations Center</a>
     <a href='#workers-panel'>Workers</a>
     <a href='#approvals-panel'>Approvals</a>
@@ -123,6 +124,14 @@
         <button class='inspect-button' type='button' data-detail-kind='session'>Inspect session</button>
       </div>
       <dl id='current-operation' class='metrics'></dl>
+    </section>
+
+    <section id='execution-plan-panel' class='card' aria-labelledby='execution-plan-title'>
+      <div class='card-heading'>
+        <h2 id='execution-plan-title'>Execution Plan Summary</h2>
+        <span class='read-only-label'>Read only</span>
+      </div>
+      <dl id='execution-plan-summary' class='metrics'></dl>
     </section>
 
     <section class='card statistics-card' aria-labelledby='statistics-title'>

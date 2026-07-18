@@ -28,6 +28,7 @@ from .operator.presenter import (
     render_json as render_operator_json,
     render_preflight, render_result, safe_text,
 )
+from .planner import PlanNotFoundError, PlannerService
 
 
 def _print_json(data):
@@ -388,6 +389,56 @@ def cmd_operator_resume(args):
     return 5 if value.status == "failed" else 0
 
 
+def _print_plan(plan, json_output=False):
+    if json_output:
+        _print_json(plan.to_dict())
+        return
+    print("AI Factory OS - Execution Plan")
+    print(f"Plan ID: {plan.plan_id}")
+    print(f"Goal: {plan.goal}")
+    print(f"Status: {plan.status}")
+    print(f"Created: {plan.created_at}")
+    print("Tasks:")
+    for task in plan.tasks:
+        dependencies = ", ".join(task.depends_on) or "none"
+        print(
+            f"- {task.task_id} | {task.title} | priority={task.priority} | "
+            f"status={task.status} | depends_on={dependencies}"
+        )
+
+
+def cmd_plan_create(args):
+    try:
+        plan = PlannerService(args.workspace).create_plan(args.goal)
+    except ValueError as exc:
+        if args.json:
+            _print_json({"status": "invalid", "error": str(exc)})
+        else:
+            print(f"Execution plan invalid: {exc}")
+        return 2
+    _print_plan(plan, args.json)
+    return 0
+
+
+def cmd_plan_show(args):
+    try:
+        plan = PlannerService(args.workspace).show_plan(args.plan_id)
+    except PlanNotFoundError as exc:
+        if args.json:
+            _print_json({"status": "not_found", "error": str(exc)})
+        else:
+            print(str(exc))
+        return 4
+    except ValueError as exc:
+        if args.json:
+            _print_json({"status": "invalid", "error": str(exc)})
+        else:
+            print(str(exc))
+        return 2
+    _print_plan(plan, args.json)
+    return 0
+
+
 def _positive_float(value):
     try:
         number = float(value)
@@ -584,6 +635,21 @@ def build_parser():
     p.add_argument('--workspace', default='.')
     p.add_argument('--json', action='store_true')
     p.set_defaults(func=cmd_operator_reject)
+
+    p = sub.add_parser('plan', help='Create or show a deterministic execution plan')
+    plan_sub = p.add_subparsers(dest='plan_command', required=True)
+
+    create = plan_sub.add_parser('create', help='Create an execution plan')
+    create.add_argument('--goal', required=True)
+    create.add_argument('--workspace', default='.')
+    create.add_argument('--json', action='store_true')
+    create.set_defaults(func=cmd_plan_create)
+
+    show = plan_sub.add_parser('show', help='Show a persisted execution plan')
+    show.add_argument('--plan-id', required=True)
+    show.add_argument('--workspace', default='.')
+    show.add_argument('--json', action='store_true')
+    show.set_defaults(func=cmd_plan_show)
 
     return parser
 

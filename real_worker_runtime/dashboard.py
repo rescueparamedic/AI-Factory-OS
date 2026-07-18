@@ -7,6 +7,8 @@ from pathlib import Path
 import subprocess
 from typing import Any, Mapping
 
+from afde.planner import PlannerService
+
 from .runtime_pipeline import PipelineState, RuntimePipeline
 from .runtime_history import RuntimeHistoryStore
 
@@ -83,6 +85,7 @@ class RuntimeDashboard:
                 ),
                 'read_only': True,
             },
+            'execution_plan_summary': PlannerService(self.root).summary(),
             'evidence': _evidence(session, directory),
             'repository': repository,
             'repository_branch': repository['current_branch'],
@@ -186,6 +189,15 @@ class RuntimeDashboard:
         lines += [
             '- {type}: {path}'.format(**row) for row in data['evidence']
         ] or ['- No evidence artifacts']
+        plan = data['execution_plan_summary']
+        lines += [
+            '', 'Execution Plan Summary',
+            '- Plan ID: {}'.format(plan['plan_id']),
+            '- Goal: {}'.format(plan['goal']),
+            '- Total Tasks: {}'.format(plan['total_tasks']),
+            '- Completed: {}'.format(plan['completed']),
+            '- Pending: {}'.format(plan['pending']),
+        ]
         repo = data['repository']
         lines += [
             '', 'Repository Status',

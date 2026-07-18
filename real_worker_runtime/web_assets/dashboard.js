@@ -189,6 +189,19 @@ function renderRuntime(snapshot, lastSuccess) {
   );
 }
 
+function renderExecutionPlan(snapshot) {
+  const target = byId('execution-plan-summary');
+  replaceChildren(target);
+  const plan = snapshot.execution_plan_summary
+    && typeof snapshot.execution_plan_summary === 'object'
+    ? snapshot.execution_plan_summary : {};
+  metric(target, 'Plan ID', plan.plan_id);
+  metric(target, 'Goal', plan.goal);
+  metric(target, 'Total Tasks', plan.total_tasks ?? 0);
+  metric(target, 'Completed', plan.completed ?? 0);
+  metric(target, 'Pending', plan.pending ?? 0);
+}
+
 function renderStatistics(snapshot) {
   const target = byId('runtime-statistics');
   replaceChildren(target);
@@ -382,7 +395,8 @@ function renderRepository(snapshot, globalQuery) {
 function renderSnapshot(snapshot, lastSuccess) {
   const safeSnapshot = snapshot && typeof snapshot === 'object' ? snapshot : {};
   const query = inputValue('global-search');
-  renderRuntime(safeSnapshot, lastSuccess); renderStatistics(safeSnapshot); renderLifecycle(safeSnapshot);
+  renderRuntime(safeSnapshot, lastSuccess); renderExecutionPlan(safeSnapshot);
+  renderStatistics(safeSnapshot); renderLifecycle(safeSnapshot);
   const count = renderWorkers(safeSnapshot, query) + renderApprovals(safeSnapshot, query)
     + renderTimeline(safeSnapshot, query) + renderEvidence(safeSnapshot, query)
     + renderRepository(safeSnapshot, query);
