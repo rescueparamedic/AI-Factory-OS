@@ -86,12 +86,12 @@ class RealWorkerRuntime:
     def approval_show(self, approval_id: str) -> dict:
         return RuntimeApprovalStore(self.root).load(approval_id)
 
-    def approval_reject(self, approval_id: str) -> dict:
+    def approval_reject(self, approval_id: str, reason: str = "") -> dict:
         store = RuntimeApprovalStore(self.root)
         record = store.load(approval_id)
         session = self._load_session(record["session_id"])
         self._validate_pending_session(session, record)
-        rejected = store.reject(approval_id)
+        rejected = store.reject(approval_id, reason=safe_message(reason))
         session.status = "blocked"
         session.current_activity = "Controlled execution approval rejected"
         session.pending_approval = _approval_summary(rejected)
@@ -136,11 +136,55 @@ class RealWorkerRuntime:
         events.emit("APPROVAL_REJECTED", record["source_worker"], approval_id)
         return rejected
 
-    def approval_approve(self, approval_id: str, openai_client=None):
+    def approval_grant(
+        self, approval_id: str, approved_by: str = "Product Owner",
+    ) -> dict:
+        """Persist exact human approval without resuming the Runtime."""
         approval_store = RuntimeApprovalStore(self.root)
         record = approval_store.load(approval_id)
         session = self._load_session(record["session_id"])
         self._validate_pending_session(session, record)
+        approved = approval_store.approve(approval_id, approved_by=approved_by)
+        session.pending_approval = _approval_summary(approved)
+        session.current_activity = "Controlled execution approved; resume required"
+        session.updated_at = _now()
+        ArtifactStore(self.root, session.session_id).json(
+            "session.json", session.to_dict(),
+        )
+        return approved
+
+    def approval_approve(self, approval_id: str, openai_client=None):
+        """Backward-compatible approve-and-resume operation."""
+        return self._resume_approval(
+            approval_id, openai_client=openai_client, approve_pending=True,
+        )
+
+    def approval_resume(self, approval_id: str, openai_client=None):
+        """Resume one separately approved exact Runtime action."""
+        return self._resume_approval(
+            approval_id, openai_client=openai_client, approve_pending=False,
+        )
+
+    def _resume_approval(
+        self, approval_id: str, openai_client=None, approve_pending=True,
+    ):
+        approval_store = RuntimeApprovalStore(self.root)
+        record = approval_store.load(approval_id)
+        session = self._load_session(record["session_id"])
+        pending = session.pending_approval or {}
+        if session.status != "waiting_approval":
+            raise RuntimeSessionError("runtime session is not WAITING_APPROVAL")
+        if pending.get("approval_request_id") != approval_id:
+            raise RuntimeSessionError(
+                "approval belongs to another pending session action"
+            )
+        if record.get("status") == "PENDING":
+            if not approve_pending:
+                raise RuntimeSessionError("approval must be granted before resume")
+        elif record.get("status") != "APPROVED":
+            raise RuntimeSessionError(
+                f"approval cannot be resumed: {record.get('status')}"
+            )
         continuation = self._load_continuation(session.session_id)
         request = request_from_record(record)
         self._validate_continuation(continuation, session, record, request)
@@ -160,7 +204,10 @@ class RealWorkerRuntime:
             raise RuntimeSessionError(
                 "approval execution context changed; a new approval is required"
             )
-        approved = approval_store.approve(approval_id)
+        approved = (
+            approval_store.approve(approval_id)
+            if record.get("status") == "PENDING" else record
+        )
         artifact_store = ArtifactStore(self.root, session.session_id)
         events = EventStream(artifact_store)
         task = context.runtime_task

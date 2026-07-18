@@ -1,5 +1,26 @@
 # AI Factory OS Sprint v2.7.3 적용 방법
 
+## AFDE-3.10 Operator Workflow MVP
+
+The operator workflow provides one guided CLI journey over the existing
+Runtime, Provider, Approval Guardian, Controlled Execution, History, and
+Dashboard components. Mock mode is deterministic and network-free; protected
+file replacement pauses for exact approval and resumes only after context and
+action revalidation.
+
+```powershell
+python -m afde.cli operator-preflight --provider mock --workspace .
+python -m afde.cli operator-run --request "Create the operator workflow proof" --provider mock --workspace .
+python -m afde.cli operator-status --session-id <SESSION_ID> --workspace .
+python -m afde.cli operator-approve --session-id <SESSION_ID> --approval-id <APPROVAL_ID> --workspace .
+python -m afde.cli operator-resume --session-id <SESSION_ID> --workspace .
+```
+
+Every waiting or blocked result prints the exact next command. Completed and
+failed results print evidence plus Runtime history and Dashboard hints. See
+`docs/operations/AFDE_OPERATOR_QUICKSTART.md` for the complete PowerShell flow,
+rejection, live-provider opt-in, exit codes, and recovery guidance.
+
 ## AFDE-3.2 Codex Automation Bridge
 
 Worker results can now provide a canonical `actions` array using the strict

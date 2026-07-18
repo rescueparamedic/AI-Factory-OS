@@ -1,5 +1,22 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-3.10 Operator Workflow MVP
+
+- Added a thin `afde.operator` application layer that delegates to the existing
+  Runtime, Provider, Approval Guardian, Controlled Execution, History, and
+  Dashboard components.
+- Added read-only PASS/WARN/FAIL preflight checks with provider/live opt-in,
+  repository dirty-state, workspace, execution-boundary, runtime-path, and
+  credential-safe output reporting.
+- Added `operator-preflight`, `operator-run`, `operator-status`,
+  `operator-approve`, `operator-reject`, and `operator-resume` with stable JSON
+  projections, exact next commands, evidence hints, and semantic exit codes.
+- Split exact approval recording from Runtime resume while retaining the legacy
+  approve-and-resume API and all existing policy, context, preimage, and
+  single-use revalidation behavior.
+- Added a deterministic network-free acceptance flow, focused operator tests,
+  byte-invariance coverage, and a PowerShell operator quickstart.
+
 ## AFDE-3.9 Runtime History Foundation
 
 - Extended the existing RuntimeEvent and EventStream path with required event
