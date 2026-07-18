@@ -5,8 +5,14 @@ from real_worker_runtime.models import ExecutionInput, WorkerExecutionResult
 
 from .bridge import ProviderRuntimeBridge
 from .pipeline import RealExecutionPipeline
+from .service import (
+    BetaExecutionInputError, BetaExecutionResult, BetaExecutionService,
+)
 
 __all__ = [
+    "BetaExecutionInputError",
+    "BetaExecutionResult",
+    "BetaExecutionService",
     "ExecutionInput",
     "ProviderRuntimeBridge",
     "RealExecutionPipeline",

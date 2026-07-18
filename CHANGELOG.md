@@ -1,5 +1,19 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-3.14 Beta Readiness Validation
+
+- Added one official afde execute Beta CLI over the existing Planner, Provider,
+  ProviderRuntimeBridge, RealExecutionPipeline, and single-worker adapter
+  contracts.
+- Added unique execution/session/request identities and atomic bounded evidence
+  at data/runtime_sessions/<session_id>/execution_evidence.json.
+- Added normalized, sanitized planning/provider/bridge/worker/evidence failure
+  results with stable CLI exit codes.
+- Added deterministic full-path Mock E2E, three-run repeatability, failure
+  matrix, secret-leakage, and explicitly opted-in live OpenAI coverage.
+- Documented the AFDE-4.0 Beta execution contract, acceptance checklist, E2E
+  scenarios, and known limitations without changing legacy Runtime commands.
+
 ## AFDE-3.12 Real AI Provider Integration
 
 - Added a minimal immutable provider contract and deterministic mock provider.
