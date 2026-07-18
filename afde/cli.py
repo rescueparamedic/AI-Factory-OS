@@ -20,6 +20,7 @@ from real_worker_runtime.openai_probe import OpenAIResponsesProbe
 from real_worker_runtime.raw_openai_probe import RawOpenAIResponsesProbe
 from real_worker_runtime.http_boundary_probe import HTTPBoundaryDiagnostic
 from .environment_checker import EnvironmentChecker
+from .execution import BetaExecutionService
 from .provider_manager import ProviderManager
 from .real_ai_worker_bootstrap import RealAIWorkerBootstrap
 from .task_runner import TaskRunner
@@ -170,6 +171,29 @@ def cmd_factory_demo(args):
             print(f"Action: {session.pending_approval.get('safe_action_summary', '')}")
             print(f"Reason: {session.pending_approval.get('guardian_reason', '')}")
             print(f"Next: {session.pending_approval.get('next_action', '')}")
+
+
+def cmd_execute(args):
+    result = BetaExecutionService(args.workspace).execute(
+        args.request, args.provider, model=args.model,
+        allow_live_api=args.allow_live_api,
+    )
+    data = result.to_dict()
+    if args.json:
+        _print_json(data)
+    else:
+        print("AI Factory OS - Beta Execution")
+        print(f"Execution ID: {result.execution_id}")
+        print(f"Session ID: {result.session_id}")
+        print(f"Status: {result.status}")
+        print(f"Stage: {result.stage}")
+        print(f"Provider: {result.provider}")
+        print(f"Model: {result.model or 'default'}")
+        print(f"Worker: {result.worker_id}")
+        print(f"Evidence: {result.evidence_path or 'unavailable'}")
+        if result.error:
+            print(f"Error: {result.error['message']}")
+    return result.exit_code
 
 def cmd_openai_probe(args):
     probe=OpenAIResponsesProbe(model=args.model,allow_live_api=args.allow_live_api)
@@ -536,6 +560,16 @@ def build_parser():
 
     p=sub.add_parser("factory-demo",help="Run the Real AI Worker Runtime demo")
     p.add_argument("--request",required=True); p.add_argument("--provider",default="mock",choices=["mock","openai","gemini"]); p.add_argument("--model"); p.add_argument("--allow-live-api",action="store_true",help="Explicitly allow paid external API calls"); p.add_argument("--enable-controlled-execution",action="store_true",help="Enable bounded approved local execution proposals"); p.add_argument("--json",action="store_true"); p.add_argument("--no-live",action="store_true"); p.add_argument("--include-approval-demo",action="store_true"); p.add_argument("--max-revisions",type=int,default=1,choices=range(0,4)); p.set_defaults(func=cmd_factory_demo)
+    p = sub.add_parser(
+        "execute", help="Run the official AFDE-4.0 Beta execution path",
+    )
+    p.add_argument("--request", required=True)
+    p.add_argument("--provider", default="mock")
+    p.add_argument("--model")
+    p.add_argument("--allow-live-api", action="store_true")
+    p.add_argument("--workspace", default=".")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(func=cmd_execute)
     p=sub.add_parser("openai-probe",help="Run a minimal opt-in OpenAI Responses API probe")
     p.add_argument("--probe",required=True,choices=["A","B","C","all"]); p.add_argument("--model"); p.add_argument("--allow-live-api",action="store_true",help="Explicitly allow one or more paid probe calls"); p.set_defaults(func=cmd_openai_probe)
     p=sub.add_parser("openai-raw-probe",help="Run an SDK-free opt-in raw HTTPS Responses probe")

@@ -80,3 +80,50 @@ def test_openai_provider_redacts_key_from_request_failure(monkeypatch):
     with pytest.raises(ProviderRequestError) as caught:
         provider.generate("request")
     assert secret not in str(caught.value)
+
+
+def test_openai_client_disables_retries_and_sets_bounded_timeout(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-placeholder")
+    monkeypatch.setenv("AI_FACTORY_OPENAI_TIMEOUT_SECONDS", "12.5")
+    observed = {}
+
+    class OpenAI:
+        def __init__(self, **kwargs):
+            observed.update(kwargs)
+
+    monkeypatch.setitem(
+        __import__("sys").modules, "openai", SimpleNamespace(OpenAI=OpenAI),
+    )
+
+    OpenAIProvider(allow_live_api=True)
+
+    assert observed["max_retries"] == 0
+    assert observed["timeout"] == 12.5
+    assert "api_key" in observed
+
+
+def test_openai_server_error_keeps_only_safe_diagnostics(monkeypatch):
+    secret = "test-secret-value"
+    monkeypatch.setenv("OPENAI_API_KEY", secret)
+
+    class FakeInternalServerError(RuntimeError):
+        status_code = 500
+        request_id = "req_safe_identifier"
+
+    provider = OpenAIProvider(
+        allow_live_api=True,
+        client=SimpleNamespace(responses=RecordingResponses(
+            error=FakeInternalServerError(f"raw body with {secret}"),
+        )),
+    )
+
+    with pytest.raises(ProviderRequestError) as caught:
+        provider.generate("request")
+
+    error = caught.value
+    assert error.category == "provider_server"
+    assert error.status_code == 500
+    assert error.request_id == "req_safe_identifier"
+    assert error.retryable is True
+    assert secret not in str(error)
+    assert "raw body" not in str(error)

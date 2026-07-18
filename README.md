@@ -58,6 +58,23 @@ references, and safe failure or approval details without changing existing CLI
 commands. This evidence is local and provider-neutral; it does not enable live
 API access, deployment, release, or automatic approval.
 
+## AFDE-4.0 Beta execution path
+
+The official Beta path connects the rule-based Execution Planner, the public
+AI Provider contract, ProviderRuntimeBridge, and one sequential Development
+Worker. Mock is the default and performs no network calls:
+
+    python -m afde.cli execute --request "Prepare a bounded Beta task" --provider mock --workspace . --json
+
+Evidence is written atomically to
+data/runtime_sessions/<session_id>/execution_evidence.json. Successful commands
+return exit code 0, invalid input or provider configuration returns 2,
+execution failure returns 5, and evidence persistence failure returns 7.
+
+Live OpenAI Beta execution additionally requires all three opt-ins:
+OPENAI_API_KEY, AI_FACTORY_RUN_LIVE_OPENAI_TESTS=1, and --allow-live-api. See
+docs/reports/AFDE_3_14_BETA_READINESS_VALIDATION.md.
+
 ## Real Worker Demo
 
 ```powershell

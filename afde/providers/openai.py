@@ -13,6 +13,7 @@ from .models import ProviderResponse
 
 
 DEFAULT_OPENAI_MODEL = "gpt-4.1-mini"
+DEFAULT_OPENAI_TIMEOUT_SECONDS = 60.0
 
 
 class OpenAIProvider(AIProvider):
@@ -44,7 +45,11 @@ class OpenAIProvider(AIProvider):
             raise ProviderConfigurationError(
                 "The openai package is required for the openai provider"
             ) from exc
-        return OpenAI(api_key=api_key)
+        return OpenAI(
+            api_key=api_key,
+            max_retries=0,
+            timeout=_timeout_seconds(),
+        )
 
     def generate(self, request: str) -> ProviderResponse:
         value = _request(request)
@@ -53,8 +58,10 @@ class OpenAIProvider(AIProvider):
                 model=self.model, input=value,
             )
         except Exception as exc:
+            diagnostic = _request_diagnostic(exc)
             raise ProviderRequestError(
-                f"OpenAI request failed ({type(exc).__name__})"
+                f"OpenAI request failed ({type(exc).__name__})",
+                **diagnostic,
             ) from None
         content = getattr(response, "output_text", None)
         if not isinstance(content, str) or not content.strip():
@@ -80,6 +87,47 @@ def _request(value: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError("provider request must not be empty")
     return value.strip()
+
+
+def _timeout_seconds() -> float:
+    raw = os.environ.get("AI_FACTORY_OPENAI_TIMEOUT_SECONDS", "").strip()
+    if not raw:
+        return DEFAULT_OPENAI_TIMEOUT_SECONDS
+    try:
+        value = float(raw)
+    except ValueError as exc:
+        raise ProviderConfigurationError(
+            "AI_FACTORY_OPENAI_TIMEOUT_SECONDS must be a positive number"
+        ) from exc
+    if value <= 0:
+        raise ProviderConfigurationError(
+            "AI_FACTORY_OPENAI_TIMEOUT_SECONDS must be a positive number"
+        )
+    return value
+
+
+def _request_diagnostic(exc: Exception) -> dict[str, Any]:
+    status = getattr(exc, "status_code", None)
+    status_code = status if isinstance(status, int) else None
+    request_id = getattr(exc, "request_id", None)
+    safe_request_id = str(request_id)[:200] if request_id else None
+    name = type(exc).__name__.lower()
+    if status_code in {401, 403} or "authentication" in name or "permission" in name:
+        category, retryable = "provider_authentication", False
+    elif status_code == 429 or "ratelimit" in name:
+        category, retryable = "provider_rate_limit", True
+    elif status_code == 408 or "timeout" in name:
+        category, retryable = "provider_timeout", True
+    elif status_code is not None and status_code >= 500:
+        category, retryable = "provider_server", True
+    else:
+        category, retryable = "provider_request", True
+    return {
+        "category": category,
+        "status_code": status_code,
+        "request_id": safe_request_id,
+        "retryable": retryable,
+    }
 
 
 def _usage(value: Any) -> dict[str, Any]:
