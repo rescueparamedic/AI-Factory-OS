@@ -23,6 +23,11 @@ from .environment_checker import EnvironmentChecker
 from .provider_manager import ProviderManager
 from .real_ai_worker_bootstrap import RealAIWorkerBootstrap
 from .task_runner import TaskRunner
+from .operator import OperatorError, OperatorService
+from .operator.presenter import (
+    render_json as render_operator_json,
+    render_preflight, render_result, safe_text,
+)
 
 
 def _print_json(data):
@@ -188,7 +193,7 @@ def cmd_runtime_cancel(args): _print_json(RealWorkerRuntime(Path.cwd()).cancel(a
 
 
 def cmd_runtime_dashboard(args):
-    dashboard = RuntimeDashboard(Path.cwd())
+    dashboard = RuntimeDashboard(args.workspace)
     if args.live:
         renderer = TerminalLiveDashboardRenderer(no_clear=args.no_clear)
         controller = LiveDashboardController(
@@ -253,7 +258,7 @@ def _print_history_events(events):
 
 
 def cmd_runtime_history(args):
-    summary = RuntimeHistoryStore(Path.cwd()).summary(
+    summary = RuntimeHistoryStore(args.workspace).summary(
         args.session_id, **_history_filters(args),
     )
     if args.json:
@@ -271,7 +276,7 @@ def cmd_runtime_history(args):
 
 
 def cmd_runtime_events(args):
-    events = RuntimeHistoryStore(Path.cwd()).events(
+    events = RuntimeHistoryStore(args.workspace).events(
         args.session_id, **_history_filters(args),
     )
     if args.json:
@@ -286,13 +291,101 @@ def cmd_runtime_events(args):
 
 
 def cmd_runtime_export(args):
-    summary = RuntimeHistoryStore(Path.cwd()).summary(
+    summary = RuntimeHistoryStore(args.workspace).summary(
         args.session_id, **_history_filters(args),
     )
     if args.format == 'csv':
         print(history_csv(summary), end='')
     else:
         _print_json(summary)
+
+
+def _print_operator(value, json_output=False):
+    if json_output:
+        print(render_operator_json(value))
+    else:
+        print(render_result(value))
+
+
+def _operator_failure(args, error):
+    status = "blocked" if error.exit_code == 3 else "failed"
+    data = {
+        "status": status,
+        "session_id": getattr(args, "session_id", None),
+        "request": safe_text(getattr(args, "request", "")),
+        "provider": getattr(args, "provider", "mock"),
+        "approval_id": getattr(args, "approval_id", None),
+        "summary": safe_text(error),
+        "next_action": "",
+        "evidence": [],
+        "dashboard_hint": "",
+        "history_hint": "",
+    }
+    if getattr(args, "json", False):
+        _print_json(data)
+    else:
+        print("Operator command failed: {}".format(data["summary"]))
+    return error.exit_code
+
+
+def cmd_operator_preflight(args):
+    value = OperatorService(args.workspace).preflight(
+        args.provider, args.allow_live_api,
+    )
+    print(render_operator_json(value) if args.json else render_preflight(value))
+    return 3 if value.blocking else 0
+
+
+def cmd_operator_run(args):
+    try:
+        value = OperatorService(args.workspace).run(
+            args.request, args.provider, allow_live_api=args.allow_live_api,
+            model=args.model,
+        )
+    except OperatorError as exc:
+        return _operator_failure(args, exc)
+    _print_operator(value, args.json)
+    return 5 if value.status == "failed" else 0
+
+
+def cmd_operator_status(args):
+    try:
+        value = OperatorService(args.workspace).status(args.session_id)
+    except OperatorError as exc:
+        return _operator_failure(args, exc)
+    _print_operator(value, args.json)
+    return 0
+
+
+def cmd_operator_approve(args):
+    try:
+        value = OperatorService(args.workspace).approve(
+            args.session_id, args.approval_id,
+        )
+    except OperatorError as exc:
+        return _operator_failure(args, exc)
+    _print_operator(value, args.json)
+    return 0
+
+
+def cmd_operator_reject(args):
+    try:
+        value = OperatorService(args.workspace).reject(
+            args.session_id, args.approval_id, args.reason,
+        )
+    except OperatorError as exc:
+        return _operator_failure(args, exc)
+    _print_operator(value, args.json)
+    return 0
+
+
+def cmd_operator_resume(args):
+    try:
+        value = OperatorService(args.workspace).resume(args.session_id)
+    except OperatorError as exc:
+        return _operator_failure(args, exc)
+    _print_operator(value, args.json)
+    return 5 if value.status == "failed" else 0
 
 
 def _positive_float(value):
@@ -409,6 +502,7 @@ def build_parser():
 
     p = sub.add_parser('runtime-dashboard', help='Show the persisted Runtime Dashboard')
     p.add_argument('--session-id', required=True)
+    p.add_argument('--workspace', default='.')
     p.add_argument('--json', action='store_true')
     p.add_argument('--live', action='store_true')
     p.add_argument('--refresh-interval', type=_positive_float, default=1.0)
@@ -434,6 +528,7 @@ def build_parser():
     ):
         p = sub.add_parser(command, help=help_text)
         p.add_argument('--session-id', required=True)
+        p.add_argument('--workspace', default='.')
         p.add_argument('--event-type', action='append')
         p.add_argument('--actor')
         p.add_argument('--status')
@@ -447,6 +542,49 @@ def build_parser():
             p.add_argument('--json', action='store_true')
         p.set_defaults(func=function)
 
+    p = sub.add_parser(
+        'operator-preflight', help='Check guided operator workflow readiness',
+    )
+    p.add_argument('--provider', default='mock')
+    p.add_argument('--workspace', default='.')
+    p.add_argument('--allow-live-api', action='store_true')
+    p.add_argument('--json', action='store_true')
+    p.set_defaults(func=cmd_operator_preflight)
+
+    p = sub.add_parser('operator-run', help='Start a guided operator workflow')
+    p.add_argument('--request', required=True)
+    p.add_argument('--provider', default='mock')
+    p.add_argument('--workspace', default='.')
+    p.add_argument('--model')
+    p.add_argument('--allow-live-api', action='store_true')
+    p.add_argument('--json', action='store_true')
+    p.set_defaults(func=cmd_operator_run)
+
+    for command, help_text, function in (
+        ('operator-status', 'Show one operator workflow session', cmd_operator_status),
+        ('operator-resume', 'Resume one approved operator workflow', cmd_operator_resume),
+    ):
+        p = sub.add_parser(command, help=help_text)
+        p.add_argument('--session-id', required=True)
+        p.add_argument('--workspace', default='.')
+        p.add_argument('--json', action='store_true')
+        p.set_defaults(func=function)
+
+    p = sub.add_parser('operator-approve', help='Approve one exact workflow action')
+    p.add_argument('--session-id', required=True)
+    p.add_argument('--approval-id', required=True)
+    p.add_argument('--workspace', default='.')
+    p.add_argument('--json', action='store_true')
+    p.set_defaults(func=cmd_operator_approve)
+
+    p = sub.add_parser('operator-reject', help='Reject one exact workflow action')
+    p.add_argument('--session-id', required=True)
+    p.add_argument('--approval-id', required=True)
+    p.add_argument('--reason', required=True)
+    p.add_argument('--workspace', default='.')
+    p.add_argument('--json', action='store_true')
+    p.set_defaults(func=cmd_operator_reject)
+
     return parser
 
 
@@ -459,4 +597,4 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

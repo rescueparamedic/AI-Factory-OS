@@ -81,12 +81,13 @@ class RuntimeApprovalStore:
         self._save(record)
         return record
 
-    def reject(self, approval_id: str) -> dict[str, Any]:
+    def reject(self, approval_id: str, reason: str = "") -> dict[str, Any]:
         record = self.load(approval_id)
         if record.get("status") != PENDING:
             raise RuntimeSessionError(f"approval is not pending: {record.get('status')}")
         record["status"] = REJECTED
         record["rejected_at"] = _now()
+        record["rejection_reason"] = str(reason or "")[:500]
         self._save(record)
         return record
 
