@@ -128,6 +128,8 @@ def canonical_event_type(value: Any) -> str:
         return 'SESSION_STARTED'
     if name == 'RUNTIME_COMPLETED':
         return 'SESSION_COMPLETED'
+    if name == 'RUNTIME_CANCELLED':
+        return 'SESSION_CANCELLED'
     if name in {'APPROVAL_PENDING', 'RUNTIME_WAITING_APPROVAL'}:
         return 'APPROVAL_REQUESTED'
     if name in {'APPROVAL_GRANTED', 'APPROVAL_CONSUMED', 'APPROVAL_REJECTED'}:
@@ -141,6 +143,8 @@ def canonical_event_type(value: Any) -> str:
 
 def canonical_event_status(event: Any, state: Any = '') -> str:
     name = str(event or '').upper()
+    if 'CANCEL' in name:
+        return 'cancelled'
     if 'REJECT' in name:
         return 'rejected'
     if any(token in name for token in ('FAILED', 'ERROR', 'EXCEPTION')):

@@ -1,5 +1,17 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-4.0.2 Full Regression Validation
+
+- Added Runtime Session Boundary Validation for status(), report(), and
+  cancel(), rejecting absolute, traversal, separator-bearing, and session-root
+  escape paths.
+- Added one canonical SESSION_CANCELLED Runtime Cancel Event with status
+  cancelled through the existing Event Stream and History structure.
+- Separated the Dashboard Cancelled Status from Failed while preserving the
+  existing failed-session projection.
+- Added deterministic Regression Validation for Runtime Cancel, Session
+  Boundary, CLI Exit Code, and Evidence Consistency release gates.
+
 ## AFDE-4.0.1 Beta Runtime Hardening
 
 - Standardized expected Runtime CLI failures with explicit Status, Error,
