@@ -96,13 +96,28 @@ provider calls are never made without `--allow-live-api`.
 
 ## Common recovery cases
 
-- Exit code `2`: correct missing or invalid CLI arguments and rerun the command.
+- Expected Runtime failures use `Status`, `Error`, `Cause`, `Next action`,
+  `Evidence`, and `Session ID` where applicable. JSON commands expose the same
+  meanings as lower-case keys. This is Beta hardening of existing commands, not
+  a new Runtime feature or state transition.
+- Exit code `0`: the command completed successfully.
+- Exit code `2`: correct invalid CLI input, filters, state-dependent requests,
+  or provider configuration and rerun the command.
 - Exit code `3`: resolve every preflight `FAIL`; no Runtime session was started.
-- Exit code `4`: verify the exact session and approval IDs and the `--workspace`.
-- Exit code `5`: inspect the printed evidence, Runtime history, and Dashboard.
+- Exit code `4`: the requested session or approval was not found; verify the
+  exact ID and `--workspace`, then use the printed Runtime history command.
+- Exit code `5`: a Runtime/Provider operation or Runtime evidence read failed;
+  inspect the printed cause, evidence, Runtime history, and Dashboard.
+- Exit code `7`: official Beta execution could not persist evidence; verify
+  workspace write access before retrying.
 - `waiting_approval`: run the exact printed `operator-approve` command, then the
   exact printed `operator-resume` command.
 - `blocked` after rejection: inspect `operator-status` and history; start a new
   operator run if a new action is desired.
 - Context or preimage mismatch: do not retry the consumed or invalid approval;
   inspect evidence and start a new run so policy can evaluate a new exact action.
+
+Expected input, lookup, state, Provider, and persisted-data errors are rendered
+without a Python traceback. Unexpected internal errors are deliberately not
+caught at this boundary so debugging information and exception chains remain
+available.

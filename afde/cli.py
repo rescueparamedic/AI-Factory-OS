@@ -15,7 +15,10 @@ from real_worker_runtime import (
     RuntimeDashboard, RuntimeDashboardWebServer, RuntimeHistoryStore,
     TerminalLiveDashboardRenderer,
 )
-from real_worker_runtime.runtime_history import history_csv
+from real_worker_runtime.runtime_history import (
+    history_csv, RuntimeHistoryInvalid, SESSION_ID_PATTERN,
+)
+from real_worker_runtime.errors import RuntimeErrorBase, RuntimeSessionError
 from real_worker_runtime.openai_probe import OpenAIResponsesProbe
 from real_worker_runtime.raw_openai_probe import RawOpenAIResponsesProbe
 from real_worker_runtime.http_boundary_probe import HTTPBoundaryDiagnostic
@@ -179,6 +182,10 @@ def cmd_execute(args):
         allow_live_api=args.allow_live_api,
     )
     data = result.to_dict()
+    cause, next_action = _beta_execution_guidance(result, args.workspace)
+    if result.error:
+        data["cause"] = cause
+        data["next_action"] = next_action
     if args.json:
         _print_json(data)
     else:
@@ -193,7 +200,32 @@ def cmd_execute(args):
         print(f"Evidence: {result.evidence_path or 'unavailable'}")
         if result.error:
             print(f"Error: {result.error['message']}")
+            print(f"Cause: {cause}")
+            print(f"Next action: {next_action}")
+        else:
+            print("Result: Execution completed with persisted Runtime evidence.")
     return result.exit_code
+
+
+def _beta_execution_guidance(result, workspace):
+    if not result.error:
+        return "", ""
+    category = str(result.error.get("category") or "runtime_failure")
+    if category == "invalid_input":
+        return ("The request or provider selection is invalid.",
+                "Run python -m afde.cli execute --help and correct the request.")
+    if category == "provider_configuration":
+        return ("The selected provider is not configured for this execution.",
+                "Run python -m afde.cli providers and verify the provider configuration.")
+    if category == "evidence_persistence":
+        return ("Runtime could not persist the execution evidence.",
+                "Verify workspace write access before running execute again.")
+    cause = f"Runtime failed during {result.stage} ({category})."
+    next_action = (
+        "Inspect evidence, then run: python -m afde.cli runtime-history "
+        f"--session-id {result.session_id} --workspace \"{Path(workspace).resolve()}\""
+    )
+    return cause, next_action
 
 def cmd_openai_probe(args):
     probe=OpenAIResponsesProbe(model=args.model,allow_live_api=args.allow_live_api)
@@ -208,32 +240,167 @@ def cmd_openai_http_boundary(args):
     result=HTTPBoundaryDiagnostic(model=args.model,include_post=args.include_post,include_curl_post=args.include_curl_post,include_curl_error_details=args.include_curl_error_details,allow_live_api=args.allow_live_api,timeout_seconds=args.timeout).run()
     _print_json(result)
 
-def cmd_approval_show(args): _print_json(RealWorkerRuntime(Path.cwd()).approval_show(args.id))
-def cmd_approval_approve(args): _print_json(RealWorkerRuntime(Path.cwd()).approval_approve(args.id).to_dict())
-def cmd_approval_reject(args): _print_json(RealWorkerRuntime(Path.cwd()).approval_reject(args.id))
+def _runtime_failure(args, error, *, command, json_output):
+    session_id = safe_text(getattr(args, "session_id", ""))[:128] or None
+    approval_id = safe_text(getattr(args, "id", ""))[:128] or None
+    workspace = Path(getattr(args, "workspace", ".")).expanduser().resolve()
+    evidence = (
+        str(Path("data") / "runtime_sessions" / session_id)
+        if session_id and SESSION_ID_PATTERN.fullmatch(session_id)
+        else "unavailable"
+    )
+    code, message, cause, next_action = _runtime_failure_details(
+        error, command, session_id, approval_id, workspace,
+    )
+    data = {
+        "status": "failed", "session_id": session_id,
+        "approval_id": approval_id, "error": message,
+        "cause": cause, "next_action": next_action, "evidence": evidence,
+    }
+    return _render_runtime_failure(data, code, json_output)
 
-def cmd_runtime_status(args): _print_json(RealWorkerRuntime(Path.cwd()).status(args.session_id))
-def cmd_runtime_report(args): print(RealWorkerRuntime(Path.cwd()).report(args.session_id))
-def cmd_runtime_cancel(args): _print_json(RealWorkerRuntime(Path.cwd()).cancel(args.session_id))
+
+def _render_runtime_failure(data, code, json_output):
+    if json_output:
+        _print_json(data)
+        return code
+    return _render_runtime_failure_text(data, code)
+
+
+def _render_runtime_failure_text(data, code):
+    labels = {
+        "status": "Status", "session_id": "Session ID", "error": "Error",
+        "approval_id": "Approval ID", "cause": "Cause",
+        "next_action": "Next action", "evidence": "Evidence",
+    }
+    for key, label in labels.items():
+        if data[key]:
+            print(f"{label}: {data[key]}")
+    return code
+
+
+def _runtime_failure_details(error, command, session_id, approval_id, workspace):
+    if (command.startswith("approval-")
+            and "unknown approval" in safe_text(error).lower()):
+        next_action = (
+            "Verify the approval ID, then run: python -m afde.cli "
+            f"approval-show --id {approval_id or 'APR-...'}"
+        )
+        return (4, "Runtime approval was not found.",
+                "No approval exists for the supplied approval ID.", next_action)
+    if isinstance(error, FileNotFoundError):
+        if command.startswith("approval-"):
+            next_action = (
+                "Verify the approval ID, then run: python -m afde.cli "
+                f"approval-show --id {approval_id or 'APR-...'}"
+            )
+            return (4, "Runtime approval was not found.",
+                    "No approval exists for the supplied approval ID.", next_action)
+        next_action = (
+            "Verify the session ID, then run: python -m afde.cli "
+            f'runtime-history --session-id {session_id or "RWS-..."} '
+            f'--workspace "{workspace}"'
+        )
+        session_file = workspace / "data" / "runtime_sessions" / str(session_id) / "session.json"
+        if session_file.is_file():
+            return (5, "Runtime result was not found.",
+                    "The session exists, but the requested result or evidence is unavailable.",
+                    next_action)
+        return (4, "Runtime session was not found.",
+                "No session exists for the supplied session ID.", next_action)
+    if isinstance(error, json.JSONDecodeError):
+        return (5, "Runtime evidence could not be read.",
+                "The persisted Runtime data is not valid JSON.",
+                "Inspect Runtime history and the evidence path; do not overwrite the persisted session.")
+    if isinstance(error, (RuntimeHistoryInvalid, ValueError)):
+        cause = safe_text(error) or "The supplied Runtime arguments are invalid."
+        next_action = f"Run python -m afde.cli {command} --help and correct the request."
+        return 2, "Runtime request is invalid.", cause, next_action
+    if isinstance(error, RuntimeErrorBase):
+        cause = safe_text(error) or "The Runtime rejected the requested operation."
+        next_action = (
+            "Inspect the session with: python -m afde.cli runtime-status "
+            f"--session-id {session_id or 'RWS-...'}"
+        )
+        return 5, "Runtime operation failed.", cause, next_action
+    return (5, "Runtime evidence could not be read.",
+            safe_text(error) or "The persisted Runtime data is unavailable.",
+            "Verify workspace access and inspect the evidence path.")
+
+
+def cmd_approval_show(args):
+    try:
+        _print_json(RealWorkerRuntime(Path.cwd()).approval_show(args.id))
+    except (FileNotFoundError, ValueError, RuntimeSessionError, OSError, json.JSONDecodeError) as exc:
+        return _runtime_failure(args, exc, command="approval-show", json_output=True)
+    return
+
+
+def cmd_approval_approve(args):
+    try:
+        value = RealWorkerRuntime(Path.cwd()).approval_approve(args.id).to_dict()
+        _print_json(value)
+    except (FileNotFoundError, ValueError, RuntimeSessionError, OSError, json.JSONDecodeError) as exc:
+        return _runtime_failure(args, exc, command="approval-approve", json_output=True)
+    return
+
+
+def cmd_approval_reject(args):
+    try:
+        _print_json(RealWorkerRuntime(Path.cwd()).approval_reject(args.id))
+    except (FileNotFoundError, ValueError, RuntimeSessionError, OSError, json.JSONDecodeError) as exc:
+        return _runtime_failure(args, exc, command="approval-reject", json_output=True)
+    return
+
+
+def cmd_runtime_status(args):
+    try:
+        RuntimeHistoryStore(args.workspace).events(args.session_id, limit=1)
+        _print_json(RealWorkerRuntime(args.workspace).status(args.session_id))
+    except (FileNotFoundError, ValueError, RuntimeSessionError, OSError, json.JSONDecodeError) as exc:
+        return _runtime_failure(args, exc, command="runtime-status", json_output=True)
+    return
+
+
+def cmd_runtime_report(args):
+    try:
+        RuntimeHistoryStore(args.workspace).events(args.session_id, limit=1)
+        print(RealWorkerRuntime(args.workspace).report(args.session_id))
+    except (FileNotFoundError, ValueError, RuntimeSessionError, OSError, json.JSONDecodeError) as exc:
+        return _runtime_failure(args, exc, command="runtime-report", json_output=False)
+    return
+
+
+def cmd_runtime_cancel(args):
+    try:
+        RuntimeHistoryStore(args.workspace).events(args.session_id, limit=1)
+        _print_json(RealWorkerRuntime(args.workspace).cancel(args.session_id))
+    except (FileNotFoundError, ValueError, RuntimeSessionError, OSError, json.JSONDecodeError) as exc:
+        return _runtime_failure(args, exc, command="runtime-cancel", json_output=True)
+    return
 
 
 def cmd_runtime_dashboard(args):
-    dashboard = RuntimeDashboard(args.workspace)
-    if args.live:
-        renderer = TerminalLiveDashboardRenderer(no_clear=args.no_clear)
-        controller = LiveDashboardController(
-            dashboard, renderer,
-            refresh_interval=args.refresh_interval,
-            max_refreshes=args.max_refreshes,
-            max_duration=args.max_duration,
+    try:
+        dashboard = RuntimeDashboard(args.workspace)
+        if args.live:
+            renderer = TerminalLiveDashboardRenderer(no_clear=args.no_clear)
+            controller = LiveDashboardController(
+                dashboard, renderer, refresh_interval=args.refresh_interval,
+                max_refreshes=args.max_refreshes, max_duration=args.max_duration,
+            )
+            result = controller.run(args.session_id)
+            if result.interrupted:
+                print('\nLive dashboard stopped.')
+        elif args.json:
+            _print_json(dashboard.snapshot(args.session_id))
+        else:
+            print(dashboard.render(args.session_id))
+    except (FileNotFoundError, ValueError, RuntimeSessionError, OSError, json.JSONDecodeError) as exc:
+        return _runtime_failure(
+            args, exc, command="runtime-dashboard", json_output=args.json,
         )
-        result = controller.run(args.session_id)
-        if result.interrupted:
-            print('\nLive dashboard stopped.')
-    elif args.json:
-        _print_json(dashboard.snapshot(args.session_id))
-    else:
-        print(dashboard.render(args.session_id))
+    return
 
 
 def cmd_runtime_dashboard_web(args):
@@ -283,9 +450,14 @@ def _print_history_events(events):
 
 
 def cmd_runtime_history(args):
-    summary = RuntimeHistoryStore(args.workspace).summary(
-        args.session_id, **_history_filters(args),
-    )
+    try:
+        summary = RuntimeHistoryStore(args.workspace).summary(
+            args.session_id, **_history_filters(args),
+        )
+    except (FileNotFoundError, RuntimeHistoryInvalid, OSError, json.JSONDecodeError) as exc:
+        return _runtime_failure(
+            args, exc, command="runtime-history", json_output=args.json,
+        )
     if args.json:
         _print_json(summary)
         return
@@ -298,12 +470,18 @@ def cmd_runtime_history(args):
         summary['first_event_at'], summary['last_event_at'],
     ))
     _print_history_events(summary['events'])
+    return
 
 
 def cmd_runtime_events(args):
-    events = RuntimeHistoryStore(args.workspace).events(
-        args.session_id, **_history_filters(args),
-    )
+    try:
+        events = RuntimeHistoryStore(args.workspace).events(
+            args.session_id, **_history_filters(args),
+        )
+    except (FileNotFoundError, RuntimeHistoryInvalid, OSError, json.JSONDecodeError) as exc:
+        return _runtime_failure(
+            args, exc, command="runtime-events", json_output=args.json,
+        )
     if args.json:
         _print_json({
             'session_id': args.session_id,
@@ -313,16 +491,23 @@ def cmd_runtime_events(args):
         })
         return
     _print_history_events(events)
+    return
 
 
 def cmd_runtime_export(args):
-    summary = RuntimeHistoryStore(args.workspace).summary(
-        args.session_id, **_history_filters(args),
-    )
+    try:
+        summary = RuntimeHistoryStore(args.workspace).summary(
+            args.session_id, **_history_filters(args),
+        )
+    except (FileNotFoundError, RuntimeHistoryInvalid, OSError, json.JSONDecodeError) as exc:
+        return _runtime_failure(
+            args, exc, command="runtime-export", json_output=args.format == "json",
+        )
     if args.format == 'csv':
         print(history_csv(summary), end='')
     else:
         _print_json(summary)
+    return
 
 
 def _print_operator(value, json_output=False):
@@ -579,9 +764,9 @@ def build_parser():
     p=sub.add_parser("approval-show",help="Show one exact pending runtime approval"); p.add_argument("--id",required=True); p.set_defaults(func=cmd_approval_show)
     p=sub.add_parser("approval-approve",help="Approve and resume one exact pending runtime action"); p.add_argument("--id",required=True); p.set_defaults(func=cmd_approval_approve)
     p=sub.add_parser("approval-reject",help="Reject one exact pending runtime action"); p.add_argument("--id",required=True); p.set_defaults(func=cmd_approval_reject)
-    p=sub.add_parser("runtime-status"); p.add_argument("--session-id",required=True); p.set_defaults(func=cmd_runtime_status)
-    p=sub.add_parser("runtime-report"); p.add_argument("--session-id",required=True); p.set_defaults(func=cmd_runtime_report)
-    p=sub.add_parser("runtime-cancel"); p.add_argument("--session-id",required=True); p.set_defaults(func=cmd_runtime_cancel)
+    p=sub.add_parser("runtime-status"); p.add_argument("--session-id",required=True); p.add_argument("--workspace",default="."); p.set_defaults(func=cmd_runtime_status)
+    p=sub.add_parser("runtime-report"); p.add_argument("--session-id",required=True); p.add_argument("--workspace",default="."); p.set_defaults(func=cmd_runtime_report)
+    p=sub.add_parser("runtime-cancel"); p.add_argument("--session-id",required=True); p.add_argument("--workspace",default="."); p.set_defaults(func=cmd_runtime_cancel)
     p=sub.add_parser("tool-action-demo",help="Run the deterministic AFDE-3.2 structured action demo"); p.add_argument("--path",choices=["auto","ask","deny"],default="auto"); p.set_defaults(func=cmd_tool_action_demo)
     p=sub.add_parser("tool-action-status",help="Show persisted evidence for one structured action"); p.add_argument("--action-id",required=True); p.set_defaults(func=cmd_tool_action_status)
 
