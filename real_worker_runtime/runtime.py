@@ -1042,19 +1042,41 @@ class RealWorkerRuntime:
                 raise RuntimeSessionError(f"continuation {key} mismatch")
 
     def status(self, sid):
-        path = self.root / "data" / "runtime_sessions" / sid / "session.json"
+        path = self._session_directory(sid) / "session.json"
         return json.loads(path.read_text(encoding="utf-8"))
 
     def report(self, sid):
-        return (self.root / "data" / "runtime_sessions" / sid / "final_report.md").read_text(encoding="utf-8")
+        return (self._session_directory(sid) / "final_report.md").read_text(encoding="utf-8")
 
     def cancel(self, sid):
         data = self.status(sid)
         if data["status"] in {"completed", "failed", "blocked", "cancelled"}:
             raise ValueError("cannot cancel terminal session")
         data["status"] = "cancelled"
-        ArtifactStore(self.root, sid).json("session.json", data)
+        store = ArtifactStore(self.root, sid)
+        store.json("session.json", data)
+        EventStream(store).emit(
+            "RUNTIME_CANCELLED", detail="cancelled", state="cancelled",
+        )
         return data
+
+    def _session_directory(self, sid):
+        if not isinstance(sid, str) or not sid:
+            raise RuntimeSessionError("invalid runtime session id")
+        value = Path(sid)
+        if (
+            sid in {".", ".."} or value.is_absolute()
+            or "/" in sid or "\\" in sid
+            or any(part in {".", ".."} for part in value.parts)
+        ):
+            raise RuntimeSessionError("invalid runtime session id")
+        sessions = (self.root / "data" / "runtime_sessions").resolve()
+        directory = (sessions / sid).resolve()
+        try:
+            directory.relative_to(sessions)
+        except ValueError as exc:
+            raise RuntimeSessionError("invalid runtime session id") from exc
+        return directory
 
 
 def _approval_execution_context(root, session, context, worker_id):

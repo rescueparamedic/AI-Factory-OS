@@ -241,7 +241,9 @@ class TerminalDashboard:
 def _runtime_status(session: Mapping[str, Any], pipeline: RuntimePipeline | None) -> str:
     status = str(session.get('status', '')).lower()
     pending = _approvals(session)
-    if status in {'failed', 'cancelled'}:
+    if status == 'cancelled':
+        return 'Cancelled'
+    if status == 'failed':
         return 'Failed'
     if status in {'waiting', 'waiting_approval'} or status == 'blocked' and pending:
         return 'Waiting'
