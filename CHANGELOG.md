@@ -1,5 +1,18 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-4.0.1 Beta Runtime Hardening
+
+- Standardized expected Runtime CLI failures with explicit Status, Error,
+  Cause, Next action, Evidence, and Session ID fields for human and JSON paths.
+- Preserved the established Beta exit-code contract while making Runtime
+  success, invalid request, missing session, execution failure, and evidence
+  failure outcomes explicit.
+- Added validated `--workspace` support to the existing runtime status, report,
+  and cancel commands without changing their default current-directory behavior.
+- Added actionable guidance using existing Runtime history, status, provider,
+  and help commands; unexpected internal exceptions remain visible for debugging.
+- Added deterministic, network-free Runtime CLI hardening regression coverage.
+
 ## AFDE-3.14 Beta Readiness Validation
 
 - Added one official afde execute Beta CLI over the existing Planner, Provider,
