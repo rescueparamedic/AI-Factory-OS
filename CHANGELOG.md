@@ -1,5 +1,16 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-4.2 Beta Evidence Inspection And Recovery (Unreleased)
+
+- Added a read-only `execution-evidence` CLI for human and direct JSON
+  inspection of persisted Beta execution Evidence.
+- Added explicit invalid, missing, and unreadable Evidence exit codes plus
+  workspace containment, link rejection, and defensive secret redaction.
+- Replaced failed Beta execution recovery guidance with the executable
+  Evidence inspection command while preserving existing Runtime history.
+- Added deterministic, network-free regression coverage for completed and
+  failed Evidence inspection, recovery, sanitization, and byte invariance.
+
 ## AFDE-4.0.2 Full Regression Validation
 
 - Added Runtime Session Boundary Validation for status(), report(), and
