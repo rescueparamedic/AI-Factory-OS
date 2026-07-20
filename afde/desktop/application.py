@@ -1,8 +1,10 @@
 """Qt-independent application boundary for AI Factory Desktop."""
 from __future__ import annotations
 
+from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from dataclasses import dataclass
 from enum import Enum
+from io import StringIO
 import json
 import os
 from pathlib import Path
@@ -11,6 +13,8 @@ import sys
 from typing import Any, Callable, Mapping
 
 from real_worker_runtime.runtime_lifecycle import safe_message
+
+from .packaging import is_frozen
 
 
 ENGINE_ROOT = Path(__file__).resolve().parents[2]
@@ -90,8 +94,11 @@ Runner = Callable[..., subprocess.CompletedProcess[str]]
 class DesktopExecutionService:
     """Validate inputs and reuse the official AFDE CLI JSON contract."""
 
-    def __init__(self, *, runner: Runner = subprocess.run) -> None:
+    def __init__(
+        self, *, runner: Runner = subprocess.run, frozen: bool | None = None,
+    ) -> None:
         self._runner = runner
+        self._frozen = is_frozen() if frozen is None else frozen
 
     def validate(self, workspace: str, request: str) -> DesktopExecutionRequest:
         workspace_text = str(workspace or "").strip()
@@ -140,6 +147,14 @@ class DesktopExecutionService:
             sys.executable,
             "-m",
             "afde.cli",
+            *self.build_cli_arguments(request),
+        )
+
+    @staticmethod
+    def build_cli_arguments(
+        request: DesktopExecutionRequest,
+    ) -> tuple[str, ...]:
+        return (
             "execute",
             "--request",
             request.request,
@@ -160,14 +175,17 @@ class DesktopExecutionService:
         validated = self.validate(workspace, request)
         command = self.build_command(validated)
         try:
-            completed = self._runner(
-                command,
-                cwd=str(ENGINE_ROOT),
-                env=self.safe_environment(),
-                capture_output=True,
-                text=True,
-                check=False,
-            )
+            if self._frozen:
+                completed = self._run_frozen_cli(validated)
+            else:
+                completed = self._runner(
+                    command,
+                    cwd=str(ENGINE_ROOT),
+                    env=self.safe_environment(),
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
         except FileNotFoundError as exc:
             raise DesktopExecutionError(
                 "Python execution failed.",
@@ -183,6 +201,42 @@ class DesktopExecutionService:
                 exit_code=5,
             ) from exc
         return self.parse_completed(validated.workspace, completed)
+
+    def _run_frozen_cli(
+        self, request: DesktopExecutionRequest,
+    ) -> subprocess.CompletedProcess[str]:
+        '''Run the existing CLI contract when no Python executable exists.'''
+        from afde.cli import main as cli_main
+
+        arguments = self.build_cli_arguments(request)
+        stdout = StringIO()
+        stderr = StringIO()
+        environment = self.safe_environment()
+        overrides = {
+            'OPENAI_API_KEY': environment['OPENAI_API_KEY'],
+            'AI_FACTORY_RUN_LIVE_OPENAI_TESTS': environment[
+                'AI_FACTORY_RUN_LIVE_OPENAI_TESTS'
+            ],
+        }
+        with (
+            _temporary_environment(overrides),
+            redirect_stdout(stdout),
+            redirect_stderr(stderr),
+        ):
+            try:
+                returned = cli_main(list(arguments))
+                return_code = int(returned or 0)
+            except SystemExit as exc:
+                return_code = exc.code if isinstance(exc.code, int) else 1
+            except Exception as exc:  # Match the subprocess failure boundary.
+                print(safe_message(exc), file=stderr)
+                return_code = 5
+        return subprocess.CompletedProcess(
+            args=arguments,
+            returncode=return_code,
+            stdout=stdout.getvalue(),
+            stderr=stderr.getvalue(),
+        )
 
     def parse_completed(
         self, workspace: Path, completed: subprocess.CompletedProcess[str],
@@ -339,3 +393,17 @@ def _integer(value: Any, default: int) -> int:
         return int(value)
     except (TypeError, ValueError):
         return int(default)
+
+
+@contextmanager
+def _temporary_environment(values: Mapping[str, str]):
+    previous = {key: os.environ.get(key) for key in values}
+    try:
+        os.environ.update(values)
+        yield
+    finally:
+        for key, value in previous.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value

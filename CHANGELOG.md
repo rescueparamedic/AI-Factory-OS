@@ -1,5 +1,20 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-4.3B Windows EXE Packaging (Unreleased)
+
+- Added a reproducible PyInstaller 6.21.0 and PySide6 6.11.1 windowed
+  onedir definition for `AI Factory Desktop.exe`.
+- Added a bounded PowerShell build command and source/frozen path helpers
+  without relocating workspace or Evidence data.
+- Reused the existing AFDE CLI JSON and exit-code contract in frozen mode
+  without changing Runtime lifecycle or public CLI behavior.
+- Added deterministic packaging tests and a read-only Windows PR artifact
+  workflow with no Release, deployment, signing, or merge automation.
+- Verified the local build, GUI launch, normal exit, zero orphan processes,
+  705 passed tests, 2 explicit live-test skips, compileall, pip consistency,
+  and diff integrity. Interactive packaged Mock flow still requires manual
+  validation, and clean Windows PC validation is not yet verified.
+
 ## AFDE-4.3A AI Factory Desktop MVP (Unreleased)
 
 - Added the optional PySide6 `AI Factory Desktop` single-window entry point at

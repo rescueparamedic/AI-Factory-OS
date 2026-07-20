@@ -14,9 +14,20 @@ python -m afde.desktop
 Choose an existing project workspace, enter one bounded goal, and select Run.
 The Desktop fixes the Provider to deterministic `mock`, disables live OpenAI
 opt-in, and displays the resulting status, Session ID, execution mode, and
-absolute Evidence path. The current MVP is Python-launch only; it has no
-Provider selection, approvals, Git/GitHub automation, dashboard, or packaged
-Windows EXE. See `docs/project/AI_FACTORY_DESKTOP.md`.
+absolute Evidence path.
+
+To build the optional unsigned Windows onedir application:
+
+```powershell
+python -m pip install -r requirements-packaging.txt
+.\scripts\build_desktop_exe.ps1
+```
+
+The result is `dist\AI Factory Desktop\AI Factory Desktop.exe`. Distribute
+the complete `AI Factory Desktop` directory, not the EXE alone. There is no
+installer, updater, code signing, Provider selection, approval workflow, or
+external deployment. See `docs/project/AI_FACTORY_DESKTOP.md` and
+`docs/project/AI_FACTORY_DESKTOP_PACKAGING.md`.
 
 ## AFDE-3.10 Operator Workflow MVP
 
