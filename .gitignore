@@ -74,3 +74,4 @@ deployments/
 # Build outputs
 dist/
 build/
+*.spec.bak

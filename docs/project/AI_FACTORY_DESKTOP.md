@@ -18,9 +18,11 @@ python -m pip install -r requirements-desktop.txt
 python -m afde.desktop
 ```
 
-The initial release is launched with Python on Windows. A PyInstaller build and
-Windows installer are future packaging work, not AFDE-4.3A deliverables. The
-independent `afde.desktop` module entry point is the future packaging boundary.
+Source execution remains available. AFDE-4.3B also provides an optional
+PyInstaller windowed onedir build at
+`dist\AI Factory Desktop\AI Factory Desktop.exe`. See
+`AI_FACTORY_DESKTOP_PACKAGING.md` for build and validation details. The
+package is not an installer and does not change the default CLI dependencies.
 
 ## Execution Architecture
 
@@ -28,7 +30,7 @@ independent `afde.desktop` module entry point is the future packaging boundary.
 DesktopMainWindow
   -> QThread DesktopExecutionWorker
   -> DesktopExecutionService
-  -> python -m afde.cli execute --provider mock --json
+  -> existing afde.cli execute --provider mock --json contract
   -> existing Beta Runtime and execution_evidence.json
 ```
 
@@ -60,7 +62,8 @@ without terminating the GUI event loop.
 ## Current Scope And Limitations
 
 - Mock Provider only; there is no Provider selection UI or external API call.
-- Python launch only; there is no EXE, installer, updater, or system tray.
+- Python and packaged Windows EXE launch are supported; there is no installer,
+  updater, code signing, or system tray.
 - No Approval workflow, Codex execution, Git/GitHub action, dashboard, session
   browser, history viewer, settings, themes, graph, or plugin system.
 - Runtime output is persisted by the existing Beta contract under the selected
