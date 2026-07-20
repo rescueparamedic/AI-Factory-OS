@@ -1,5 +1,23 @@
 # AI Factory OS Sprint v2.7.3 적용 방법
 
+## AI Factory Desktop Beta
+
+AI Factory Desktop is the optional Windows GUI for the existing AI Factory OS
+Beta execution path. Install the desktop dependencies, then launch it with
+Python:
+
+```powershell
+python -m pip install -r requirements-desktop.txt
+python -m afde.desktop
+```
+
+Choose an existing project workspace, enter one bounded goal, and select Run.
+The Desktop fixes the Provider to deterministic `mock`, disables live OpenAI
+opt-in, and displays the resulting status, Session ID, execution mode, and
+absolute Evidence path. The current MVP is Python-launch only; it has no
+Provider selection, approvals, Git/GitHub automation, dashboard, or packaged
+Windows EXE. See `docs/project/AI_FACTORY_DESKTOP.md`.
+
 ## AFDE-3.10 Operator Workflow MVP
 
 The operator workflow provides one guided CLI journey over the existing

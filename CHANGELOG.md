@@ -1,5 +1,16 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-4.3A AI Factory Desktop MVP (Unreleased)
+
+- Added the optional PySide6 `AI Factory Desktop` single-window entry point at
+  `python -m afde.desktop` without changing the default CLI dependency set.
+- Reused the official `afde.cli execute --json` contract through a background
+  QThread worker with the Provider fixed to offline deterministic `mock`.
+- Added workspace/request validation, Idle-to-Completed/Failed UI states,
+  structured logs, absolute Evidence handling, and default Windows file open.
+- Added Qt-independent application and state regression coverage plus minimal
+  Desktop installation, operation, scope, and packaging documentation.
+
 ## AFDE-4.2 Beta Evidence Inspection And Recovery (Unreleased)
 
 - Added a read-only `execution-evidence` CLI for human and direct JSON
