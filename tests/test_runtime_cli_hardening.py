@@ -111,7 +111,8 @@ def test_beta_runtime_failure_includes_cause_and_next_action(
 
     assert code == 5
     assert "bridge" in value["cause"]
-    assert "runtime-history" in value["next_action"]
+    assert "execution-evidence" in value["next_action"]
+    assert "runtime-history" not in value["next_action"]
     assert value["evidence_path"]
 
 

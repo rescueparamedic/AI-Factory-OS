@@ -23,7 +23,9 @@ from real_worker_runtime.openai_probe import OpenAIResponsesProbe
 from real_worker_runtime.raw_openai_probe import RawOpenAIResponsesProbe
 from real_worker_runtime.http_boundary_probe import HTTPBoundaryDiagnostic
 from .environment_checker import EnvironmentChecker
-from .execution import BetaExecutionService
+from .execution import (
+    BetaEvidenceReadError, BetaExecutionInputError, BetaExecutionService,
+)
 from .provider_manager import ProviderManager
 from .real_ai_worker_bootstrap import RealAIWorkerBootstrap
 from .task_runner import TaskRunner
@@ -222,10 +224,97 @@ def _beta_execution_guidance(result, workspace):
                 "Verify workspace write access before running execute again.")
     cause = f"Runtime failed during {result.stage} ({category})."
     next_action = (
-        "Inspect evidence, then run: python -m afde.cli runtime-history "
+        "Inspect evidence: python -m afde.cli execution-evidence "
         f"--session-id {result.session_id} --workspace \"{Path(workspace).resolve()}\""
     )
     return cause, next_action
+
+
+def cmd_execution_evidence(args):
+    try:
+        evidence = BetaExecutionService(args.workspace).evidence(args.session_id)
+    except (BetaExecutionInputError, FileNotFoundError,
+            BetaEvidenceReadError, OSError) as exc:
+        return _execution_evidence_failure(args, exc)
+    if args.json:
+        _print_json(evidence)
+        return 0
+    _render_execution_evidence(evidence, args.session_id)
+    return 0
+
+
+def _render_execution_evidence(evidence, session_id):
+    provider = evidence.get('provider')
+    provider = provider if isinstance(provider, dict) else {}
+    error = evidence.get('error')
+    error = error if isinstance(error, dict) else {}
+    duration = evidence.get('duration_ms')
+    duration_text = (
+        f'{duration} ms'
+        if isinstance(duration, (int, float)) and not isinstance(duration, bool)
+        else 'unavailable'
+    )
+    retryable = error.get('retryable')
+    retryable_text = (
+        str(retryable).lower() if isinstance(retryable, bool) else 'false'
+    )
+    print('AI Factory OS - Beta Execution Evidence')
+    for label, value in (
+        ('Execution ID', evidence.get('execution_id')),
+        ('Session ID', evidence.get('session_id') or session_id),
+        ('Request ID', evidence.get('request_id')),
+        ('Status', evidence.get('execution_status')),
+        ('Stage', evidence.get('stage')),
+        ('Provider', provider.get('name')),
+        ('Model', provider.get('model')),
+        ('Execution mode', provider.get('execution_mode')),
+        ('Started at', evidence.get('started_at')),
+        ('Completed at', evidence.get('completed_at')),
+        ('Duration', duration_text),
+        ('Error code', error.get('code') or 'none'),
+        ('Error category', error.get('category') or 'none'),
+        ('Error message', error.get('message') or 'none'),
+        ('Error retryable', retryable_text),
+        ('Evidence', _execution_evidence_relative_path(session_id)),
+    ):
+        print(f'{label}: {safe_text(value) or "unavailable"}')
+
+
+def _execution_evidence_failure(args, error):
+    session_id = safe_text(getattr(args, 'session_id', ''))[:128] or None
+    if isinstance(error, BetaExecutionInputError):
+        code = 2
+        message = 'Invalid Beta execution session ID or Evidence path.'
+        cause = 'The requested Evidence location failed input or containment checks.'
+        next_action = 'Run python -m afde.cli execution-evidence --help.'
+    elif isinstance(error, FileNotFoundError):
+        code = 4
+        message = 'Beta execution Evidence was not found.'
+        cause = 'No execution_evidence.json exists for the supplied session ID.'
+        next_action = 'Verify the session ID and workspace, then run the command again.'
+    else:
+        code = 5
+        message = 'Beta execution Evidence could not be read.'
+        cause = 'The Evidence file is unreadable, corrupt, or structurally invalid.'
+        next_action = 'Do not overwrite it; verify file access and JSON integrity.'
+    evidence_path = (
+        _execution_evidence_relative_path(session_id)
+        if session_id and SESSION_ID_PATTERN.fullmatch(session_id)
+        else 'unavailable'
+    )
+    data = {
+        'status': 'failed', 'session_id': session_id, 'approval_id': None,
+        'error': message, 'cause': cause, 'next_action': next_action,
+        'evidence': evidence_path,
+    }
+    return _render_runtime_failure(data, code, args.json)
+
+
+def _execution_evidence_relative_path(session_id):
+    return str(
+        Path('data') / 'runtime_sessions' / str(session_id)
+        / 'execution_evidence.json'
+    )
 
 def cmd_openai_probe(args):
     probe=OpenAIResponsesProbe(model=args.model,allow_live_api=args.allow_live_api)
@@ -755,6 +844,14 @@ def build_parser():
     p.add_argument("--workspace", default=".")
     p.add_argument("--json", action="store_true")
     p.set_defaults(func=cmd_execute)
+    p = sub.add_parser(
+        'execution-evidence',
+        help='Inspect one persisted Beta execution Evidence document',
+    )
+    p.add_argument('--session-id', required=True)
+    p.add_argument('--workspace', default='.')
+    p.add_argument('--json', action='store_true')
+    p.set_defaults(func=cmd_execution_evidence)
     p=sub.add_parser("openai-probe",help="Run a minimal opt-in OpenAI Responses API probe")
     p.add_argument("--probe",required=True,choices=["A","B","C","all"]); p.add_argument("--model"); p.add_argument("--allow-live-api",action="store_true",help="Explicitly allow one or more paid probe calls"); p.set_defaults(func=cmd_openai_probe)
     p=sub.add_parser("openai-raw-probe",help="Run an SDK-free opt-in raw HTTPS Responses probe")

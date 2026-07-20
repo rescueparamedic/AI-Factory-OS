@@ -71,6 +71,15 @@ data/runtime_sessions/<session_id>/execution_evidence.json. Successful commands
 return exit code 0, invalid input or provider configuration returns 2,
 execution failure returns 5, and evidence persistence failure returns 7.
 
+Inspect one persisted Beta result without changing it:
+
+    python -m afde.cli execution-evidence --session-id <SESSION_ID> --workspace .
+    python -m afde.cli execution-evidence --session-id <SESSION_ID> --workspace . --json
+
+The inspection command is local, read-only, and makes no Provider call. It
+returns 2 for invalid input, 4 when Evidence is missing, and 5 when Evidence is
+unreadable or corrupt.
+
 Live OpenAI Beta execution additionally requires all three opt-ins:
 OPENAI_API_KEY, AI_FACTORY_RUN_LIVE_OPENAI_TESTS=1, and --allow-live-api. See
 docs/reports/AFDE_3_14_BETA_READINESS_VALIDATION.md.

@@ -5,11 +5,13 @@ from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime
 from hashlib import sha256
+import json
 import os
 from pathlib import Path
+import re
 import sys
 from time import perf_counter
-from typing import Any, Callable
+from typing import Any, Callable, Mapping
 from uuid import uuid4
 
 from afde.planner import ExecutionPlan, RuleBasedExecutionPlanner
@@ -19,6 +21,7 @@ from afde.providers import (
 )
 from real_worker_runtime.artifact_store import ArtifactStore
 from real_worker_runtime.models import ExecutionInput, WorkerExecutionResult
+from real_worker_runtime.runtime_history import SESSION_ID_PATTERN
 from real_worker_runtime.runtime_lifecycle import safe_message
 
 from .pipeline import RealExecutionPipeline
@@ -30,6 +33,10 @@ OFFICIAL_WORKER_ID = "development_worker"
 
 
 class BetaExecutionInputError(ValueError):
+    pass
+
+
+class BetaEvidenceReadError(RuntimeError):
     pass
 
 
@@ -82,6 +89,28 @@ class BetaExecutionService:
         self.root = Path(root).expanduser().resolve()
         self.provider_factory = provider_factory
         self.pipeline_factory = pipeline_factory
+
+    def evidence(self, session_id: str) -> dict[str, Any]:
+        '''Read one persisted Beta execution Evidence document without mutation.'''
+        path = _evidence_path(self.root, session_id)
+        if not path.is_file():
+            raise FileNotFoundError(session_id)
+        try:
+            value = json.loads(path.read_bytes().decode('utf-8'))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise BetaEvidenceReadError(
+                'execution Evidence is not valid UTF-8 JSON',
+            ) from exc
+        if not isinstance(value, Mapping):
+            raise BetaEvidenceReadError(
+                'execution Evidence root must be a JSON object',
+            )
+        persisted_session_id = value.get('session_id')
+        if persisted_session_id is not None and persisted_session_id != session_id:
+            raise BetaEvidenceReadError(
+                'execution Evidence session ID does not match its path',
+            )
+        return _sanitize_evidence(value)
 
     def execute(
         self, request: str, provider: str = "mock", *,
@@ -464,6 +493,83 @@ def _worker_summaries(
         }
         for item in results
     ]
+
+
+_SENSITIVE_FIELD = re.compile(
+    r'(?:authorization|api[_-]?key|secret|password|token|credential|private[_-]?key)',
+    re.IGNORECASE,
+)
+_SENSITIVE_TEXT = (
+    re.compile(r'(?i)(authorization\s*[:=]\s*(?:bearer\s+)?)[^\s,;]+'),
+    re.compile(r'(?i)((?:api[_-]?key|secret|password|token|credential|private[_-]?key)\s*[:=]\s*)[^\s,;]+'),
+    re.compile(r'(?i)(\bbearer\s+)[^\s,;]+'),
+    re.compile(r'\bsk-[A-Za-z0-9_-]{8,}\b'),
+)
+_CONTROL_TEXT = re.compile(r'[\x00-\x1f\x7f]')
+
+
+def _evidence_path(root: Path, session_id: str) -> Path:
+    if not isinstance(session_id, str) or not SESSION_ID_PATTERN.fullmatch(session_id):
+        raise BetaExecutionInputError('invalid Beta execution session ID')
+    workspace = root.resolve()
+    sessions = workspace / 'data' / 'runtime_sessions'
+    session = sessions / session_id
+    evidence = session / EVIDENCE_FILENAME
+    for candidate in (sessions, session, evidence):
+        if candidate.exists() and _is_redirected(candidate):
+            raise BetaExecutionInputError(
+                'Beta execution Evidence path must not use a link or junction',
+            )
+    resolved_sessions = sessions.resolve()
+    resolved_session = session.resolve()
+    resolved_evidence = evidence.resolve()
+    if (
+        not resolved_sessions.is_relative_to(workspace)
+        or not resolved_session.is_relative_to(resolved_sessions)
+        or not resolved_evidence.is_relative_to(resolved_session)
+        or resolved_evidence.parent != resolved_session
+    ):
+        raise BetaExecutionInputError(
+            'Beta execution Evidence must remain inside the workspace',
+        )
+    return resolved_evidence
+
+
+def _is_redirected(path: Path) -> bool:
+    if path.is_symlink():
+        return True
+    is_junction = getattr(path, 'is_junction', None)
+    return bool(is_junction and is_junction())
+
+
+def _sanitize_evidence(value: Any, field: str = '') -> Any:
+    if isinstance(value, Mapping):
+        return {
+            str(key): _sanitize_evidence(item, str(key))
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [_sanitize_evidence(item, field) for item in value]
+    if isinstance(value, str):
+        if _SENSITIVE_FIELD.search(field):
+            return '[REDACTED]'
+        return _sanitize_evidence_text(value)
+    return deepcopy(value)
+
+
+def _sanitize_evidence_text(value: str) -> str:
+    sanitized = _CONTROL_TEXT.sub(' ', value)
+    api_key = os.environ.get('OPENAI_API_KEY', '')
+    if api_key:
+        sanitized = sanitized.replace(api_key, '[REDACTED]')
+    for pattern in _SENSITIVE_TEXT:
+        sanitized = pattern.sub(
+            lambda match: (
+                f'{match.group(1)}[REDACTED]' if match.lastindex else '[REDACTED]'
+            ),
+            sanitized,
+        )
+    return sanitized
 
 
 def _evidence_relative_path(session_id: str) -> str:
