@@ -1,0 +1,57 @@
+name: Beta CI
+
+on:
+  pull_request:
+    branches:
+      - develop
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  OPENAI_API_KEY: ""
+  AI_FACTORY_RUN_LIVE_OPENAI_TESTS: "0"
+
+jobs:
+  beta-regression:
+    name: Beta Regression
+    runs-on: windows-2025
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install pytest==9.1.1
+
+      - name: Beta Regression
+        run: python -m pytest
+
+      - name: Python Compile
+        run: python -m compileall -q .
+
+      - name: Diff Integrity
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: git diff --check "${env:PR_BASE_SHA}...HEAD"
