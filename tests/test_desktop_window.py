@@ -4,7 +4,11 @@ from pathlib import Path
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import pytest
-from PySide6.QtWidgets import QApplication
+
+QApplication = pytest.importorskip(
+    "PySide6.QtWidgets",
+    reason="Desktop widget tests require the optional PySide6 dependency.",
+).QApplication
 
 from afde.desktop.application import DesktopExecutionResult, DesktopStatus
 from afde.desktop.window import DesktopMainWindow
