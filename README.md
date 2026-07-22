@@ -11,10 +11,11 @@ python -m pip install -r requirements-desktop.txt
 python -m afde.desktop
 ```
 
-Choose an existing project workspace, enter one bounded goal, and select Run.
-The Desktop fixes the Provider to deterministic `mock`, disables live OpenAI
-opt-in, and displays the resulting status, Session ID, execution mode, and
-absolute Evidence path.
+The single window guides operators through three Korean-labeled steps: choose
+a project folder, enter one bounded AI task, and select `3. AI 실행`. The
+Desktop fixes the Provider to deterministic `mock`, disables live OpenAI
+opt-in, and displays Korean status text with progress, Session ID, execution
+mode, and the absolute Evidence path.
 
 To build the optional unsigned Windows onedir application:
 

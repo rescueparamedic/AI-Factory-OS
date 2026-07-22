@@ -1,5 +1,20 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-4.4 Desktop Operator UX MVP (Unreleased)
+
+- Reworked the existing single Desktop window into a Korean-labeled
+  project-folder, AI-task, and run flow without changing the Runtime or public
+  CLI contract.
+- Added Korean display-only status mapping, input-ready Run behavior, a
+  prominent primary action, and clear completed-Evidence access while
+  preserving the detailed execution log.
+- Added offscreen Qt coverage for labels, step titles, status rendering, input
+  readiness, busy controls, completed controls, and detailed result fields.
+- Verified 33 focused Desktop tests, 714 passed full tests with 2 explicit live
+  skips, compileall, pip consistency, diff integrity, a rebuilt Windows onedir
+  EXE, GUI launch, packaged Mock Evidence flow, Open Evidence, and zero orphan
+  packaged processes.
+
 ## AFDE-4.3B Windows EXE Packaging (Unreleased)
 
 - Added a reproducible PyInstaller 6.21.0 and PySide6 6.11.1 windowed
