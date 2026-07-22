@@ -7,6 +7,9 @@ Beta execution path. It lets an operator select one project directory, enter a
 natural-language goal, run the deterministic Mock Provider, review status and
 log output, and open the persisted `execution_evidence.json` file.
 
+AFDE-4.4 presents that unchanged execution path as three Korean-labeled steps:
+`1. 프로젝트 폴더`, `2. AI에게 맡길 작업`, and `3. AI 실행`.
+
 The product label is **AI Factory Desktop — Powered by AI Factory OS**.
 
 ## Install And Run
@@ -39,20 +42,24 @@ service validates inputs, constructs the fixed Mock command, disables live
 OpenAI environment opt-in, parses the existing JSON/exit-code contract, and
 resolves Evidence inside the selected workspace. Runtime logic is not copied.
 
-Execution runs outside the main UI thread. While it is active, Run, Browse,
-workspace, request, and Open Evidence controls are disabled and the progress
-bar is indeterminate. Closing the window is blocked until execution finishes,
-which avoids abandoning an orphan subprocess.
+Execution runs outside the main UI thread. Run remains unavailable until both
+inputs contain text. While execution is active, Run, folder selection,
+workspace, request, and result controls are disabled and the progress bar is
+indeterminate beside the current status. Closing the window is blocked until
+execution finishes, which avoids abandoning an orphan subprocess.
 
 ## Supported Flow
 
-1. Select Browse or enter an existing Project Workspace.
-2. Enter a non-empty bounded goal.
-3. Select Run.
-4. Review Validating, Running, Completed, or Failed status and log lines.
+1. Select `폴더 선택` or enter an existing path under
+   `1. 프로젝트 폴더`.
+2. Enter a non-empty bounded goal under `2. AI에게 맡길 작업`.
+3. Select the prominent `3. AI 실행` action.
+4. Review `입력 확인 중`, `AI 작업 실행 중`, `실행 완료`, or
+   `실행 실패` beside the progress bar. Internal status values remain
+   Validating, Running, Completed, and Failed.
 5. On success, review Session ID, Provider, execution mode, exit code, and the
-   absolute Evidence path.
-6. Select Open Evidence to use the Windows default JSON file application.
+   absolute Evidence path in `상세 실행 기록`.
+6. Select `실행 결과 열기` to use the Windows default JSON file application.
 
 Errors use `Status`, `Error`, `Cause`, and `Next` log fields. Missing workspace,
 empty request, Python/CLI startup, nonzero exit, malformed JSON, missing session

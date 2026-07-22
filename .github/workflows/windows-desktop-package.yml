@@ -45,7 +45,11 @@ jobs:
           python -m pip install pytest==9.1.1
 
       - name: Packaging regression
-        run: python -m pytest tests/test_desktop_application.py tests/test_desktop_packaging.py
+        run: >-
+          python -m pytest
+          tests/test_desktop_application.py
+          tests/test_desktop_packaging.py
+          tests/test_desktop_window.py
 
       - name: Build Windows Desktop
         shell: pwsh

@@ -42,17 +42,17 @@ default PyInstaller icon.
 ## Local Validation
 
 - Local Windows build: **PASS**
-- Generated EXE: 10,319,008 bytes
-- Generated onedir bundle: 231 files, 145,481,600 bytes
+- Generated EXE: 10,320,097 bytes
+- Generated onedir bundle: 231 files, 145,482,689 bytes
 - PE subsystem: Windows GUI
 - Desktop window launch and handle: **PASS**
 - Normal WM_CLOSE and exit code 0: **PASS**
 - Orphan packaged processes after exit: 0
-- Full pytest: 705 passed, 2 skipped
+- Full pytest: 714 passed, 2 skipped
 - OpenAI live calls: 0
 - Compileall, pip check, and diff integrity: **PASS**
-- Workspace input, Goal input, packaged Mock execution, Evidence display, and
-  Open Evidence interaction: **MANUAL VALIDATION REQUIRED**
+- Korean three-step labels, Workspace input, Goal input, packaged Mock
+  execution, Evidence display, and Open Evidence interaction: **PASS**
 - Clean Windows PC validation: **NOT YET VERIFIED**
 
 The build emitted an optional `tzdata` hidden-import discovery warning. No

@@ -30,6 +30,15 @@ from .application import (
 from .worker import DesktopExecutionWorker
 
 
+_STATUS_DISPLAY = {
+    DesktopStatus.IDLE: "대기 중",
+    DesktopStatus.VALIDATING: "입력 확인 중",
+    DesktopStatus.RUNNING: "AI 작업 실행 중",
+    DesktopStatus.COMPLETED: "실행 완료",
+    DesktopStatus.FAILED: "실행 실패",
+}
+
+
 class DesktopMainWindow(QMainWindow):
     def __init__(self, *, service: DesktopExecutionService | None = None) -> None:
         super().__init__()
@@ -37,6 +46,7 @@ class DesktopMainWindow(QMainWindow):
         self._thread: QThread | None = None
         self._worker: DesktopExecutionWorker | None = None
         self._last_evidence: Path | None = None
+        self._status = DesktopStatus.IDLE
 
         self.setWindowTitle("AI Factory Desktop")
         self.resize(900, 650)
@@ -58,42 +68,55 @@ class DesktopMainWindow(QMainWindow):
         layout.addWidget(title)
         layout.addWidget(subtitle)
 
-        layout.addWidget(QLabel("Project Workspace"))
+        self.workspace_label = QLabel("1. 프로젝트 폴더")
+        self.workspace_label.setStyleSheet("font-size: 16px; font-weight: 600;")
+        layout.addWidget(self.workspace_label)
         workspace_row = QHBoxLayout()
         self.workspace_input = QLineEdit()
         self.workspace_input.setPlaceholderText(
             r"C:\AIFactory\Projects\ai_sns_automation_system"
         )
-        self.browse_button = QPushButton("Browse")
+        self.browse_button = QPushButton("폴더 선택")
         self.browse_button.clicked.connect(self._browse_workspace)
         workspace_row.addWidget(self.workspace_input, 1)
         workspace_row.addWidget(self.browse_button)
         layout.addLayout(workspace_row)
 
-        layout.addWidget(QLabel("Goal"))
+        self.request_label = QLabel("2. AI에게 맡길 작업")
+        self.request_label.setStyleSheet("font-size: 16px; font-weight: 600;")
+        layout.addWidget(self.request_label)
         self.request_input = QTextEdit()
         self.request_input.setPlaceholderText(
-            "ASAS 저장소의 현재 상태를 읽기 전용으로 분석하고 "
-            "다음 Sprint 준비 상태를 평가해줘."
+            "예: 이 프로젝트의 현재 상태를 분석하고 다음 Sprint 준비 항목을 "
+            "정리해 주세요."
         )
         self.request_input.setMinimumHeight(100)
         layout.addWidget(self.request_input)
 
         control_row = QHBoxLayout()
-        self.run_button = QPushButton("Run")
-        self.clear_button = QPushButton("Clear Log")
-        self.open_evidence_button = QPushButton("Open Evidence")
+        self.run_button = QPushButton("3. AI 실행")
+        self.run_button.setMinimumHeight(44)
+        self.run_button.setStyleSheet(
+            "QPushButton { background: #2563eb; color: white; border: 0; "
+            "border-radius: 4px; padding: 8px 20px; font-size: 16px; "
+            "font-weight: 600; } "
+            "QPushButton:hover { background: #1d4ed8; } "
+            "QPushButton:disabled { background: #aeb8c8; color: #f8fafc; }"
+        )
+        self.clear_button = QPushButton("기록 지우기")
+        self.open_evidence_button = QPushButton("실행 결과 열기")
+        self.open_evidence_button.setMinimumHeight(36)
         self.run_button.clicked.connect(self._run)
         self.clear_button.clicked.connect(self._clear_log)
         self.open_evidence_button.clicked.connect(self._open_evidence)
-        control_row.addWidget(self.run_button)
+        control_row.addWidget(self.run_button, 1)
         control_row.addWidget(self.clear_button)
-        control_row.addStretch(1)
         control_row.addWidget(self.open_evidence_button)
         layout.addLayout(control_row)
 
         status_row = QHBoxLayout()
-        status_row.addWidget(QLabel("Status:"))
+        self.status_title_label = QLabel("현재 상태")
+        status_row.addWidget(self.status_title_label)
         self.status_label = QLabel()
         self.status_label.setObjectName("desktopStatus")
         self.status_label.setStyleSheet("font-weight: 600;")
@@ -103,13 +126,19 @@ class DesktopMainWindow(QMainWindow):
 
         self.progress = QProgressBar()
         self.progress.setTextVisible(False)
+        self.progress.setAccessibleName("진행 상태")
         layout.addWidget(self.progress)
 
-        layout.addWidget(QLabel("Execution Log"))
+        self.log_title_label = QLabel("상세 실행 기록")
+        self.log_title_label.setStyleSheet("font-weight: 600;")
+        layout.addWidget(self.log_title_label)
         self.log_output = QPlainTextEdit()
         self.log_output.setReadOnly(True)
         self.log_output.setMinimumHeight(190)
         layout.addWidget(self.log_output, 1)
+
+        self.workspace_input.textChanged.connect(self._refresh_run_button)
+        self.request_input.textChanged.connect(self._refresh_run_button)
 
         self.setCentralWidget(central)
 
@@ -127,6 +156,9 @@ class DesktopMainWindow(QMainWindow):
 
     @Slot()
     def _run(self) -> None:
+        if self._thread is not None and self._thread.isRunning():
+            self._append_log("Execution is already running.")
+            return
         self._last_evidence = None
         self._apply_state(DesktopStatus.VALIDATING)
         self._append_log("Validating workspace...")
@@ -182,6 +214,7 @@ class DesktopMainWindow(QMainWindow):
     def _thread_finished(self) -> None:
         self._worker = None
         self._thread = None
+        self._refresh_run_button()
 
     @Slot(str)
     def _append_log(self, message: str) -> None:
@@ -203,13 +236,14 @@ class DesktopMainWindow(QMainWindow):
     def _apply_state(
         self, status: DesktopStatus, *, evidence_available: bool = False,
     ) -> None:
+        self._status = status
         state = view_state(status, evidence_available=evidence_available)
-        self.status_label.setText(state.status.value)
+        self.status_label.setText(_STATUS_DISPLAY[state.status])
         self.workspace_input.setEnabled(state.inputs_enabled)
         self.browse_button.setEnabled(state.inputs_enabled)
         self.request_input.setEnabled(state.inputs_enabled)
-        self.run_button.setEnabled(state.run_enabled)
         self.open_evidence_button.setEnabled(state.open_evidence_enabled)
+        self._refresh_run_button()
         if state.progress_active:
             self.progress.setRange(0, 0)
         else:
@@ -217,6 +251,17 @@ class DesktopMainWindow(QMainWindow):
             self.progress.setValue(
                 1 if status is DesktopStatus.COMPLETED else 0
             )
+
+    def _refresh_run_button(self, *_args: object) -> None:
+        state = view_state(self._status)
+        inputs_ready = bool(
+            self.workspace_input.text().strip()
+            and self.request_input.toPlainText().strip()
+        )
+        thread_active = self._thread is not None and self._thread.isRunning()
+        self.run_button.setEnabled(
+            state.run_enabled and inputs_ready and not thread_active
+        )
 
     def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802 - Qt API
         if self._thread is not None and self._thread.isRunning():
