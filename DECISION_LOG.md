@@ -1,5 +1,29 @@
 # Decision Log
 
+## 2026-07-23 - AFDE-4.7 Knowledge Foundation Architecture
+
+- Added Knowledge Foundation between Capability and Capability Resolver as a
+  governed architecture boundary for official document discovery, knowledge
+  validity, capability metadata, reference authority, and gap reporting.
+- Established Document, Knowledge, and Capability Registry standards as
+  repository indexes that never replace Source of Record documents,
+  implementation, Runtime state, or Evidence.
+- Registered `CAP-KNOW-0001` as `architecture_approved`, maturity `M2`, and
+  `not_implemented`; capability status, maturity, and implementation truth
+  remain independent.
+- Required Active Knowledge and Registry entries to bind official Active source
+  documents and required document and registry changes to be reviewed as one
+  governance unit.
+- Established AI reference eligibility, priority, scope, status, conflict,
+  missing-knowledge, external-source, and traceability rules.
+- Preserved Runtime, Product Layer, Planner, Capability Resolver, Tool Adapter,
+  Evidence, Beta Execute, Desktop, and all public contracts unchanged.
+- Deferred machine-readable registries, validation services, query APIs,
+  Resolver and Adapter implementation, RAG, vector databases, embeddings, and
+  multimodal execution to separately approved Sprints.
+- Retained `develop` as Source of Truth, feature-branch workflow, Merge Commit
+  only policy, and explicit user approval before merge.
+
 ## 2026-07-18 - AFDE-3.9 Reuse the Existing Event Ledger
 
 - Keep session `events.jsonl` as the single append-only event ledger instead of

@@ -1,5 +1,33 @@
 # AI Factory OS Project Status
 
+## AFDE-4.7 Knowledge Foundation Architecture
+
+- Status: architecture complete on the feature branch; implementation is
+  intentionally absent.
+- `CAP-KNOW-0001` is `architecture_approved`, maturity `M2`, with
+  `implementation_status: not_implemented`.
+- The official flow is Capability -> Knowledge Foundation -> Capability
+  Resolver -> Tool Adapter -> Runtime -> Evidence -> Product Assembly.
+- Document, Knowledge, Capability Registry, Governance, and AI Reference
+  standards define official-source discovery, authority, scope, lifecycle,
+  dependencies, conflicts, supersession, traceability, and gap reporting.
+- Product Layer architecture now acknowledges Knowledge Foundation before
+  resolution while preserving the AFDE-4.5 implementation and compatibility
+  boundaries.
+- Runtime, Product Layer, Planner, Resolver, Tool Adapter, Evidence schemas,
+  Beta Execute, Desktop, and public contracts were not changed.
+- Machine-readable Registry services, Capability Resolver, Tool Adapters, RAG,
+  vector databases, embeddings, and multimodal implementation remain deferred.
+
+## AFDE-4.5 Product Layer Reconciliation
+
+- The internal `afde/product/` implementation is present on `develop` at the
+  AFDE-4.5 merge baseline.
+- Product coordination and read-only projection reuse existing Operator and
+  Runtime capabilities without replacing Runtime or changing public contracts.
+- The Product Layer architecture document now distinguishes its historical
+  implementation plan from current repository implementation truth.
+
 ## AFDE-3.9 Runtime History Foundation
 
 - Runtime events now carry required IDs, session identity, canonical event type,
