@@ -187,5 +187,10 @@ A registry change is valid only when:
    implicitly;
 8. Git review history provides the audit trail.
 
-Validation is architectural in AFDE-4.7. Machine-readable registry validation
-is a later implementation capability and is not implied by this standard.
+AFDE-4.7 established these architecture rules and PR #38 merged them into
+`develop`. AFDE-4.8 implements their machine-readable projection, typed loader,
+cross-registry validator, and read-only Provider under `afde/knowledge/`.
+
+This implementation validates Registry metadata and source bindings. It does
+not parse source Markdown, promote new knowledge, resolve a Capability
+implementation, or advance `CAP-KNOW-0001` to M4.

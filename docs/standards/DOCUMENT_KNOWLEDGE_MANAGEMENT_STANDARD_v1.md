@@ -94,7 +94,9 @@ Proposed -> Validated -> Active -> Superseded -> Retired
 
 ## Document Registry Minimum Schema
 
-Every registered official document must provide:
+Every registered official document provides the governed fields below.
+`source_commit` is optional in the machine-readable MVP; every other field is
+required.
 
 | Field | Requirement |
 | --- | --- |
@@ -109,13 +111,31 @@ Every registered official document must provide:
 | `version` | Document version or `living` |
 | `effective_date` | Date the current authority became effective |
 | `supersedes` | Prior document IDs, or an empty list |
-| `source_commit` | Commit containing the registered revision, resolved from Git history |
+| `source_commit` | Optional revision metadata resolved from Git history |
 | `knowledge_ids` | Knowledge entries promoted from the document |
 | `capability_ids` | Capabilities supported or defined by the document |
 
-An Active entry must resolve to a tracked file at the registered path. Until
-the AFDE-4.7 changes are committed, `source_commit` is recorded as
-`pending-afde-4.7-merge` and must be synchronized during merge preparation.
+An Active entry must resolve to a tracked file at the registered path.
+`source_commit` is optional metadata in the machine-readable projection. A
+Registry file must not embed a placeholder, stale value, or the SHA of the
+Commit that is simultaneously creating that Registry. Git history remains the
+authoritative revision audit.
+
+## Machine-readable Registry Projection
+
+AFDE-4.8 implements the governed projection at:
+
+`docs/registry/KNOWLEDGE_FOUNDATION_REGISTRY_v1.json`
+
+The single versioned snapshot contains separate `documents`, `knowledge`, and
+`capabilities` collections plus authority and reference-priority metadata.
+`afde.knowledge` loads and validates that exact JSON file; it does not search
+Markdown.
+
+The JSON snapshot is not a Source of Truth and does not copy complete source
+documents or store execution configuration. It is a read-only index over the
+official Markdown sources. A source change and its affected JSON Registry
+bindings remain one governance unit.
 
 ## Initial Authoritative Document Inventory
 

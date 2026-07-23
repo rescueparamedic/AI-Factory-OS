@@ -25,18 +25,28 @@
 - `CHANGELOG.md` — repository change history
 - `PROJECT_BASELINE.md` — frozen historical baseline; not current architecture
 
+### Knowledge Foundation Implementation
+
+- `docs/registry/KNOWLEDGE_FOUNDATION_REGISTRY_v1.json` — governed
+  machine-readable Registry projection; not a Source of Truth
+- `afde/knowledge/` — immutable models, read-only loader, validator, and
+  Resolver-ready Knowledge Provider
+- `tests/test_knowledge_*.py` — focused model, Registry, Provider, and
+  architecture-boundary validation
+
 ### Knowledge Foundation Capability
 
 ```yaml
 capability_id: CAP-KNOW-0001
-status: architecture_approved
-maturity: M2
-implementation_status: not_implemented
+status: implemented
+maturity: M3
+implementation_status: implemented
 ```
 
 The standards above are the canonical discovery path for official documents,
 registered knowledge, capability state, governance, and AI reference rules.
-Registry metadata does not replace its linked Source of Record.
+Registry metadata and its JSON projection do not replace linked Source of
+Record documents. Capability Resolver and M4 validation remain deferred.
 
 ## Sprint 9-3 MVP
 
