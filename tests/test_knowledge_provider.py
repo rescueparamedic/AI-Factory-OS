@@ -80,7 +80,6 @@ def test_capability_context_resolves_knowledge_sources_and_gaps(provider):
     assert context.scope == "architecture.knowledge_foundation"
     assert [gap.gap_type for gap in context.gaps] == [
         "capability_gap",
-        "capability_gap",
         "evidence_gap",
     ]
     assert provider.gaps("CAP-KNOW-0001") == context.gaps

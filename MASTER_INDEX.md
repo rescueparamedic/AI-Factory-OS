@@ -5,7 +5,7 @@
 ### Architecture
 
 - `docs/development/AFDE_ARCHITECTURE_v1.md` — canonical AFDE architecture,
-  including the AFDE-4.7 Knowledge Foundation flow
+  including the AFDE-4.9 Knowledge Foundation and Resolver flow
 - `docs/architecture/AI_DEVELOPMENT_ENGINE_PRODUCT_LAYER.md` — Product Layer,
   future capability, Resolver, Adapter, Runtime, Evidence, and Product Assembly
   boundaries
@@ -34,6 +34,24 @@
 - `tests/test_knowledge_*.py` — focused model, Registry, Provider, and
   architecture-boundary validation
 
+### Capability Resolver Implementation
+
+- `afde/resolver/` — immutable requirement/result models and deterministic,
+  read-only capability eligibility evaluation over the Knowledge Provider
+- `tests/test_capability_resolver*.py` — model, resolution-rule,
+  Provider-injection, byte-invariance, and architecture-boundary validation
+
+```yaml
+capability_id: CAP-RESOLVER-0001
+status: implemented
+maturity: M3
+implementation_status: implemented
+```
+
+Resolver evaluates one exact registered capability candidate. Planner
+integration, multiple-candidate discovery/ranking, Tool Adapter selection,
+Runtime integration, operational Evidence, and M4 validation remain deferred.
+
 ### Knowledge Foundation Capability
 
 ```yaml
@@ -46,7 +64,8 @@ implementation_status: implemented
 The standards above are the canonical discovery path for official documents,
 registered knowledge, capability state, governance, and AI reference rules.
 Registry metadata and its JSON projection do not replace linked Source of
-Record documents. Capability Resolver and M4 validation remain deferred.
+Record documents. Tool Adapter integration, Runtime integration, operational
+Evidence, and M4 validation remain deferred.
 
 ## Sprint 9-3 MVP
 

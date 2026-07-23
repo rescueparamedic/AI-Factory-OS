@@ -114,9 +114,39 @@ Implementation is contained in `afde/knowledge/` and the governed snapshot is
 search Markdown, write files, select an implementation, call Runtime, or alter
 Product Layer, Planner, Tool Adapter, or public contracts.
 
-The status above does not claim a Capability Resolver, operational
-integration, M4 validation, retrieval system, vector database, embedding
-pipeline, or multimodal implementation.
+The Knowledge Foundation status does not claim operational integration, M4
+validation, retrieval, vector database, embedding, or multimodal behavior.
+
+### Capability Resolver Foundation
+
+```yaml
+capability_id: CAP-RESOLVER-0001
+status: implemented
+maturity: M3
+implementation_status: implemented
+```
+
+AFDE-4.9 implements one deterministic read-only resolution boundary:
+
+```text
+Structured CapabilityRequirement
+        |
+        v
+Injected Knowledge Provider -> CapabilityResolver
+        |
+        v
+Immutable CapabilityResolutionResult
+```
+
+The Resolver evaluates one exact Capability ID against registered status,
+implementation status, maturity, scope, required Knowledge, direct Capability
+dependencies, gaps, and constraints. It returns resolved, unresolved, blocked,
+or decision-required status with ordered rationale. It does not parse Registry
+JSON, search Markdown, select a Tool Adapter or implementation path, invoke
+Runtime, execute a Worker, change Planner output, or assemble a product.
+
+Planner integration, multi-candidate discovery/ranking, Tool Adapter and
+Runtime integration, operational Evidence, and M4 validation remain deferred.
 
 ### Normative Standards
 

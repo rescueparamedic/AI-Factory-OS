@@ -51,7 +51,8 @@ def test_valid_registry_loads_all_three_projections():
         "KNW-KNOW-0003",
     ]
     assert [item.capability_id for item in snapshot.capabilities] == [
-        "CAP-KNOW-0001"
+        "CAP-KNOW-0001",
+        "CAP-RESOLVER-0001",
     ]
 
 

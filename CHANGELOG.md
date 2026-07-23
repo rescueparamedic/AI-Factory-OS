@@ -1,5 +1,21 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-4.9 Capability Resolver Foundation (Unreleased)
+
+- Registered `CAP-RESOLVER-0001` as implemented at M3 without claiming M4.
+- Added immutable structured requirement and resolution-result models.
+- Added deterministic capability, status, implementation, maturity, scope,
+  Knowledge, dependency, gap, decision, and rationale evaluation.
+- Reused only the injected read-only Knowledge Provider contract; Resolver does
+  not parse Registry JSON or search Markdown.
+- Added focused Resolver model, behavior, Provider-injection, source-byte, and
+  architecture-boundary tests.
+- Preserved Planner, Tool Adapter, Runtime, Product Layer, public contracts,
+  lifecycle models, Evidence schemas, CLI, Desktop, and provider behavior.
+- Added no tool selection, execution, file I/O, network access, external
+  dependency, fuzzy/semantic ranking, RAG, vector database, embedding, or
+  multimodal behavior.
+
 ## AFDE-4.8 Knowledge Foundation Provider MVP (Unreleased)
 
 - Added a governed machine-readable Registry snapshot with the existing 12

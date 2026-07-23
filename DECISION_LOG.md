@@ -1,5 +1,24 @@
 # Decision Log
 
+## 2026-07-23 - AFDE-4.9 Capability Resolver Foundation
+
+- Implemented `CAP-RESOLVER-0001` as an internal deterministic Resolver and
+  advanced it from unregistered M0 to M3 Implemented without claiming M4.
+- Required structured `CapabilityRequirement` input; natural-language,
+  fuzzy, semantic, and multiple-candidate discovery remain outside the MVP.
+- Reused the injected Knowledge Provider for all capability, Knowledge,
+  document, gap, and reference-priority access.
+- Distinguished invalid requirements and invalid Provider state from normal
+  unresolved, blocked, and decision-required outcomes.
+- Evaluated lifecycle status, implementation status, maturity, scope, required
+  Knowledge, direct Capability dependencies, gaps, and constraints in a stable
+  order with an ordered rationale.
+- Kept the result immutable and read-only, with no Registry JSON parsing,
+  Markdown search, file access, network access, implementation-path selection,
+  Tool Adapter selection, Runtime call, Worker execution, or Product Assembly.
+- Preserved Planner, Runtime, Product Layer, Tool Adapter, CLI, Desktop,
+  Evidence, and every existing public contract.
+
 ## 2026-07-23 - AFDE-4.8 Read-only Knowledge Foundation Provider
 
 - Implemented `CAP-KNOW-0001` as an internal read-only Provider and advanced it
