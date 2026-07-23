@@ -17,7 +17,8 @@
         "KNW-KNOW-0001"
       ],
       "capability_ids": [
-        "CAP-KNOW-0001"
+        "CAP-KNOW-0001",
+        "CAP-RESOLVER-0001"
       ]
     },
     {
@@ -34,7 +35,8 @@
       "supersedes": [],
       "knowledge_ids": [],
       "capability_ids": [
-        "CAP-KNOW-0001"
+        "CAP-KNOW-0001",
+        "CAP-RESOLVER-0001"
       ]
     },
     {
@@ -90,7 +92,8 @@
         "KNW-KNOW-0003"
       ],
       "capability_ids": [
-        "CAP-KNOW-0001"
+        "CAP-KNOW-0001",
+        "CAP-RESOLVER-0001"
       ]
     },
     {
@@ -229,6 +232,10 @@
         {
           "capability_id": "CAP-KNOW-0001",
           "relation": "required"
+        },
+        {
+          "capability_id": "CAP-RESOLVER-0001",
+          "relation": "required"
         }
       ],
       "conflicts_with": [],
@@ -260,6 +267,10 @@
         {
           "capability_id": "CAP-KNOW-0001",
           "relation": "required"
+        },
+        {
+          "capability_id": "CAP-RESOLVER-0001",
+          "relation": "required"
         }
       ],
       "conflicts_with": [],
@@ -286,6 +297,10 @@
       "capability_bindings": [
         {
           "capability_id": "CAP-KNOW-0001",
+          "relation": "required"
+        },
+        {
+          "capability_id": "CAP-RESOLVER-0001",
           "relation": "required"
         }
       ],
@@ -332,12 +347,6 @@
         {
           "gap_type": "capability_gap",
           "subject_id": "CAP-KNOW-0001",
-          "message": "Capability Resolver is not implemented.",
-          "related_ids": []
-        },
-        {
-          "gap_type": "capability_gap",
-          "subject_id": "CAP-KNOW-0001",
           "message": "Tool Adapter Contract implementation remains deferred.",
           "related_ids": []
         },
@@ -356,6 +365,75 @@
         "DOC-CREG-0001",
         "DOC-DGOV-0001",
         "DOC-AIREF-0001"
+      ],
+      "supersedes": []
+    },
+    {
+      "capability_id": "CAP-RESOLVER-0001",
+      "name": "Capability Resolver",
+      "description": "Evaluate structured capability requirements against Knowledge Provider metadata and return deterministic eligibility, gaps, and rationale without selecting or executing tools.",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.knowledge_foundation.resolver",
+      "status": "implemented",
+      "maturity": "M3",
+      "implementation_status": "implemented",
+      "required_knowledge": [
+        "KNW-KNOW-0001",
+        "KNW-KNOW-0002",
+        "KNW-KNOW-0003"
+      ],
+      "required_capabilities": [
+        "CAP-KNOW-0001"
+      ],
+      "tool_dependencies": [],
+      "adapter_dependencies": [],
+      "runtime_dependencies": [],
+      "implementation_references": [
+        "afde/resolver/errors.py",
+        "afde/resolver/models.py",
+        "afde/resolver/resolver.py"
+      ],
+      "validation_evidence": [
+        "tests/test_capability_resolver_models.py",
+        "tests/test_capability_resolver.py",
+        "tests/test_capability_resolver_boundaries.py"
+      ],
+      "known_gaps": [
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-RESOLVER-0001",
+          "message": "Planner integration remains deferred.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-RESOLVER-0001",
+          "message": "Tool Adapter integration remains deferred.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-RESOLVER-0001",
+          "message": "Runtime integration remains deferred.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-RESOLVER-0001",
+          "message": "Multiple-candidate discovery and ranking remain deferred.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "evidence_gap",
+          "subject_id": "CAP-RESOLVER-0001",
+          "message": "Operational Evidence and M4 validation are not complete.",
+          "related_ids": []
+        }
+      ],
+      "source_documents": [
+        "DOC-ARCH-0001",
+        "DOC-ARCH-0002",
+        "DOC-CREG-0001"
       ],
       "supersedes": []
     }

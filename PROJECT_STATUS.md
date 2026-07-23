@@ -1,5 +1,24 @@
 # AI Factory OS Project Status
 
+## AFDE-4.9 Capability Resolver Foundation
+
+- `CAP-RESOLVER-0001` is `implemented`, maturity `M3`, with
+  `implementation_status: implemented`.
+- `afde.resolver` accepts immutable structured capability requirements and
+  returns immutable deterministic resolution results.
+- Resolution evaluates exact Capability ID, lifecycle status, implementation
+  status, maturity threshold, scope, required Knowledge, direct Capability
+  dependencies, Provider gaps, explicit constraints, and ordered rationale.
+- All Registry, Knowledge, document, gap, and reference-priority data is
+  consumed through the injected `afde.knowledge` Provider.
+- Resolver has no Planner, Tool Adapter, Runtime, Product Layer, CLI, Desktop,
+  network, filesystem, external-provider, or external-package dependency.
+- Planner integration, Tool Adapter integration, Runtime integration,
+  multiple-candidate discovery/ranking, operational Evidence, and M4
+  validation remain deferred.
+- `CAP-KNOW-0001` remains implemented at M3; only its obsolete
+  Resolver-not-implemented gap was removed.
+
 ## AFDE-4.8 Knowledge Foundation Provider MVP
 
 - `CAP-KNOW-0001` is `implemented`, maturity `M3`, with

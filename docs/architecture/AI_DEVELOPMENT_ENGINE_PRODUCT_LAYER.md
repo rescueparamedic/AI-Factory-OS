@@ -48,6 +48,11 @@ AFDE-4.7 extends the future capability boundary with a Knowledge Foundation.
 It is an architecture/document extension only and does not change Product
 Layer code or public behavior.
 
+AFDE-4.9 implements an isolated exact-ID Capability Resolver foundation over
+the read-only Knowledge Provider. It does not change Product Layer code or
+behavior and does not implement the future adapter/provider selection described
+below.
+
 ## 2. Scope and invariants
 
 ### In scope
@@ -654,7 +659,8 @@ the extension base. A second Planner must not be introduced.
 
 ### Capability Resolver
 
-**Status: Future / Deferred / Not implemented in AFDE-4.5.**
+**AFDE-4.5 status: Future / Deferred. AFDE-4.9 foundation: M3 exact-ID
+eligibility evaluation only.**
 
 Planning determines WHAT capabilities are required.
 
@@ -676,6 +682,14 @@ Capability Resolver delegates execution through the Tool Adapter Contract and do
 It is a Product Layer responsibility only.
 
 Runtime remains responsible for execution, approval, Evidence, and lifecycle.
+
+The AFDE-4.9 foundation evaluates one supplied Capability ID for eligibility
+using injected Knowledge Provider metadata. It returns immutable resolved,
+unresolved, blocked, or decision-required rationale. It does not discover or
+rank multiple implementations, choose an adapter/provider/tool, or call
+Runtime. Those selection responsibilities and Product Layer integration remain
+future work.
+
 Capability Resolver must not duplicate Runtime behavior.
 
 ### 4. Tool Selection and Fallback

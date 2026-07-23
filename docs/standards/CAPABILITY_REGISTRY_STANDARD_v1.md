@@ -110,8 +110,9 @@ A document, registry entry, test plan, or architecture approval alone cannot.
 - `required_capabilities` must resolve without cycles.
 - Tool, Adapter, and Runtime dependencies must name the owning contract rather
   than grant direct execution authority.
-- The Capability Resolver may select only eligible implementations in a future
-  approved Sprint.
+- The Capability Resolver foundation may evaluate only registered eligible
+  capabilities. Multiple-candidate discovery, implementation ranking, and Tool
+  Adapter selection require a future approved Sprint.
 - Runtime remains responsible for execution, lifecycle, approval, and Evidence.
 - Known gaps remain visible and fail closed where a required dependency cannot
   be established.
@@ -136,12 +137,38 @@ A document, registry entry, test plan, or architecture approval alone cannot.
 | Runtime dependencies | none |
 | Implementation references | `afde/knowledge/`, `docs/registry/KNOWLEDGE_FOUNDATION_REGISTRY_v1.json` |
 | Validation evidence | AFDE-4.8 focused tests and full repository regression |
-| Known gaps | Capability Resolver and Tool Adapter implementation remain deferred; M4 validation and operational integration are not complete |
+| Known gaps | Tool Adapter implementation, operational integration, and M4 validation remain deferred |
 | Source documents | `DOC-ARCH-0001`, `DOC-ARCH-0002`, `DOC-DKM-0001`, `DOC-KREG-0001`, `DOC-CREG-0001`, `DOC-DGOV-0001`, `DOC-AIREF-0001` |
 | Supersedes | none |
 
 This entry records the minimum read-only Knowledge Provider implementation. It
-does not claim Resolver integration, operational use, or M4 validation.
+does not claim Tool Adapter or Runtime integration, operational use, or M4.
+
+### CAP-RESOLVER-0001
+
+| Field | Value |
+| --- | --- |
+| Name | Capability Resolver |
+| Description | Evaluate a structured capability requirement against Knowledge Provider metadata and return deterministic eligibility, gaps, and rationale |
+| Owner | AI Factory OS Architecture |
+| Scope | `architecture.knowledge_foundation.resolver` |
+| Status | `implemented` |
+| Maturity | `M3` |
+| Implementation status | `implemented` |
+| Required knowledge | `KNW-KNOW-0001`, `KNW-KNOW-0002`, `KNW-KNOW-0003` |
+| Required capabilities | `CAP-KNOW-0001` |
+| Tool dependencies | none |
+| Adapter dependencies | none |
+| Runtime dependencies | none |
+| Implementation references | `afde/resolver/` |
+| Validation evidence | AFDE-4.9 focused tests and full repository regression |
+| Known gaps | Planner, Tool Adapter, and Runtime integration; multiple-candidate discovery/ranking; operational Evidence; M4 validation |
+| Source documents | `DOC-ARCH-0001`, `DOC-ARCH-0002`, `DOC-CREG-0001` |
+| Supersedes | none |
+
+This entry records exact-ID eligibility resolution over an injected read-only
+Knowledge Provider. It does not select an adapter or implementation, execute a
+tool or Runtime, alter Planner output, or claim operational validation.
 
 ## Registry Validation
 
@@ -161,8 +188,10 @@ A capability registry change is valid only when:
 
 ## Known Architecture Gaps
 
-- Capability Resolver is not implemented.
+- Planner integration with Capability Resolver remains deferred.
 - Tool Adapter Contract remains a future architecture and implementation item.
+- Runtime integration remains deferred.
+- Multiple-candidate discovery and ranking remain deferred.
 - M4 validation and operational integration are not complete.
 - RAG, vector databases, embeddings, and multimodal adapters are outside
-  AFDE-4.8.
+  AFDE-4.9.
