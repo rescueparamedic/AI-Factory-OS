@@ -1,5 +1,31 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-4.7 Knowledge Foundation Architecture (Unreleased)
+
+- Added the Knowledge Foundation architecture boundary between Capability and
+  Capability Resolver.
+- Added Document/Knowledge Management, Knowledge Registry, Capability Registry,
+  Document Governance, and AI Reference Policy v1 standards.
+- Registered `CAP-KNOW-0001` as architecture-approved at M2 while explicitly
+  retaining `not_implemented` implementation status.
+- Added initial authoritative Document and Knowledge entries, source bindings,
+  lifecycle and authority models, conflict/supersession rules, validation
+  requirements, and Knowledge/Capability Gap handling.
+- Updated the canonical AFDE and Product Layer architecture, Master Index,
+  Decision Log, and Project Status without changing code or public contracts.
+- Preserved Runtime, Product Layer, Planner, Resolver, Tool Adapter, Evidence,
+  Beta Execute, Desktop, merge, deployment, and external-call behavior.
+
+## AFDE-4.5 AI Development Engine Product Layer
+
+- Added the internal `afde.product` package with `ProductRunView`,
+  `DevelopmentRunService`, and Operator-result projection.
+- Reused the existing Operator and Runtime path for product coordination and
+  read-only presentation.
+- Preserved Beta Execute, Desktop, Runtime lifecycle, Approval, ToolAction, and
+  Evidence contracts.
+- Added focused product model, presenter, and service tests.
+
 ## AFDE-4.4 Desktop Operator UX MVP (Unreleased)
 
 - Reworked the existing single Desktop window into a Korean-labeled

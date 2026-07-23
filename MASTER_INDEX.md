@@ -1,5 +1,43 @@
 # AI Factory OS Master Index
 
+## Current Architecture and Governance
+
+### Architecture
+
+- `docs/development/AFDE_ARCHITECTURE_v1.md` — canonical AFDE architecture,
+  including the AFDE-4.7 Knowledge Foundation flow
+- `docs/architecture/AI_DEVELOPMENT_ENGINE_PRODUCT_LAYER.md` — Product Layer,
+  future capability, Resolver, Adapter, Runtime, Evidence, and Product Assembly
+  boundaries
+
+### Knowledge Foundation Standards
+
+- `docs/standards/DOCUMENT_KNOWLEDGE_MANAGEMENT_STANDARD_v1.md`
+- `docs/standards/KNOWLEDGE_REGISTRY_STANDARD_v1.md`
+- `docs/standards/CAPABILITY_REGISTRY_STANDARD_v1.md`
+- `docs/standards/DOCUMENT_GOVERNANCE_STANDARD_v1.md`
+- `docs/standards/AI_REFERENCE_POLICY_v1.md`
+
+### Living Repository Records
+
+- `DECISION_LOG.md` — accepted architecture and governance decisions
+- `PROJECT_STATUS.md` — current delivery and capability status
+- `CHANGELOG.md` — repository change history
+- `PROJECT_BASELINE.md` — frozen historical baseline; not current architecture
+
+### Knowledge Foundation Capability
+
+```yaml
+capability_id: CAP-KNOW-0001
+status: architecture_approved
+maturity: M2
+implementation_status: not_implemented
+```
+
+The standards above are the canonical discovery path for official documents,
+registered knowledge, capability state, governance, and AI reference rules.
+Registry metadata does not replace its linked Source of Record.
+
 ## Sprint 9-3 MVP
 
 - main.py
