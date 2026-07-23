@@ -1,5 +1,27 @@
 # Decision Log
 
+## 2026-07-23 - AFDE-4.8 Read-only Knowledge Foundation Provider
+
+- Implemented `CAP-KNOW-0001` as an internal read-only Provider and advanced it
+  from M2 Designed to M3 Implemented without claiming M4 validation.
+- Adopted one governed JSON snapshot containing separate Document, Knowledge,
+  and Capability collections plus authority and reference-priority metadata.
+- Kept official Markdown documents as Source of Record; the JSON Registry is an
+  index and neither copies full source content nor stores execution settings.
+- Added immutable typed models, a repository-contained UTF-8 JSON loader,
+  cross-registry fail-closed validation, deterministic queries,
+  Resolver-ready `CapabilityContext`, and structured gaps.
+- Distinguished an invalid Registry, which raises a validation error, from a
+  valid unmet Capability requirement, which returns an explicit Gap.
+- Omitted self-referential source Commit metadata from the MVP snapshot; Git
+  history remains the authoritative revision audit.
+- Added no Resolver selection, Runtime call, Worker execution, Planner or
+  Product Layer change, Tool Adapter behavior, file mutation, network call,
+  Markdown search, RAG, vector database, embedding, or multimodal behavior.
+- Preserved every existing public contract and Runtime lifecycle.
+- Capability Resolver, Tool Adapter implementation, operational integration,
+  and M4 validation remain separately approved future work.
+
 ## 2026-07-23 - AFDE-4.7 Knowledge Foundation Architecture
 
 - Added Knowledge Foundation between Capability and Capability Resolver as a

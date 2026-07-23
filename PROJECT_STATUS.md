@@ -1,9 +1,27 @@
 # AI Factory OS Project Status
 
+## AFDE-4.8 Knowledge Foundation Provider MVP
+
+- `CAP-KNOW-0001` is `implemented`, maturity `M3`, with
+  `implementation_status: implemented`.
+- PR #38 and AFDE-4.7 architecture are present on the `develop` merge baseline.
+- A governed JSON snapshot projects 12 Document entries, 3 Knowledge entries,
+  1 Capability entry, authority levels, and deterministic reference priority.
+- `afde.knowledge` provides immutable models, repository-contained loading,
+  cross-registry fail-closed validation, read-only queries,
+  `CapabilityContext`, and explicit typed gaps.
+- The Provider reads only the configured JSON snapshot and leaves Registry and
+  source-document bytes unchanged.
+- Knowledge Foundation has no dependency on Runtime, Product Layer, Planner,
+  Resolver, AI Provider, Tool Adapter, CLI, Desktop, network, or external packages.
+- Focused Knowledge Foundation tests and full repository regression pass.
+- Capability Resolver and Tool Adapter implementation remain absent.
+- Operational integration and M4 validation remain deferred.
+
 ## AFDE-4.7 Knowledge Foundation Architecture
 
-- Status: architecture complete on the feature branch; implementation is
-  intentionally absent.
+- Status: architecture merged through PR #38; superseded for current capability
+  status by AFDE-4.8 implementation.
 - `CAP-KNOW-0001` is `architecture_approved`, maturity `M2`, with
   `implementation_status: not_implemented`.
 - The official flow is Capability -> Knowledge Foundation -> Capability

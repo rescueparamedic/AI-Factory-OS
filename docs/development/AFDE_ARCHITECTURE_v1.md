@@ -89,14 +89,34 @@ for product coordination and Product Assembly.
 
 ```yaml
 capability_id: CAP-KNOW-0001
-status: architecture_approved
-maturity: M2
-implementation_status: not_implemented
+status: implemented
+maturity: M3
+implementation_status: implemented
 ```
 
-The status above does not claim a registry service, query API, Resolver,
-retrieval system, vector database, embedding pipeline, or multimodal
-implementation.
+AFDE-4.8 implements the minimum read-only Knowledge Provider:
+
+```text
+Official Markdown source documents
+        |
+        v
+Governed JSON Registry snapshot
+        |
+        v
+Typed Loader -> Validator -> KnowledgeFoundationProvider
+        |
+        v
+Resolver-ready CapabilityContext and explicit Gaps
+```
+
+Implementation is contained in `afde/knowledge/` and the governed snapshot is
+`docs/registry/KNOWLEDGE_FOUNDATION_REGISTRY_v1.json`. The Provider does not
+search Markdown, write files, select an implementation, call Runtime, or alter
+Product Layer, Planner, Tool Adapter, or public contracts.
+
+The status above does not claim a Capability Resolver, operational
+integration, M4 validation, retrieval system, vector database, embedding
+pipeline, or multimodal implementation.
 
 ### Normative Standards
 

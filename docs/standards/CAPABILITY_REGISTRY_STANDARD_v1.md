@@ -126,22 +126,22 @@ A document, registry entry, test plan, or architecture approval alone cannot.
 | Description | Index official documents, validate knowledge and capability metadata, resolve reference authority, and expose knowledge or capability gaps |
 | Owner | AI Factory OS Architecture |
 | Scope | `architecture.knowledge_foundation` |
-| Status | `architecture_approved` |
-| Maturity | `M2` |
-| Implementation status | `not_implemented` |
+| Status | `implemented` |
+| Maturity | `M3` |
+| Implementation status | `implemented` |
 | Required knowledge | `KNW-KNOW-0001`, `KNW-KNOW-0002`, `KNW-KNOW-0003` |
 | Required capabilities | none |
 | Tool dependencies | none |
 | Adapter dependencies | none |
-| Runtime dependencies | none; future consumers may read results without transferring Runtime ownership |
-| Implementation references | none |
-| Validation evidence | AFDE-4.7 architecture review; Git merge evidence pending |
-| Known gaps | No machine-readable registry, validator, query API, Resolver integration, or implementation Evidence |
+| Runtime dependencies | none |
+| Implementation references | `afde/knowledge/`, `docs/registry/KNOWLEDGE_FOUNDATION_REGISTRY_v1.json` |
+| Validation evidence | AFDE-4.8 focused tests and full repository regression |
+| Known gaps | Capability Resolver and Tool Adapter implementation remain deferred; M4 validation and operational integration are not complete |
 | Source documents | `DOC-ARCH-0001`, `DOC-ARCH-0002`, `DOC-DKM-0001`, `DOC-KREG-0001`, `DOC-CREG-0001`, `DOC-DGOV-0001`, `DOC-AIREF-0001` |
 | Supersedes | none |
 
-This entry intentionally records architecture approval without claiming
-implementation.
+This entry records the minimum read-only Knowledge Provider implementation. It
+does not claim Resolver integration, operational use, or M4 validation.
 
 ## Registry Validation
 
@@ -163,6 +163,6 @@ A capability registry change is valid only when:
 
 - Capability Resolver is not implemented.
 - Tool Adapter Contract remains a future architecture and implementation item.
-- Machine-readable registry persistence and validation are not implemented.
+- M4 validation and operational integration are not complete.
 - RAG, vector databases, embeddings, and multimodal adapters are outside
-  AFDE-4.7.
+  AFDE-4.8.

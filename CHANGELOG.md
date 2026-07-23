@@ -1,5 +1,24 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-4.8 Knowledge Foundation Provider MVP (Unreleased)
+
+- Added a governed machine-readable Registry snapshot with the existing 12
+  Document, 3 Knowledge, and `CAP-KNOW-0001` entries.
+- Added immutable typed Registry, Capability Context, and Gap models.
+- Added a repository-contained UTF-8 JSON loader and fail-closed validation for
+  schema, IDs, enums, paths, bindings, conflicts, cycles, and implementation
+  consistency.
+- Added deterministic read-only Document, Knowledge, Capability, priority,
+  context, and gap Provider APIs for future Resolver injection.
+- Advanced `CAP-KNOW-0001` from M2 Designed to M3 Implemented without claiming
+  M4 validation or operational integration.
+- Added focused tests for valid queries, malformed and invalid Registries,
+  containment, byte invariance, and architecture boundaries.
+- Preserved Runtime, Product Layer, Planner, Resolver, Tool Adapter, CLI,
+  Desktop, Evidence, and all public contracts.
+- Added no external dependency, network access, Markdown search, RAG, vector
+  database, embedding, or multimodal behavior.
+
 ## AFDE-4.7 Knowledge Foundation Architecture (Unreleased)
 
 - Added the Knowledge Foundation architecture boundary between Capability and

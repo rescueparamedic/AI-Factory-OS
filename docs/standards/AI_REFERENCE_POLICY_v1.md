@@ -109,6 +109,18 @@ the request:
   into documents, registries, logs, or Evidence.
 - Paid calls, uploads, publication, and deployment require explicit approval.
 
+## Machine-readable Projection
+
+AFDE-4.8 projects the governed document, knowledge, capability, authority, and
+reference-priority metadata through
+`docs/registry/KNOWLEDGE_FOUNDATION_REGISTRY_v1.json` and the read-only
+`afde.knowledge.KnowledgeFoundationProvider`.
+
+The Provider returns deterministic eligible metadata and explicit gaps. It
+does not replace official Markdown, search Markdown, choose a Capability
+implementation, call a tool, or execute Runtime. If the Registry is malformed
+or its bindings are invalid, loading fails closed.
+
 ## Reference Traceability
 
 An AI-generated architecture or governance conclusion must be traceable to:
