@@ -1,5 +1,28 @@
 # Decision Log
 
+## 2026-07-24 - AFDE-5.3 Non-executable Execution Path
+
+- Implemented `CAP-EXECPATH-0001` at M3 without claiming M4.
+- Kept Planner `ExecutionPlan` goal/task planning and executable Runtime models
+  outside the new structural handoff boundary.
+- Added dedicated `afde.execution_path` ownership after Tool Selection and
+  before a future Runtime Integration capability.
+- Reused immutable `ToolAdapterSelectionResult` and exact
+  `ToolAdapterDescriptor` metadata through a constructor-injected Catalog
+  lookup without constructing or mutating a Catalog.
+- Required identity/Capability agreement, resolved eligible state,
+  availability, Runtime compatibility, and controlled execution contract.
+- Derived stable path IDs from structured metadata without time, randomness,
+  filesystem, network, or environment input.
+- Distinguished path construction and structural handoff readiness from
+  authority; Runtime and execution remain prohibited.
+- Represented credentials only as an explicit prerequisite.
+- Preserved Planner, Planner Resolution, Resolver, Selection, Catalog,
+  Execution Planner, Runtime, Worker, Product, Provider, Evidence, CLI,
+  Desktop, and lifecycle contracts.
+- Deferred Runtime authorization/invocation, Worker handoff, adapter execution,
+  credentials, Evidence, Product Assembly, operations, and M4 validation.
+
 ## 2026-07-24 - AFDE-5.2 Immutable Tool Adapter Catalog
 
 - Implemented `CAP-TOOLCATALOG-0001` at M3 without claiming M4.

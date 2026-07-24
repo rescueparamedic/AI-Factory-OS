@@ -44,7 +44,7 @@ def test_valid_registry_loads_all_three_projections():
     snapshot = KnowledgeRegistryLoader(ROOT).load()
 
     assert snapshot.schema_version == "1.0"
-    assert len(snapshot.documents) == 13
+    assert len(snapshot.documents) == 14
     assert [item.knowledge_id for item in snapshot.knowledge] == [
         "KNW-KNOW-0001",
         "KNW-KNOW-0002",
@@ -56,6 +56,7 @@ def test_valid_registry_loads_all_three_projections():
         "CAP-PLANRES-0001",
         "CAP-TOOLSELECT-0001",
         "CAP-TOOLCATALOG-0001",
+        "CAP-EXECPATH-0001",
     ]
 
 
@@ -102,6 +103,36 @@ def test_tool_catalog_capability_and_standard_are_registered_at_m3_only():
         "docs/standards/TOOL_ADAPTER_CATALOG_STANDARD_v1.md"
     )
     assert standard.capability_ids == ("CAP-TOOLCATALOG-0001",)
+
+
+def test_execution_path_capability_and_standard_are_registered_at_m3_only():
+    snapshot = KnowledgeRegistryLoader(ROOT).load()
+    capability = next(
+        item for item in snapshot.capabilities
+        if item.capability_id == "CAP-EXECPATH-0001"
+    )
+    standard = next(
+        item for item in snapshot.documents
+        if item.document_id == "DOC-EXEP-0001"
+    )
+
+    assert capability.status == "implemented"
+    assert capability.maturity == "M3"
+    assert capability.implementation_status == "implemented"
+    assert capability.required_capabilities == (
+        "CAP-TOOLSELECT-0001",
+        "CAP-TOOLCATALOG-0001",
+    )
+    assert capability.runtime_dependencies == ()
+    assert capability.implementation_references == (
+        "afde/execution_path/errors.py",
+        "afde/execution_path/models.py",
+        "afde/execution_path/service.py",
+    )
+    assert standard.path == (
+        "docs/standards/EXECUTION_PATH_STANDARD_v1.md"
+    )
+    assert standard.capability_ids == ("CAP-EXECPATH-0001",)
 
 
 def test_missing_and_malformed_registry_fail_closed(tmp_path):

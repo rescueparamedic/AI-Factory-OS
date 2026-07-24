@@ -21,7 +21,8 @@
         "CAP-RESOLVER-0001",
         "CAP-PLANRES-0001",
         "CAP-TOOLSELECT-0001",
-        "CAP-TOOLCATALOG-0001"
+        "CAP-TOOLCATALOG-0001",
+        "CAP-EXECPATH-0001"
       ]
     },
     {
@@ -42,7 +43,8 @@
         "CAP-RESOLVER-0001",
         "CAP-PLANRES-0001",
         "CAP-TOOLSELECT-0001",
-        "CAP-TOOLCATALOG-0001"
+        "CAP-TOOLCATALOG-0001",
+        "CAP-EXECPATH-0001"
       ]
     },
     {
@@ -102,7 +104,8 @@
         "CAP-RESOLVER-0001",
         "CAP-PLANRES-0001",
         "CAP-TOOLSELECT-0001",
-        "CAP-TOOLCATALOG-0001"
+        "CAP-TOOLCATALOG-0001",
+        "CAP-EXECPATH-0001"
       ]
     },
     {
@@ -120,6 +123,23 @@
       "knowledge_ids": [],
       "capability_ids": [
         "CAP-TOOLCATALOG-0001"
+      ]
+    },
+    {
+      "document_id": "DOC-EXEP-0001",
+      "title": "Execution Path Standard v1",
+      "path": "docs/standards/EXECUTION_PATH_STANDARD_v1.md",
+      "document_type": "standard",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.execution_path",
+      "status": "Active",
+      "authority_level": "normative",
+      "version": "v1",
+      "effective_date": "2026-07-24",
+      "supersedes": [],
+      "knowledge_ids": [],
+      "capability_ids": [
+        "CAP-EXECPATH-0001"
       ]
     },
     {
@@ -627,6 +647,63 @@
         "DOC-ARCH-0002",
         "DOC-CREG-0001",
         "DOC-TCAT-0001"
+      ],
+      "supersedes": []
+    },
+    {
+      "capability_id": "CAP-EXECPATH-0001",
+      "name": "Execution Path",
+      "description": "Transform one successful Tool Adapter Selection and exact Catalog descriptor into an immutable non-executable Runtime handoff projection.",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.execution_path",
+      "status": "implemented",
+      "maturity": "M3",
+      "implementation_status": "implemented",
+      "required_knowledge": [],
+      "required_capabilities": [
+        "CAP-TOOLSELECT-0001",
+        "CAP-TOOLCATALOG-0001"
+      ],
+      "tool_dependencies": [],
+      "adapter_dependencies": [
+        "ToolAdapterSelectionResult",
+        "ToolAdapterDescriptor exact Catalog lookup"
+      ],
+      "runtime_dependencies": [],
+      "implementation_references": [
+        "afde/execution_path/errors.py",
+        "afde/execution_path/models.py",
+        "afde/execution_path/service.py"
+      ],
+      "validation_evidence": [
+        "tests/test_execution_path.py",
+        "tests/test_execution_path_boundaries.py"
+      ],
+      "known_gaps": [
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-EXECPATH-0001",
+          "message": "Runtime handoff authorization and Runtime invocation remain deferred to a future Runtime Integration capability.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-EXECPATH-0001",
+          "message": "Worker handoff, adapter execution, credential handling, Evidence, and Product Assembly remain deferred.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "evidence_gap",
+          "subject_id": "CAP-EXECPATH-0001",
+          "message": "Operational Evidence and M4 validation are not complete.",
+          "related_ids": []
+        }
+      ],
+      "source_documents": [
+        "DOC-ARCH-0001",
+        "DOC-ARCH-0002",
+        "DOC-CREG-0001",
+        "DOC-EXEP-0001"
       ],
       "supersedes": []
     }

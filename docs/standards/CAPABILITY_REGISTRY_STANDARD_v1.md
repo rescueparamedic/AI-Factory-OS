@@ -222,6 +222,33 @@ The Catalog instance, not the Knowledge Registry, is the Single Source of Truth
 for adapter discovery metadata in its scope. The Registry governs capability
 and document lifecycle only. Catalog metadata grants no execution authority.
 
+### CAP-EXECPATH-0001
+
+| Field | Value |
+| --- | --- |
+| Name | Execution Path Foundation |
+| Description | Construct a deterministic, immutable, non-executable path from one Selection result and exact injected Catalog metadata |
+| Owner | AI Factory OS Architecture |
+| Scope | `architecture.execution_path` |
+| Status | `implemented` |
+| Maturity | `M3` |
+| Implementation status | `implemented` |
+| Required knowledge | none |
+| Required capabilities | `CAP-TOOLSELECT-0001`, `CAP-TOOLCATALOG-0001` |
+| Tool dependencies | none |
+| Adapter dependencies | immutable `ToolAdapterSelectionResult` and exact `ToolAdapterDescriptor` lookup |
+| Runtime dependencies | none |
+| Implementation references | `afde/execution_path/` |
+| Validation evidence | AFDE-5.3 focused tests and full repository regression |
+| Known gaps | Runtime Integration authorization and invocation; operational Worker, adapter, credential, Evidence, and Product Assembly integration; M4 validation |
+| Source documents | `DOC-ARCH-0001`, `DOC-ARCH-0002`, `DOC-CREG-0001`, `DOC-EXEP-0001` |
+| Supersedes | none |
+
+This entry records structural path construction and handoff readiness only.
+`runtime_allowed` and `execution_allowed` remain false. Actual Runtime handoff,
+authorization, adapter invocation, credential access, and operational Evidence
+belong to a future separately governed capability.
+
 ## Registry Validation
 
 A capability registry change is valid only when:
@@ -246,4 +273,4 @@ A capability registry change is valid only when:
 - Multiple-candidate discovery and ranking remain deferred.
 - M4 validation and operational integration are not complete.
 - RAG, vector databases, embeddings, and multimodal adapters are outside
-  AFDE-5.2.
+  AFDE-5.3.

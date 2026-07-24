@@ -1,5 +1,21 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-5.3 Execution Path Foundation (Unreleased)
+
+- Registered `CAP-EXECPATH-0001` as implemented at M3 without claiming M4.
+- Added a normative standard plus immutable request, structural handoff step,
+  result, status, errors, and constructor-injected service.
+- Reused AFDE-5.1 Selection and AFDE-5.2 Catalog contracts unchanged.
+- Added exact identity/mapping, availability, compatibility,
+  execution-contract, credential-prerequisite, and fail-closed policy.
+- Added deterministic metadata-derived path IDs and stable trace without time,
+  randomness, filesystem, network, or environment input.
+- Preserved Resolver and Selection state, gaps, rationale, references, trace,
+  and relevant Catalog metadata in read-only projections.
+- Kept Runtime and execution disallowed and added no adapter, Worker, command,
+  task, process, Provider, Evidence, Product, or orchestration behavior.
+- Added focused, upstream integration, Registry, and architecture tests.
+
 ## AFDE-5.2 Tool Adapter Catalog Foundation (Unreleased)
 
 - Registered `CAP-TOOLCATALOG-0001` as implemented at M3 without claiming M4.
