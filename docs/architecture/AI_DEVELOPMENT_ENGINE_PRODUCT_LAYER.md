@@ -53,6 +53,10 @@ the read-only Knowledge Provider. It does not change Product Layer code or
 behavior and does not implement the future adapter/provider selection described
 below.
 
+AFDE-5.0 composes structured Planner context with that Resolver through an
+isolated injected application service. It preserves the Resolver result and
+keeps Runtime disallowed; Product Layer code and behavior remain unchanged.
+
 ## 2. Scope and invariants
 
 ### In scope

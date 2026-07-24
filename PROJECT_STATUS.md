@@ -1,5 +1,19 @@
 # AI Factory OS Project Status
 
+## AFDE-5.0 Planner-Resolver Integration
+
+- `CAP-PLANRES-0001` is `implemented`, maturity `M3`, with
+  `implementation_status: implemented`.
+- `afde.planner_resolution` combines an immutable structured Planner snapshot
+  with an explicit requirement and an injected Capability Resolver.
+- Resolver status, gaps, source/reference details, decision flag, and ordered
+  rationale remain available through the immutable integration result.
+- Existing Planner and Resolver public contracts are unchanged; no Product
+  Layer or Runtime code is modified.
+- Natural-language requirement extraction, candidate ranking, Tool Adapter
+  selection, Runtime execution, Evidence, Product Assembly, and M4 validation
+  remain deferred.
+
 ## AFDE-4.9 Capability Resolver Foundation
 
 - `CAP-RESOLVER-0001` is `implemented`, maturity `M3`, with
@@ -13,9 +27,9 @@
   consumed through the injected `afde.knowledge` Provider.
 - Resolver has no Planner, Tool Adapter, Runtime, Product Layer, CLI, Desktop,
   network, filesystem, external-provider, or external-package dependency.
-- Planner integration, Tool Adapter integration, Runtime integration,
-  multiple-candidate discovery/ranking, operational Evidence, and M4
-  validation remain deferred.
+- Planner integration is implemented separately at M3. Tool Adapter and
+  Runtime integration, multiple-candidate discovery/ranking, operational
+  Evidence, and M4 validation remain deferred.
 - `CAP-KNOW-0001` remains implemented at M3; only its obsolete
   Resolver-not-implemented gap was removed.
 

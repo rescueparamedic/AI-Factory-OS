@@ -18,7 +18,8 @@
       ],
       "capability_ids": [
         "CAP-KNOW-0001",
-        "CAP-RESOLVER-0001"
+        "CAP-RESOLVER-0001",
+        "CAP-PLANRES-0001"
       ]
     },
     {
@@ -36,7 +37,8 @@
       "knowledge_ids": [],
       "capability_ids": [
         "CAP-KNOW-0001",
-        "CAP-RESOLVER-0001"
+        "CAP-RESOLVER-0001",
+        "CAP-PLANRES-0001"
       ]
     },
     {
@@ -93,7 +95,8 @@
       ],
       "capability_ids": [
         "CAP-KNOW-0001",
-        "CAP-RESOLVER-0001"
+        "CAP-RESOLVER-0001",
+        "CAP-PLANRES-0001"
       ]
     },
     {
@@ -402,12 +405,6 @@
         {
           "gap_type": "capability_gap",
           "subject_id": "CAP-RESOLVER-0001",
-          "message": "Planner integration remains deferred.",
-          "related_ids": []
-        },
-        {
-          "gap_type": "capability_gap",
-          "subject_id": "CAP-RESOLVER-0001",
           "message": "Tool Adapter integration remains deferred.",
           "related_ids": []
         },
@@ -426,6 +423,71 @@
         {
           "gap_type": "evidence_gap",
           "subject_id": "CAP-RESOLVER-0001",
+          "message": "Operational Evidence and M4 validation are not complete.",
+          "related_ids": []
+        }
+      ],
+      "source_documents": [
+        "DOC-ARCH-0001",
+        "DOC-ARCH-0002",
+        "DOC-CREG-0001"
+      ],
+      "supersedes": []
+    },
+    {
+      "capability_id": "CAP-PLANRES-0001",
+      "name": "Planner-Resolver Integration",
+      "description": "Combine immutable structured Planner context with an explicit Capability Requirement and project an injected Resolver result without selecting tools or invoking Runtime.",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.planner_resolution",
+      "status": "implemented",
+      "maturity": "M3",
+      "implementation_status": "implemented",
+      "required_knowledge": [],
+      "required_capabilities": [
+        "CAP-RESOLVER-0001"
+      ],
+      "tool_dependencies": [],
+      "adapter_dependencies": [],
+      "runtime_dependencies": [],
+      "implementation_references": [
+        "afde/planner_resolution/errors.py",
+        "afde/planner_resolution/models.py",
+        "afde/planner_resolution/service.py"
+      ],
+      "validation_evidence": [
+        "tests/test_planner_resolver_integration_models.py",
+        "tests/test_planner_resolver_integration.py",
+        "tests/test_planner_resolver_integration_boundaries.py"
+      ],
+      "known_gaps": [
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PLANRES-0001",
+          "message": "Natural-language Capability Requirement extraction remains deferred.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PLANRES-0001",
+          "message": "Multiple-candidate discovery and ranking remain deferred.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PLANRES-0001",
+          "message": "Tool Adapter selection and Runtime integration remain deferred.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PLANRES-0001",
+          "message": "Execution Evidence and Product Assembly integration remain deferred.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "evidence_gap",
+          "subject_id": "CAP-PLANRES-0001",
           "message": "Operational Evidence and M4 validation are not complete.",
           "related_ids": []
         }

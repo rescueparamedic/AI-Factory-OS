@@ -5,7 +5,7 @@
 ### Architecture
 
 - `docs/development/AFDE_ARCHITECTURE_v1.md` — canonical AFDE architecture,
-  including the AFDE-4.9 Knowledge Foundation and Resolver flow
+  including the AFDE-5.0 Planner-to-Resolver integration flow
 - `docs/architecture/AI_DEVELOPMENT_ENGINE_PRODUCT_LAYER.md` — Product Layer,
   future capability, Resolver, Adapter, Runtime, Evidence, and Product Assembly
   boundaries
@@ -49,8 +49,27 @@ implementation_status: implemented
 ```
 
 Resolver evaluates one exact registered capability candidate. Planner
-integration, multiple-candidate discovery/ranking, Tool Adapter selection,
-Runtime integration, operational Evidence, and M4 validation remain deferred.
+integration is provided separately by `afde/planner_resolution/`.
+Multiple-candidate discovery/ranking, Tool Adapter selection, Runtime
+integration, operational Evidence, and M4 validation remain deferred.
+
+### Planner-Resolver Integration
+
+- `afde/planner_resolution/` — immutable request/result models and a small
+  application service that invokes an injected Resolver
+- `tests/test_planner_resolver_integration*.py` — model, projection,
+  dependency-injection, determinism, and architecture-boundary validation
+
+```yaml
+capability_id: CAP-PLANRES-0001
+status: implemented
+maturity: M3
+implementation_status: implemented
+```
+
+The integration accepts structured Planner context and an explicit Capability
+Requirement, preserves Resolver status, gaps, and ordered rationale, and never
+selects a Tool Adapter or grants Runtime execution.
 
 ### Knowledge Foundation Capability
 

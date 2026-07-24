@@ -145,8 +145,24 @@ or decision-required status with ordered rationale. It does not parse Registry
 JSON, search Markdown, select a Tool Adapter or implementation path, invoke
 Runtime, execute a Worker, change Planner output, or assemble a product.
 
-Planner integration, multi-candidate discovery/ranking, Tool Adapter and
-Runtime integration, operational Evidence, and M4 validation remain deferred.
+AFDE-5.0 adds the isolated M3 Planner-to-Resolver composition:
+
+```text
+Structured Planner context + explicit CapabilityRequirement
+        |
+        v
+PlannerResolutionService -> injected CapabilityResolver
+        |
+        v
+Immutable PlannerCapabilityResolutionResult
+```
+
+The integration preserves the existing Planner and Resolver public contracts,
+projects the Resolver status, gaps, source/reference details, and ordered
+rationale, and always keeps Runtime disallowed. Natural-language requirement
+extraction, multi-candidate discovery/ranking, Tool Adapter and Runtime
+integration, operational Evidence, Product Assembly, and M4 validation remain
+deferred.
 
 ### Normative Standards
 
