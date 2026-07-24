@@ -1,5 +1,20 @@
 # Decision Log
 
+## 2026-07-24 - AFDE-5.0 Planner-Resolver Integration
+
+- Implemented `CAP-PLANRES-0001` at M3 without claiming M4.
+- Chose a separate `afde.planner_resolution` application service so existing
+  Planner and Resolver public contracts remain unchanged.
+- Required immutable structured Planner context and either an explicit
+  `CapabilityRequirement` or explicit exact-ID requirement fields.
+- Injected the Resolver through a minimal protocol; the service creates no
+  Provider or Resolver and performs no Registry, Markdown, file, or network I/O.
+- Preserved resolved, unresolved, blocked, and decision-required status,
+  Resolver gaps, source references, and ordered trace while always denying
+  Runtime execution.
+- Deferred natural-language extraction, candidate discovery/ranking, Tool
+  Adapter selection, Runtime, Evidence, Product Assembly, and M4 validation.
+
 ## 2026-07-23 - AFDE-4.9 Capability Resolver Foundation
 
 - Implemented `CAP-RESOLVER-0001` as an internal deterministic Resolver and

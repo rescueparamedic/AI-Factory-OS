@@ -1,5 +1,18 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-5.0 Planner-Resolver Integration (Unreleased)
+
+- Registered `CAP-PLANRES-0001` as implemented at M3 without claiming
+  operational M4 validation.
+- Added immutable integration request/result models and a minimal application
+  service around the injected existing Capability Resolver.
+- Preserved Planner context plus Resolver status, gaps, source/reference data,
+  decision flag, and ordered rationale; `runtime_allowed` remains false.
+- Added focused models, projection, fail-closed, dependency-injection,
+  determinism, and AST architecture-boundary tests.
+- Preserved Planner, Resolver, Tool Adapter, Runtime, Product Layer, public
+  contracts, lifecycle models, Evidence schemas, CLI, and Desktop behavior.
+
 ## AFDE-4.9 Capability Resolver Foundation (Unreleased)
 
 - Registered `CAP-RESOLVER-0001` as implemented at M3 without claiming M4.
