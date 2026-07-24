@@ -19,7 +19,8 @@
       "capability_ids": [
         "CAP-KNOW-0001",
         "CAP-RESOLVER-0001",
-        "CAP-PLANRES-0001"
+        "CAP-PLANRES-0001",
+        "CAP-TOOLSELECT-0001"
       ]
     },
     {
@@ -38,7 +39,8 @@
       "capability_ids": [
         "CAP-KNOW-0001",
         "CAP-RESOLVER-0001",
-        "CAP-PLANRES-0001"
+        "CAP-PLANRES-0001",
+        "CAP-TOOLSELECT-0001"
       ]
     },
     {
@@ -96,7 +98,8 @@
       "capability_ids": [
         "CAP-KNOW-0001",
         "CAP-RESOLVER-0001",
-        "CAP-PLANRES-0001"
+        "CAP-PLANRES-0001",
+        "CAP-TOOLSELECT-0001"
       ]
     },
     {
@@ -350,7 +353,7 @@
         {
           "gap_type": "capability_gap",
           "subject_id": "CAP-KNOW-0001",
-          "message": "Tool Adapter Contract implementation remains deferred.",
+          "message": "Tool Adapter execution Contract implementation remains deferred.",
           "related_ids": []
         },
         {
@@ -405,7 +408,7 @@
         {
           "gap_type": "capability_gap",
           "subject_id": "CAP-RESOLVER-0001",
-          "message": "Tool Adapter integration remains deferred.",
+          "message": "Tool Adapter execution integration remains deferred.",
           "related_ids": []
         },
         {
@@ -476,7 +479,7 @@
         {
           "gap_type": "capability_gap",
           "subject_id": "CAP-PLANRES-0001",
-          "message": "Tool Adapter selection and Runtime integration remain deferred.",
+          "message": "Runtime integration remains deferred.",
           "related_ids": []
         },
         {
@@ -488,6 +491,60 @@
         {
           "gap_type": "evidence_gap",
           "subject_id": "CAP-PLANRES-0001",
+          "message": "Operational Evidence and M4 validation are not complete.",
+          "related_ids": []
+        }
+      ],
+      "source_documents": [
+        "DOC-ARCH-0001",
+        "DOC-ARCH-0002",
+        "DOC-CREG-0001"
+      ],
+      "supersedes": []
+    },
+    {
+      "capability_id": "CAP-TOOLSELECT-0001",
+      "name": "Tool Adapter Selection",
+      "description": "Select one Tool Adapter identity by exact Capability ID from an injected authoritative candidate snapshot without executing the adapter or invoking Runtime.",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.tool_adapter_selection",
+      "status": "implemented",
+      "maturity": "M3",
+      "implementation_status": "implemented",
+      "required_knowledge": [],
+      "required_capabilities": [
+        "CAP-PLANRES-0001"
+      ],
+      "tool_dependencies": [],
+      "adapter_dependencies": [
+        "AdapterCandidateSource read-only contract"
+      ],
+      "runtime_dependencies": [],
+      "implementation_references": [
+        "afde/tool_selection/errors.py",
+        "afde/tool_selection/models.py",
+        "afde/tool_selection/service.py"
+      ],
+      "validation_evidence": [
+        "tests/test_tool_adapter_selection.py",
+        "tests/test_tool_adapter_selection_boundaries.py"
+      ],
+      "known_gaps": [
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-TOOLSELECT-0001",
+          "message": "A governed operational Tool Adapter catalog and Adapter execution Contract remain deferred.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-TOOLSELECT-0001",
+          "message": "Runtime, Worker, Provider, Evidence, and Product Assembly integration remain deferred.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "evidence_gap",
+          "subject_id": "CAP-TOOLSELECT-0001",
           "message": "Operational Evidence and M4 validation are not complete.",
           "related_ids": []
         }

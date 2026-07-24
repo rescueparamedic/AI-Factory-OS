@@ -160,9 +160,42 @@ Immutable PlannerCapabilityResolutionResult
 The integration preserves the existing Planner and Resolver public contracts,
 projects the Resolver status, gaps, source/reference details, and ordered
 rationale, and always keeps Runtime disallowed. Natural-language requirement
-extraction, multi-candidate discovery/ranking, Tool Adapter and Runtime
-integration, operational Evidence, Product Assembly, and M4 validation remain
-deferred.
+extraction, multi-candidate discovery/ranking, Tool Adapter execution and
+Runtime integration, operational Evidence, Product Assembly, and M4 validation
+remain deferred.
+
+### Tool Adapter Selection Foundation
+
+```yaml
+capability_id: CAP-TOOLSELECT-0001
+status: implemented
+maturity: M3
+implementation_status: implemented
+```
+
+AFDE-5.1 adds one isolated application-level selection boundary:
+
+```text
+CapabilityResolutionResult or PlannerCapabilityResolutionResult
+        |
+        v
+ToolAdapterSelectionService -> injected AdapterCandidateSource
+        |
+        v
+Immutable ToolAdapterSelectionResult
+```
+
+The service requires a resolved eligible outcome, snapshots and sorts injected
+adapter metadata by stable adapter ID, and selects only one exact Capability ID
+match. No match is explicit and multiple authoritative matches block as
+ambiguous. Resolver status, gaps, rejection reasons, source/reference details,
+and ordered trace remain available in the result.
+
+The selection policy performs no Registry or filesystem access, Provider or
+network call, Runtime or Worker invocation, adapter execution, orchestration,
+ranking, Evidence generation, or Product Assembly. `runtime_allowed` and
+`execution_allowed` are always false. Operational adapter catalog integration,
+execution, fallback, and M4 validation remain deferred.
 
 ### Normative Standards
 

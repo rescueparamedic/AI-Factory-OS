@@ -1,5 +1,21 @@
 # AI Factory OS Project Status
 
+## AFDE-5.1 Tool Adapter Selection Foundation
+
+- `CAP-TOOLSELECT-0001` is `implemented`, maturity `M3`, with
+  `implementation_status: implemented`.
+- The existing capability audit found Resolver and Planner Resolution outputs
+  suitable for reuse, but no governed adapter descriptor, adapter Registry, or
+  read-only adapter-selection service.
+- `afde.tool_selection` accepts either existing structured result, snapshots an
+  injected candidate source, and selects only one exact Capability ID match.
+- Immutable request, candidate, and result models preserve Resolver status,
+  gaps, rationale, source/reference details, and ordered trace.
+- Invalid metadata, invalid or non-selectable resolution, no match, and
+  ambiguous matches fail closed. Runtime and execution are always disallowed.
+- Adapter execution, Runtime, Worker, Provider, Product Assembly, Evidence,
+  discovery/ranking, operational catalog integration, and M4 remain deferred.
+
 ## AFDE-5.0 Planner-Resolver Integration
 
 - `CAP-PLANRES-0001` is `implemented`, maturity `M3`, with
@@ -11,8 +27,8 @@
 - Existing Planner and Resolver public contracts are unchanged; no Product
   Layer or Runtime code is modified.
 - Natural-language requirement extraction, candidate ranking, Tool Adapter
-  selection, Runtime execution, Evidence, Product Assembly, and M4 validation
-  remain deferred.
+  execution, Runtime execution, Evidence, Product Assembly, and M4 validation
+  remain deferred. Exact Tool Adapter selection is implemented separately.
 
 ## AFDE-4.9 Capability Resolver Foundation
 
@@ -27,9 +43,9 @@
   consumed through the injected `afde.knowledge` Provider.
 - Resolver has no Planner, Tool Adapter, Runtime, Product Layer, CLI, Desktop,
   network, filesystem, external-provider, or external-package dependency.
-- Planner integration is implemented separately at M3. Tool Adapter and
-  Runtime integration, multiple-candidate discovery/ranking, operational
-  Evidence, and M4 validation remain deferred.
+- Planner and exact Tool Adapter selection are implemented separately at M3.
+  Runtime and Adapter execution integration, multiple-candidate
+  discovery/ranking, operational Evidence, and M4 validation remain deferred.
 - `CAP-KNOW-0001` remains implemented at M3; only its obsolete
   Resolver-not-implemented gap was removed.
 
