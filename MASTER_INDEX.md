@@ -15,6 +15,7 @@
 - `docs/standards/DOCUMENT_KNOWLEDGE_MANAGEMENT_STANDARD_v1.md`
 - `docs/standards/KNOWLEDGE_REGISTRY_STANDARD_v1.md`
 - `docs/standards/CAPABILITY_REGISTRY_STANDARD_v1.md`
+- `docs/standards/TOOL_ADAPTER_CATALOG_STANDARD_v1.md`
 - `docs/standards/DOCUMENT_GOVERNANCE_STANDARD_v1.md`
 - `docs/standards/AI_REFERENCE_POLICY_v1.md`
 
@@ -89,6 +90,27 @@ The service consumes an existing Resolver or Planner Resolution result and
 returns one adapter identity, no-selection, or blocked ambiguity. It does not
 load a Registry, execute an adapter, call Runtime or a Provider, rank
 candidates, generate Evidence, or assemble a product.
+
+### Tool Adapter Catalog
+
+- `afde/tool_catalog/` — immutable descriptor, exact mapping, snapshot, lookup,
+  validation, and AFDE-5.1 candidate projection
+- `tests/test_tool_adapter_catalog*.py` — focused model, policy, Selection
+  integration, and architecture-boundary validation
+- `docs/standards/TOOL_ADAPTER_CATALOG_STANDARD_v1.md` — normative metadata,
+  ownership, Single Source of Truth, classification, and isolation rules
+
+```yaml
+capability_id: CAP-TOOLCATALOG-0001
+status: implemented
+maturity: M3
+implementation_status: implemented
+```
+
+Each constructed Catalog is the read-only source of adapter discovery metadata
+for its scope. It exposes only selectable descriptors through the unchanged
+`AdapterCandidateSource` boundary. The Knowledge Registry governs the Catalog
+capability and standard, not adapter instances.
 
 ### Knowledge Foundation Capability
 

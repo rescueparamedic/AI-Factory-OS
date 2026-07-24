@@ -1,5 +1,25 @@
 # AI Factory OS Project Status
 
+## AFDE-5.2 Tool Adapter Catalog Foundation
+
+- `CAP-TOOLCATALOG-0001` is `implemented`, maturity `M3`, with
+  `implementation_status: implemented`.
+- The existing capability audit found AFDE-5.1's reusable immutable
+  `ToolAdapterCandidate` and `AdapterCandidateSource`, but no governed Catalog,
+  complete descriptor, or safe operational runtime-adapter metadata.
+- `afde.tool_catalog` is the read-only Single Source of Truth for discovery
+  metadata supplied through its constructor and immutable Catalog snapshot.
+- Descriptors govern identity, semantic version, exact Capability IDs,
+  availability, Runtime compatibility, execution contract, privacy, cost,
+  credential requirement, description, and references.
+- Exact lookups and candidate projections are deterministic. Duplicate
+  identities and multiple selectable mappings for one Capability fail closed.
+- The Knowledge Registry continues to govern Document, Knowledge, and
+  Capability lifecycle; adapter rows are not duplicated there.
+- Existing runtime adapters remain isolated and are not claimed as operational
+  Catalog entries. Execution, dynamic discovery, ranking, fallback, Runtime,
+  Worker, Provider, Evidence, Product Assembly, and M4 remain deferred.
+
 ## AFDE-5.1 Tool Adapter Selection Foundation
 
 - `CAP-TOOLSELECT-0001` is `implemented`, maturity `M3`, with
@@ -14,7 +34,8 @@
 - Invalid metadata, invalid or non-selectable resolution, no match, and
   ambiguous matches fail closed. Runtime and execution are always disallowed.
 - Adapter execution, Runtime, Worker, Provider, Product Assembly, Evidence,
-  discovery/ranking, operational catalog integration, and M4 remain deferred.
+  discovery/ranking, operational Catalog population, and M4 remain deferred.
+  The read-only Catalog foundation is implemented separately at M3.
 
 ## AFDE-5.0 Planner-Resolver Integration
 
@@ -54,8 +75,8 @@
 - `CAP-KNOW-0001` is `implemented`, maturity `M3`, with
   `implementation_status: implemented`.
 - PR #38 and AFDE-4.7 architecture are present on the `develop` merge baseline.
-- A governed JSON snapshot projects 12 Document entries, 3 Knowledge entries,
-  1 Capability entry, authority levels, and deterministic reference priority.
+- A governed JSON snapshot projects 13 Document entries, 3 Knowledge entries,
+  5 Capability entries, authority levels, and deterministic reference priority.
 - `afde.knowledge` provides immutable models, repository-contained loading,
   cross-registry fail-closed validation, read-only queries,
   `CapabilityContext`, and explicit typed gaps.

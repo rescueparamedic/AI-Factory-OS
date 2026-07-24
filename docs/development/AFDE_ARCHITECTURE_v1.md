@@ -194,14 +194,59 @@ and ordered trace remain available in the result.
 The selection policy performs no Registry or filesystem access, Provider or
 network call, Runtime or Worker invocation, adapter execution, orchestration,
 ranking, Evidence generation, or Product Assembly. `runtime_allowed` and
-`execution_allowed` are always false. Operational adapter catalog integration,
+`execution_allowed` are always false. Operational adapter population,
 execution, fallback, and M4 validation remain deferred.
+
+### Tool Adapter Catalog Foundation
+
+```yaml
+capability_id: CAP-TOOLCATALOG-0001
+status: implemented
+maturity: M3
+implementation_status: implemented
+```
+
+AFDE-5.2 adds the governed read-only discovery boundary:
+
+```text
+Constructor-injected immutable ToolAdapterDescriptor values
+        |
+        v
+ToolAdapterCatalog -> immutable snapshot and exact lookups
+        |
+        v
+AdapterCandidateSource-compatible ToolAdapterCandidate projection
+        |
+        v
+ToolAdapterSelectionService
+```
+
+Each Catalog instance is the Single Source of Truth for adapter discovery
+metadata in its scope. The Knowledge Foundation Registry governs the Catalog
+capability and normative standard but does not duplicate adapter rows.
+Descriptors contain stable identity, semantic version, exact Capability IDs,
+availability, Runtime compatibility, execution contract, privacy, cost,
+credential requirement, description, and optional metadata references.
+
+Catalog construction snapshots input, orders adapters and mappings
+deterministically, rejects duplicate identities, and rejects multiple
+selectable adapters mapped to one Capability. Exact lookup performs no fuzzy
+or semantic matching. Unavailable, incompatible, unverified, or undeclared-
+contract descriptors remain discoverable but are not Selection candidates.
+
+Existing runtime adapters are not cataloged because they do not yet carry the
+complete governed metadata contract. Catalog policy performs no Registry or
+filesystem access, network or Provider call, Runtime or Worker invocation,
+adapter execution, Evidence generation, Product Assembly, or orchestration.
+Operational adapter population, execution, external discovery, ranking,
+fallback, credential storage, and M4 validation remain deferred.
 
 ### Normative Standards
 
 - `docs/standards/DOCUMENT_KNOWLEDGE_MANAGEMENT_STANDARD_v1.md`
 - `docs/standards/KNOWLEDGE_REGISTRY_STANDARD_v1.md`
 - `docs/standards/CAPABILITY_REGISTRY_STANDARD_v1.md`
+- `docs/standards/TOOL_ADAPTER_CATALOG_STANDARD_v1.md`
 - `docs/standards/DOCUMENT_GOVERNANCE_STANDARD_v1.md`
 - `docs/standards/AI_REFERENCE_POLICY_v1.md`
 

@@ -709,6 +709,18 @@ an explicit no-selection result for zero matches, and blocks multiple matches
 as ambiguous. It never executes the selected adapter and always disallows
 Runtime and execution.
 
+AFDE-5.2 supplies that candidate boundary through an immutable Tool Adapter
+Catalog. Constructor-injected descriptors are the Catalog's Single Source of
+Truth and govern identity, version, exact Capability mappings, availability,
+Runtime compatibility, execution contract, privacy, cost, credential flag,
+description, and references. The Catalog projects only selectable descriptors
+and does not make Tool Selection parse Registry JSON or access files.
+
+The Knowledge Foundation Registry governs the Catalog capability and standard,
+not adapter instances. Existing runtime adapters are not cataloged until their
+identity, Capability mappings, availability, compatibility, and policy
+metadata are separately governed and validated.
+
 When several adapters provide the same capability, future selection may
 consider safety, cost, speed, privacy, local execution, licensing, and current
 availability. If selection or execution fails, control may move to another

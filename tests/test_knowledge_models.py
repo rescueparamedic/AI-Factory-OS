@@ -35,7 +35,7 @@ def test_snapshot_defensively_copies_input_sequences():
     value["knowledge"][0]["source_documents"].clear()
     value["capabilities"][0]["required_knowledge"].clear()
 
-    assert len(snapshot.documents) == 12
+    assert len(snapshot.documents) == 13
     assert len(snapshot.knowledge[0].source_documents) == 2
     assert snapshot.capabilities[0].required_knowledge == (
         "KNW-KNOW-0001",
