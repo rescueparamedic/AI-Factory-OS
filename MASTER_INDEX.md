@@ -16,6 +16,7 @@
 - `docs/standards/KNOWLEDGE_REGISTRY_STANDARD_v1.md`
 - `docs/standards/CAPABILITY_REGISTRY_STANDARD_v1.md`
 - `docs/standards/TOOL_ADAPTER_CATALOG_STANDARD_v1.md`
+- `docs/standards/EXECUTION_PATH_STANDARD_v1.md`
 - `docs/standards/DOCUMENT_GOVERNANCE_STANDARD_v1.md`
 - `docs/standards/AI_REFERENCE_POLICY_v1.md`
 
@@ -111,6 +112,28 @@ Each constructed Catalog is the read-only source of adapter discovery metadata
 for its scope. It exposes only selectable descriptors through the unchanged
 `AdapterCandidateSource` boundary. The Knowledge Registry governs the Catalog
 capability and standard, not adapter instances.
+
+### Execution Path
+
+- `afde/execution_path/` — immutable request, structural handoff step,
+  deterministic result, validation errors, injected Catalog lookup, and
+  non-executable construction service
+- `tests/test_execution_path*.py` — construction, preservation, blocking,
+  authority, determinism, integration, and boundary validation
+- `docs/standards/EXECUTION_PATH_STANDARD_v1.md` — normative ownership,
+  construction, credential prerequisite, authority, and isolation policy
+
+```yaml
+capability_id: CAP-EXECPATH-0001
+status: implemented
+maturity: M3
+implementation_status: implemented
+```
+
+Execution Path consumes AFDE-5.1 Selection and exact AFDE-5.2 Catalog metadata.
+It may report a structural route and handoff readiness but never grants Runtime
+or execution authority. Actual handoff belongs to a future Runtime Integration
+capability.
 
 ### Knowledge Foundation Capability
 

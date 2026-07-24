@@ -721,6 +721,20 @@ not adapter instances. Existing runtime adapters are not cataloged until their
 identity, Capability mappings, availability, compatibility, and policy
 metadata are separately governed and validated.
 
+AFDE-5.3 adds a non-executable Execution Path boundary after Selection. It
+validates the selected identity against exact injected Catalog metadata and
+constructs an immutable structural handoff projection. The result preserves
+Resolver, Selection, and relevant Catalog context, including gaps, rejection
+reasons, references, trace, compatibility, policy metadata, and credential
+prerequisites. Stable path identity is derived from structured metadata.
+
+`path_constructed` and `runtime_handoff_ready` describe structural state only.
+They never grant authority: `runtime_allowed` and `execution_allowed` remain
+false. Execution Path performs no credential retrieval, adapter invocation,
+Runtime or Worker call, Evidence generation, Product Assembly, or
+orchestration. Actual authorization and handoff belong to a future separately
+governed Runtime Integration capability.
+
 When several adapters provide the same capability, future selection may
 consider safety, cost, speed, privacy, local execution, licensing, and current
 availability. If selection or execution fails, control may move to another

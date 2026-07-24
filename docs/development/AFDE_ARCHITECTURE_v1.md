@@ -241,12 +241,55 @@ adapter execution, Evidence generation, Product Assembly, or orchestration.
 Operational adapter population, execution, external discovery, ranking,
 fallback, credential storage, and M4 validation remain deferred.
 
+### Execution Path Foundation
+
+```yaml
+capability_id: CAP-EXECPATH-0001
+status: implemented
+maturity: M3
+implementation_status: implemented
+```
+
+AFDE-5.3 adds the structural application boundary after Tool Selection:
+
+```text
+Immutable ToolAdapterSelectionResult
+        |
+        v
+ExecutionPathService -> injected exact Catalog metadata lookup
+        |
+        v
+Immutable ExecutionPathResult + RuntimeHandoffProjection
+        |
+        v
+future Runtime Integration capability
+```
+
+Execution Path validates unique Selection, resolved eligible state, exact
+Catalog identity and Capability mapping, availability, Runtime compatibility,
+and controlled execution contract. It preserves Resolver and Selection status,
+gaps, rationale, references, and trace plus relevant Catalog metadata. Stable
+path identity derives only from structured metadata.
+
+`path_constructed` reports a structural route.
+`runtime_handoff_ready` reports complete structural prerequisites. Neither is
+authority: `runtime_allowed` and `execution_allowed` remain false. Required
+credentials remain an explicit prerequisite without retrieval or authorization.
+
+The boundary does not reuse Planner `ExecutionPlan`, which owns goal/task
+planning, or executable Runtime lifecycle models. It performs no
+Registry/file/network access, Provider call, Runtime or Worker invocation,
+adapter/command/task/process execution, Evidence generation, Product Assembly,
+or orchestration. Actual Runtime authorization and invocation belong to a
+future separately governed Runtime Integration capability.
+
 ### Normative Standards
 
 - `docs/standards/DOCUMENT_KNOWLEDGE_MANAGEMENT_STANDARD_v1.md`
 - `docs/standards/KNOWLEDGE_REGISTRY_STANDARD_v1.md`
 - `docs/standards/CAPABILITY_REGISTRY_STANDARD_v1.md`
 - `docs/standards/TOOL_ADAPTER_CATALOG_STANDARD_v1.md`
+- `docs/standards/EXECUTION_PATH_STANDARD_v1.md`
 - `docs/standards/DOCUMENT_GOVERNANCE_STANDARD_v1.md`
 - `docs/standards/AI_REFERENCE_POLICY_v1.md`
 

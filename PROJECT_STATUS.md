@@ -1,5 +1,26 @@
 # AI Factory OS Project Status
 
+## AFDE-5.3 Execution Path Foundation
+
+- `CAP-EXECPATH-0001` is `implemented`, maturity `M3`, with
+  `implementation_status: implemented`.
+- The audit found no non-executable Execution Path. Planner `ExecutionPlan`
+  owns goal/task planning, while execution and Runtime models own executable
+  lifecycle behavior and were not reused across this authority boundary.
+- `afde.execution_path` consumes immutable AFDE-5.1 Selection and exact
+  AFDE-5.2 Catalog metadata through a constructor-injected lookup.
+- Results preserve exact identity, Catalog metadata, Resolver state, gaps,
+  rationale, references, and trace plus Selection rationale and trace.
+- Path IDs derive deterministically from stable metadata without timestamps,
+  randomness, filesystem state, or environment discovery.
+- `path_constructed` and `runtime_handoff_ready` are structural only;
+  `runtime_allowed` and `execution_allowed` remain false in every outcome.
+- Credentials remain an explicit unmet prerequisite without retrieval,
+  authorization, storage, or secret handling.
+- Runtime/Worker/adapter execution, Provider, Evidence, Product, command,
+  process, orchestration, operations, and M4 remain deferred. Actual authority
+  belongs to a future Runtime Integration capability.
+
 ## AFDE-5.2 Tool Adapter Catalog Foundation
 
 - `CAP-TOOLCATALOG-0001` is `implemented`, maturity `M3`, with
@@ -75,8 +96,8 @@
 - `CAP-KNOW-0001` is `implemented`, maturity `M3`, with
   `implementation_status: implemented`.
 - PR #38 and AFDE-4.7 architecture are present on the `develop` merge baseline.
-- A governed JSON snapshot projects 13 Document entries, 3 Knowledge entries,
-  5 Capability entries, authority levels, and deterministic reference priority.
+- A governed JSON snapshot projects 14 Document entries, 3 Knowledge entries,
+  6 Capability entries, authority levels, and deterministic reference priority.
 - `afde.knowledge` provides immutable models, repository-contained loading,
   cross-registry fail-closed validation, read-only queries,
   `CapabilityContext`, and explicit typed gaps.
