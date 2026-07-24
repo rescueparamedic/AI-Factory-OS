@@ -249,6 +249,32 @@ This entry records structural path construction and handoff readiness only.
 authorization, adapter invocation, credential access, and operational Evidence
 belong to a future separately governed capability.
 
+### CAP-RUNTIME-0001
+
+| Field | Value |
+| --- | --- |
+| Name | Runtime Integration Foundation |
+| Description | Project one structurally ready Execution Path into deterministic immutable Runtime-ready metadata without execution authority |
+| Owner | AI Factory OS Architecture |
+| Scope | `architecture.runtime_integration` |
+| Status | `implemented` |
+| Maturity | `M3` |
+| Implementation status | `implemented` |
+| Required knowledge | none |
+| Required capabilities | `CAP-EXECPATH-0001` |
+| Tool dependencies | none |
+| Adapter dependencies | immutable `ExecutionPathResult` and constructor-injected `RuntimeIntegrationPolicy` |
+| Runtime dependencies | none |
+| Implementation references | `afde/runtime_integration/` |
+| Validation evidence | AFDE-5.4 focused tests and full repository regression |
+| Known gaps | Runtime session creation, execution, lifecycle mutation, Worker/adapter/Provider/Evidence/Product integration, orchestration, and M4 |
+| Source documents | `DOC-ARCH-0001`, `DOC-ARCH-0002`, `DOC-CREG-0001`, `DOC-RUNTIME-0001` |
+| Supersedes | none |
+
+This entry records readiness projection only. `runtime_ready` is structural;
+`runtime_allowed` and `execution_allowed` remain false. Existing executable
+Runtime contracts remain unchanged and isolated.
+
 ## Registry Validation
 
 A capability registry change is valid only when:
@@ -269,8 +295,8 @@ A capability registry change is valid only when:
 
 - Tool Adapter execution Contract remains a future architecture item.
 - Governed operational adapter population remains deferred.
-- Runtime integration remains deferred.
+- Runtime execution and lifecycle integration remain deferred.
 - Multiple-candidate discovery and ranking remain deferred.
 - M4 validation and operational integration are not complete.
 - RAG, vector databases, embeddings, and multimodal adapters are outside
-  AFDE-5.3.
+  AFDE-5.4.

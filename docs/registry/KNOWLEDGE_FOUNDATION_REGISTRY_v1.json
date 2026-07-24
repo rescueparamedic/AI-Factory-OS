@@ -22,7 +22,8 @@
         "CAP-PLANRES-0001",
         "CAP-TOOLSELECT-0001",
         "CAP-TOOLCATALOG-0001",
-        "CAP-EXECPATH-0001"
+        "CAP-EXECPATH-0001",
+        "CAP-RUNTIME-0001"
       ]
     },
     {
@@ -44,7 +45,8 @@
         "CAP-PLANRES-0001",
         "CAP-TOOLSELECT-0001",
         "CAP-TOOLCATALOG-0001",
-        "CAP-EXECPATH-0001"
+        "CAP-EXECPATH-0001",
+        "CAP-RUNTIME-0001"
       ]
     },
     {
@@ -105,7 +107,8 @@
         "CAP-PLANRES-0001",
         "CAP-TOOLSELECT-0001",
         "CAP-TOOLCATALOG-0001",
-        "CAP-EXECPATH-0001"
+        "CAP-EXECPATH-0001",
+        "CAP-RUNTIME-0001"
       ]
     },
     {
@@ -140,6 +143,23 @@
       "knowledge_ids": [],
       "capability_ids": [
         "CAP-EXECPATH-0001"
+      ]
+    },
+    {
+      "document_id": "DOC-RUNTIME-0001",
+      "title": "Runtime Integration Standard v1",
+      "path": "docs/standards/RUNTIME_INTEGRATION_STANDARD_v1.md",
+      "document_type": "standard",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.runtime_integration",
+      "status": "Active",
+      "authority_level": "normative",
+      "version": "v1",
+      "effective_date": "2026-07-24",
+      "supersedes": [],
+      "knowledge_ids": [],
+      "capability_ids": [
+        "CAP-RUNTIME-0001"
       ]
     },
     {
@@ -704,6 +724,62 @@
         "DOC-ARCH-0002",
         "DOC-CREG-0001",
         "DOC-EXEP-0001"
+      ],
+      "supersedes": []
+    },
+    {
+      "capability_id": "CAP-RUNTIME-0001",
+      "name": "Runtime Integration Foundation",
+      "description": "Transform one structurally ready Execution Path into deterministic immutable Runtime-ready metadata without execution authority.",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.runtime_integration",
+      "status": "implemented",
+      "maturity": "M3",
+      "implementation_status": "implemented",
+      "required_knowledge": [],
+      "required_capabilities": [
+        "CAP-EXECPATH-0001"
+      ],
+      "tool_dependencies": [],
+      "adapter_dependencies": [
+        "ExecutionPathResult",
+        "constructor-injected RuntimeIntegrationPolicy"
+      ],
+      "runtime_dependencies": [],
+      "implementation_references": [
+        "afde/runtime_integration/errors.py",
+        "afde/runtime_integration/models.py",
+        "afde/runtime_integration/service.py"
+      ],
+      "validation_evidence": [
+        "tests/test_runtime_integration.py",
+        "tests/test_runtime_integration_boundaries.py"
+      ],
+      "known_gaps": [
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-RUNTIME-0001",
+          "message": "Runtime session creation, authorization, invocation, and lifecycle mutation remain deferred.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-RUNTIME-0001",
+          "message": "Worker, adapter, Provider, Evidence, Product Assembly, retry, recovery, resume, and orchestration integration remain deferred.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "evidence_gap",
+          "subject_id": "CAP-RUNTIME-0001",
+          "message": "Operational Evidence and M4 validation are not complete.",
+          "related_ids": []
+        }
+      ],
+      "source_documents": [
+        "DOC-ARCH-0001",
+        "DOC-ARCH-0002",
+        "DOC-CREG-0001",
+        "DOC-RUNTIME-0001"
       ],
       "supersedes": []
     }
