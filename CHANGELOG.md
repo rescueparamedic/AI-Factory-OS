@@ -1,5 +1,22 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-5.2 Tool Adapter Catalog Foundation (Unreleased)
+
+- Registered `CAP-TOOLCATALOG-0001` as implemented at M3 without claiming M4.
+- Added a normative Tool Adapter Catalog standard and immutable descriptor,
+  Capability mapping, Catalog snapshot, exact lookup, and validation models.
+- Added deterministic constructor-snapshotted Catalog behavior with unique
+  adapter identities and fail-closed selectable Capability ambiguity.
+- Reused AFDE-5.1 `ToolAdapterCandidate` and its injected
+  `AdapterCandidateSource` boundary without changing Tool Selection.
+- Excluded unavailable, incompatible, unverified, and execution-contract-
+  undeclared descriptors from the selection projection.
+- Added focused Catalog, Selection integration, Registry expectation, and
+  architecture-boundary tests.
+- Preserved Planner, Planner Resolution, Resolver, Tool Selection, runtime
+  adapters, Runtime, Worker, Product Layer, Provider, Evidence, CLI, Desktop,
+  and public contracts. Added no execution, orchestration, or dependency.
+
 ## AFDE-5.1 Tool Adapter Selection Foundation (Unreleased)
 
 - Registered `CAP-TOOLSELECT-0001` as implemented at M3 without claiming M4.

@@ -1,5 +1,29 @@
 # Decision Log
 
+## 2026-07-24 - AFDE-5.2 Immutable Tool Adapter Catalog
+
+- Implemented `CAP-TOOLCATALOG-0001` at M3 without claiming M4.
+- The existing capability audit found no governed Catalog or complete adapter
+  descriptor. Reused AFDE-5.1 `ToolAdapterCandidate` directly and preserved
+  `AdapterCandidateSource` as the Tool Selection protocol boundary.
+- Chose a dedicated `afde.tool_catalog` boundary. Constructor-supplied
+  descriptors are defensively snapshotted, validated, deterministically
+  ordered, and exposed only through immutable projections and exact lookups.
+- Made the constructed Catalog the Single Source of Truth for adapter
+  discovery metadata in its scope. The Knowledge Registry governs the Catalog
+  capability and standard but does not duplicate adapter rows.
+- Required explicit availability, Runtime compatibility, execution contract,
+  privacy, cost, credential flag, version, description, and exact Capability
+  mappings. Duplicate identity or multiple selectable ownership fails closed.
+- Projected only available, Runtime-compatible, controlled-contract
+  descriptors into the existing Tool Selection candidate boundary.
+- Existing `real_worker_runtime` adapters lack complete governed discovery
+  metadata and were not registered or modified.
+- Preserved Planner, Planner Resolution, Resolver, Tool Selection, Runtime,
+  Worker, Product Layer, Provider, Evidence, CLI, Desktop, and lifecycle
+  contracts. Deferred execution, external discovery, ranking, fallback,
+  operational population, secrets, and M4 validation.
+
 ## 2026-07-24 - AFDE-5.1 Deterministic Tool Adapter Selection
 
 - Implemented `CAP-TOOLSELECT-0001` at M3 without claiming M4.

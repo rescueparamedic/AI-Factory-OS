@@ -196,6 +196,32 @@ This entry records selection only. Registry metadata and selection results grant
 no execution authority. Candidate discovery/ranking, adapter execution,
 fallback, Runtime integration, operational Evidence, and M4 remain deferred.
 
+### CAP-TOOLCATALOG-0001
+
+| Field | Value |
+| --- | --- |
+| Name | Tool Adapter Catalog |
+| Description | Provide immutable Tool Adapter discovery metadata and exact Capability mappings through the existing candidate-source boundary |
+| Owner | AI Factory OS Architecture |
+| Scope | `architecture.tool_adapter_catalog` |
+| Status | `implemented` |
+| Maturity | `M3` |
+| Implementation status | `implemented` |
+| Required knowledge | none |
+| Required capabilities | none |
+| Tool dependencies | none |
+| Adapter dependencies | `ToolAdapterCandidate` projection and `AdapterCandidateSource` contract |
+| Runtime dependencies | none |
+| Implementation references | `afde/tool_catalog/` |
+| Validation evidence | AFDE-5.2 focused tests and full repository regression |
+| Known gaps | operational adapter descriptors, execution, external discovery, Runtime/Worker/Provider/Evidence/Product integration, and M4 |
+| Source documents | `DOC-ARCH-0001`, `DOC-ARCH-0002`, `DOC-CREG-0001`, `DOC-TCAT-0001` |
+| Supersedes | none |
+
+The Catalog instance, not the Knowledge Registry, is the Single Source of Truth
+for adapter discovery metadata in its scope. The Registry governs capability
+and document lifecycle only. Catalog metadata grants no execution authority.
+
 ## Registry Validation
 
 A capability registry change is valid only when:
@@ -215,9 +241,9 @@ A capability registry change is valid only when:
 ## Known Architecture Gaps
 
 - Tool Adapter execution Contract remains a future architecture item.
-- Governed operational adapter catalog integration remains deferred.
+- Governed operational adapter population remains deferred.
 - Runtime integration remains deferred.
 - Multiple-candidate discovery and ranking remain deferred.
 - M4 validation and operational integration are not complete.
 - RAG, vector databases, embeddings, and multimodal adapters are outside
-  AFDE-5.1.
+  AFDE-5.2.

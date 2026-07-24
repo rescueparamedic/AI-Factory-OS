@@ -20,7 +20,8 @@
         "CAP-KNOW-0001",
         "CAP-RESOLVER-0001",
         "CAP-PLANRES-0001",
-        "CAP-TOOLSELECT-0001"
+        "CAP-TOOLSELECT-0001",
+        "CAP-TOOLCATALOG-0001"
       ]
     },
     {
@@ -40,7 +41,8 @@
         "CAP-KNOW-0001",
         "CAP-RESOLVER-0001",
         "CAP-PLANRES-0001",
-        "CAP-TOOLSELECT-0001"
+        "CAP-TOOLSELECT-0001",
+        "CAP-TOOLCATALOG-0001"
       ]
     },
     {
@@ -99,7 +101,25 @@
         "CAP-KNOW-0001",
         "CAP-RESOLVER-0001",
         "CAP-PLANRES-0001",
-        "CAP-TOOLSELECT-0001"
+        "CAP-TOOLSELECT-0001",
+        "CAP-TOOLCATALOG-0001"
+      ]
+    },
+    {
+      "document_id": "DOC-TCAT-0001",
+      "title": "Tool Adapter Catalog Standard v1",
+      "path": "docs/standards/TOOL_ADAPTER_CATALOG_STANDARD_v1.md",
+      "document_type": "standard",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.tool_adapter_catalog",
+      "status": "Active",
+      "authority_level": "normative",
+      "version": "v1",
+      "effective_date": "2026-07-24",
+      "supersedes": [],
+      "knowledge_ids": [],
+      "capability_ids": [
+        "CAP-TOOLCATALOG-0001"
       ]
     },
     {
@@ -533,7 +553,7 @@
         {
           "gap_type": "capability_gap",
           "subject_id": "CAP-TOOLSELECT-0001",
-          "message": "A governed operational Tool Adapter catalog and Adapter execution Contract remain deferred.",
+          "message": "Operational Tool Adapter population and the Adapter execution Contract remain deferred.",
           "related_ids": []
         },
         {
@@ -553,6 +573,60 @@
         "DOC-ARCH-0001",
         "DOC-ARCH-0002",
         "DOC-CREG-0001"
+      ],
+      "supersedes": []
+    },
+    {
+      "capability_id": "CAP-TOOLCATALOG-0001",
+      "name": "Tool Adapter Catalog",
+      "description": "Provide immutable governed Tool Adapter discovery metadata and exact Capability mappings through the existing AdapterCandidateSource boundary without executing adapters or invoking Runtime.",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.tool_adapter_catalog",
+      "status": "implemented",
+      "maturity": "M3",
+      "implementation_status": "implemented",
+      "required_knowledge": [],
+      "required_capabilities": [],
+      "tool_dependencies": [],
+      "adapter_dependencies": [
+        "ToolAdapterCandidate projection",
+        "AdapterCandidateSource read-only contract"
+      ],
+      "runtime_dependencies": [],
+      "implementation_references": [
+        "afde/tool_catalog/errors.py",
+        "afde/tool_catalog/models.py",
+        "afde/tool_catalog/catalog.py"
+      ],
+      "validation_evidence": [
+        "tests/test_tool_adapter_catalog.py",
+        "tests/test_tool_adapter_catalog_boundaries.py"
+      ],
+      "known_gaps": [
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-TOOLCATALOG-0001",
+          "message": "Operational Tool Adapter descriptors and external discovery remain deferred.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-TOOLCATALOG-0001",
+          "message": "Adapter execution, Runtime, Worker, Provider, Evidence, and Product Assembly integration remain deferred.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "evidence_gap",
+          "subject_id": "CAP-TOOLCATALOG-0001",
+          "message": "Operational Evidence and M4 validation are not complete.",
+          "related_ids": []
+        }
+      ],
+      "source_documents": [
+        "DOC-ARCH-0001",
+        "DOC-ARCH-0002",
+        "DOC-CREG-0001",
+        "DOC-TCAT-0001"
       ],
       "supersedes": []
     }
