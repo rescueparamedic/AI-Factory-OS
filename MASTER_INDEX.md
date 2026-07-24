@@ -69,7 +69,26 @@ implementation_status: implemented
 
 The integration accepts structured Planner context and an explicit Capability
 Requirement, preserves Resolver status, gaps, and ordered rationale, and never
-selects a Tool Adapter or grants Runtime execution.
+grants Runtime execution.
+
+### Tool Adapter Selection
+
+- `afde/tool_selection/` — immutable selection contracts and deterministic
+  exact-Capability-ID policy over an injected candidate source
+- `tests/test_tool_adapter_selection*.py` — focused behavior, immutability,
+  preservation, dependency-injection, and architecture-boundary validation
+
+```yaml
+capability_id: CAP-TOOLSELECT-0001
+status: implemented
+maturity: M3
+implementation_status: implemented
+```
+
+The service consumes an existing Resolver or Planner Resolution result and
+returns one adapter identity, no-selection, or blocked ambiguity. It does not
+load a Registry, execute an adapter, call Runtime or a Provider, rank
+candidates, generate Evidence, or assemble a product.
 
 ### Knowledge Foundation Capability
 
@@ -83,7 +102,7 @@ implementation_status: implemented
 The standards above are the canonical discovery path for official documents,
 registered knowledge, capability state, governance, and AI reference rules.
 Registry metadata and its JSON projection do not replace linked Source of
-Record documents. Tool Adapter integration, Runtime integration, operational
+Record documents. Tool Adapter execution, Runtime integration, operational
 Evidence, and M4 validation remain deferred.
 
 ## Sprint 9-3 MVP

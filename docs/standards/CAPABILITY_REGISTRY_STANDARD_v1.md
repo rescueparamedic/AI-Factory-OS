@@ -170,6 +170,32 @@ This entry records exact-ID eligibility resolution over an injected read-only
 Knowledge Provider. It does not select an adapter or implementation, execute a
 tool or Runtime, alter Planner output, or claim operational validation.
 
+### CAP-TOOLSELECT-0001
+
+| Field | Value |
+| --- | --- |
+| Name | Tool Adapter Selection |
+| Description | Select one Tool Adapter identity by exact Capability ID from an injected authoritative candidate snapshot |
+| Owner | AI Factory OS Architecture |
+| Scope | `architecture.tool_adapter_selection` |
+| Status | `implemented` |
+| Maturity | `M3` |
+| Implementation status | `implemented` |
+| Required knowledge | none |
+| Required capabilities | `CAP-PLANRES-0001` |
+| Tool dependencies | none |
+| Adapter dependencies | injected read-only `AdapterCandidateSource` contract |
+| Runtime dependencies | none |
+| Implementation references | `afde/tool_selection/` |
+| Validation evidence | AFDE-5.1 focused tests and full repository regression |
+| Known gaps | operational adapter catalog and execution contract; Runtime, Worker, Provider, Evidence, and Product Assembly integration; M4 validation |
+| Source documents | `DOC-ARCH-0001`, `DOC-ARCH-0002`, `DOC-CREG-0001` |
+| Supersedes | none |
+
+This entry records selection only. Registry metadata and selection results grant
+no execution authority. Candidate discovery/ranking, adapter execution,
+fallback, Runtime integration, operational Evidence, and M4 remain deferred.
+
 ## Registry Validation
 
 A capability registry change is valid only when:
@@ -188,10 +214,10 @@ A capability registry change is valid only when:
 
 ## Known Architecture Gaps
 
-- Planner integration with Capability Resolver remains deferred.
-- Tool Adapter Contract remains a future architecture and implementation item.
+- Tool Adapter execution Contract remains a future architecture item.
+- Governed operational adapter catalog integration remains deferred.
 - Runtime integration remains deferred.
 - Multiple-candidate discovery and ranking remain deferred.
 - M4 validation and operational integration are not complete.
 - RAG, vector databases, embeddings, and multimodal adapters are outside
-  AFDE-4.9.
+  AFDE-5.1.

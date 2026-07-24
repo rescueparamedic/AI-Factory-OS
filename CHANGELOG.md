@@ -1,5 +1,20 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-5.1 Tool Adapter Selection Foundation (Unreleased)
+
+- Registered `CAP-TOOLSELECT-0001` as implemented at M3 without claiming M4.
+- Added immutable request, adapter-candidate, and result contracts plus a
+  constructor-injected deterministic selection service.
+- Reused Resolver and Planner Resolution results and preserved status, gaps,
+  rationale, source/reference details, and ordered trace.
+- Added exact Capability ID matching, stable adapter-ID ordering, explicit
+  no-selection, and fail-closed ambiguity and input validation.
+- Added focused behavior and architecture-boundary tests.
+- Preserved Planner, Planner Resolution, Resolver, concrete Tool Adapter,
+  Runtime, Worker, Product Layer, Provider, Evidence, CLI, Desktop, and public
+  contracts. No adapter execution, ranking, orchestration, or dependency was
+  added.
+
 ## AFDE-5.0 Planner-Resolver Integration (Unreleased)
 
 - Registered `CAP-PLANRES-0001` as implemented at M3 without claiming

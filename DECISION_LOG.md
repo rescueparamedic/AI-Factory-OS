@@ -1,5 +1,28 @@
 # Decision Log
 
+## 2026-07-24 - AFDE-5.1 Deterministic Tool Adapter Selection
+
+- Implemented `CAP-TOOLSELECT-0001` at M3 without claiming M4.
+- The existing capability audit found no Tool Adapter selection service,
+  governed descriptor, or reusable adapter Registry. Existing concrete
+  `real_worker_runtime` adapters execute work and were not reused across the
+  read-only application boundary.
+- Reused immutable `CapabilityResolutionResult` and
+  `PlannerCapabilityResolutionResult` directly instead of changing Planner,
+  Planner Resolution, or Resolver contracts.
+- Chose a dedicated `afde.tool_selection` application service with a
+  constructor-injected `AdapterCandidateSource`; it performs no hidden Registry
+  loading, filesystem or network I/O, Provider call, or Runtime invocation.
+- Required an eligible resolved outcome and one exact Capability ID match.
+  Zero matches return no-selection; multiple authoritative matches block in
+  stable adapter-ID order. No fuzzy matching, scoring, ranking, or fallback was
+  added.
+- Preserved Resolver status, gaps, rejection reasons, source documents,
+  reference priority, and ordered trace in an immutable result that always
+  denies Runtime and execution.
+- Deferred adapter execution, operational adapter catalog integration,
+  Runtime, Worker, Product Layer, Provider, Evidence, orchestration, and M4.
+
 ## 2026-07-24 - AFDE-5.0 Planner-Resolver Integration
 
 - Implemented `CAP-PLANRES-0001` at M3 without claiming M4.

@@ -54,7 +54,27 @@ def test_valid_registry_loads_all_three_projections():
         "CAP-KNOW-0001",
         "CAP-RESOLVER-0001",
         "CAP-PLANRES-0001",
+        "CAP-TOOLSELECT-0001",
     ]
+
+
+def test_tool_selection_capability_is_registered_at_m3_only():
+    snapshot = KnowledgeRegistryLoader(ROOT).load()
+    capability = next(
+        item for item in snapshot.capabilities
+        if item.capability_id == "CAP-TOOLSELECT-0001"
+    )
+
+    assert capability.status == "implemented"
+    assert capability.maturity == "M3"
+    assert capability.implementation_status == "implemented"
+    assert capability.required_capabilities == ("CAP-PLANRES-0001",)
+    assert capability.runtime_dependencies == ()
+    assert capability.implementation_references == (
+        "afde/tool_selection/errors.py",
+        "afde/tool_selection/models.py",
+        "afde/tool_selection/service.py",
+    )
 
 
 def test_missing_and_malformed_registry_fail_closed(tmp_path):

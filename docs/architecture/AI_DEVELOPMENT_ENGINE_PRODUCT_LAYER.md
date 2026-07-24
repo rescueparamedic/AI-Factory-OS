@@ -668,8 +668,9 @@ eligibility evaluation only.**
 
 Planning determines WHAT capabilities are required.
 
-Capability Resolver determines WHICH implementation (adapter, provider, local
-tool, or external program) will satisfy each capability.
+Capability Resolver determines whether the requested capability is eligible.
+Tool Adapter Selection identifies WHICH injected adapter candidate may satisfy
+an eligible capability.
 
 Selection should consider:
 
@@ -691,14 +692,22 @@ The AFDE-4.9 foundation evaluates one supplied Capability ID for eligibility
 using injected Knowledge Provider metadata. It returns immutable resolved,
 unresolved, blocked, or decision-required rationale. It does not discover or
 rank multiple implementations, choose an adapter/provider/tool, or call
-Runtime. Those selection responsibilities and Product Layer integration remain
-future work.
+Runtime. AFDE-5.1 provides exact-ID Tool Adapter selection as a separate
+application boundary without changing Resolver or Product Layer contracts.
 
 Capability Resolver must not duplicate Runtime behavior.
 
 ### 4. Tool Selection and Fallback
 
-**Status: Future / Deferred / Not implemented in AFDE-4.5.**
+**AFDE-4.5 status: Future / Deferred. AFDE-5.1 foundation: M3 exact-ID
+single-adapter selection only.**
+
+The AFDE-5.1 selection service consumes a resolved eligible Resolver or Planner
+Resolution result and an injected authoritative candidate snapshot. It
+exact-matches the Capability ID, preserves stable adapter-ID ordering, returns
+an explicit no-selection result for zero matches, and blocks multiple matches
+as ambiguous. It never executes the selected adapter and always disallows
+Runtime and execution.
 
 When several adapters provide the same capability, future selection may
 consider safety, cost, speed, privacy, local execution, licensing, and current
