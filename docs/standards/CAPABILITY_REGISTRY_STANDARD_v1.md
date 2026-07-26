@@ -304,6 +304,32 @@ Capability, and adapter identity while `runtime_allowed` and
 `execution_allowed` remain false. Adapter and Worker execution remain
 deferred.
 
+### CAP-COMPOSITION-0001
+
+| Field | Value |
+| --- | --- |
+| Name | Non-executable Composition Foundation |
+| Description | Construct the existing Planner Resolution, Capability Resolver, Tool Adapter Catalog, Tool Adapter Selection, Execution Path, Runtime Integration, and Tool Adapter Execution Contract services without executing behavior. |
+| Owner | AI Factory OS Architecture |
+| Scope | `architecture.non_executable_composition` |
+| Status | `implemented` |
+| Maturity | `M3` |
+| Implementation status | `implemented` |
+| Required knowledge | none |
+| Required capabilities | `CAP-PLANRES-0001`, `CAP-TOOLSELECT-0001`, `CAP-TOOLCATALOG-0001`, `CAP-EXECPATH-0001`, `CAP-RUNTIME-0001`, `CAP-TOOLADAPTER-CONTRACT-0001` |
+| Tool dependencies | none |
+| Adapter dependencies | caller-injected `KnowledgeProvider`, caller-injected `ToolAdapterDescriptor` values, caller-injected `RuntimeIntegrationPolicy` |
+| Runtime dependencies | none |
+| Implementation references | `afde/non_executable_composition/__init__.py`, `afde/non_executable_composition/models.py`, `afde/non_executable_composition/factory.py` |
+| Validation evidence | `tests/test_non_executable_composition.py`, `tests/test_non_executable_composition_boundaries.py` |
+| Known gaps | Executable production composition and operational Adapter Registry remain deferred.<br>Worker, Evidence, Product Assembly, Runtime session, Provider, credential, and lifecycle integration remain deferred.<br>Operational Evidence and M4 validation are not complete. |
+| Source documents | `DOC-ARCH-0001`, `DOC-ARCH-0002`, `DOC-CREG-0001`, `DOC-COMPOSITION-0001` |
+| Supersedes | none |
+
+This entry records explicit construction only. It does not grant execution
+authority or call the constructed services. The caller owns all injected
+dependencies, and `runtime_allowed` and `execution_allowed` remain false.
+
 ## Registry Validation
 
 A capability registry change is valid only when:
@@ -322,7 +348,7 @@ A capability registry change is valid only when:
 
 ## Known Architecture Gaps
 
-- Tool Adapter Execution Contract has no production composition or consumer.
+- The non-executable composition has no executable production consumer.
 - Governed Operational Adapter Registry and population remain deferred.
 - Runtime execution and lifecycle integration remain deferred.
 - Multiple-candidate discovery and ranking remain deferred.

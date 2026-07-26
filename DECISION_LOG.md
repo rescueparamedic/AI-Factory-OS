@@ -1,5 +1,22 @@
 # Decision Log
 
+## 2026-07-26 - AFDE-5.6 Explicit Non-executable Composition
+
+- Implemented `CAP-COMPOSITION-0001` at M3 without claiming M4.
+- Composed the seven existing AFDE-5.0 through AFDE-5.5 service objects by
+  explicit constructors without adding an execution or orchestration facade.
+- Required caller-injected Knowledge Provider, Tool Adapter descriptors, and
+  Runtime policy; no hidden Provider, Registry, filesystem, environment, or
+  configuration loading was added.
+- Required Tool Selection, Execution Path, and Tool Adapter Contract to share
+  one constructed Catalog.
+- Used one frozen container that rejects Runtime or execution authority and
+  exposes no run, execute, invoke, dispatch, lifecycle, or recovery behavior.
+- Rejected an external DI framework because declarative providers,
+  configuration, and wiring exceed the bounded constructor-only requirement.
+- Deferred executable production composition, Operational Adapter Registry,
+  Worker/Evidence/Product integration, and operational M4 validation.
+
 ## 2026-07-26 - AFDE-5.5 Non-executable Tool Adapter Contract
 
 - Implemented `CAP-TOOLADAPTER-CONTRACT-0001` at M3 without claiming M4.

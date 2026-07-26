@@ -1,5 +1,21 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-5.6 Non-executable Composition Foundation (Unreleased)
+
+- Registered `CAP-COMPOSITION-0001` as implemented at M3 without claiming M4.
+- Added an immutable seven-service composition container and one explicit
+  constructor builder.
+- Reused existing Capability Resolver, Planner Resolution, Tool Adapter
+  Catalog and Selection, Execution Path, Runtime Integration, and Tool Adapter
+  Contract public contracts unchanged.
+- Injected one shared Catalog into Selection, Execution Path, and Tool Adapter
+  Contract.
+- Added no execution facade, operational behavior, external dependency,
+  dynamic loading, Registry/config access, Runtime session, Worker, Evidence,
+  or Product Assembly behavior.
+- Added focused composition, manual-chain, fail-closed, determinism, and AST
+  architecture-boundary tests.
+
 ## AFDE-5.5 Tool Adapter Execution Contract Foundation (Merged, PR #46)
 
 - Registered `CAP-TOOLADAPTER-CONTRACT-0001` as implemented at M3 without

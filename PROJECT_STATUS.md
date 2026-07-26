@@ -1,5 +1,21 @@
 # AI Factory OS Project Status
 
+## AFDE-5.6 Non-executable Composition Foundation
+
+- `CAP-COMPOSITION-0001` is `implemented`, maturity `M3`, with
+  `implementation_status: implemented`.
+- `afde.non_executable_composition` explicitly constructs the existing
+  Resolver, Planner Resolution, Catalog, Selection, Execution Path, Runtime
+  Integration, and Tool Adapter Contract services.
+- Selection, Execution Path, and Tool Adapter Contract share one immutable
+  constructor-supplied Catalog instance.
+- The caller supplies the Knowledge Provider, adapter descriptors, and Runtime
+  policy. No Registry, filesystem, environment, or configuration is loaded.
+- The frozen composition has no execution facade and always keeps
+  `runtime_allowed` and `execution_allowed` false.
+- Executable production composition, Operational Adapter Registry,
+  Worker/Evidence/Product integration, and M4 remain deferred.
+
 ## AFDE-5.5 Tool Adapter Execution Contract Foundation
 
 - `CAP-TOOLADAPTER-CONTRACT-0001` is `implemented`, maturity `M3`, with

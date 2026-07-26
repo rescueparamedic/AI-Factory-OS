@@ -44,7 +44,7 @@ def test_valid_registry_loads_all_three_projections():
     snapshot = KnowledgeRegistryLoader(ROOT).load()
 
     assert snapshot.schema_version == "1.0"
-    assert len(snapshot.documents) == 16
+    assert len(snapshot.documents) == 17
     assert [item.knowledge_id for item in snapshot.knowledge] == [
         "KNW-KNOW-0001",
         "KNW-KNOW-0002",
@@ -59,6 +59,7 @@ def test_valid_registry_loads_all_three_projections():
         "CAP-EXECPATH-0001",
         "CAP-RUNTIME-0001",
         "CAP-TOOLADAPTER-CONTRACT-0001",
+        "CAP-COMPOSITION-0001",
     ]
 
 
@@ -194,6 +195,41 @@ def test_tool_adapter_contract_capability_and_standard_are_registered_at_m3():
     assert standard.capability_ids == (
         "CAP-TOOLADAPTER-CONTRACT-0001",
     )
+
+
+def test_non_executable_composition_is_registered_at_m3_only():
+    snapshot = KnowledgeRegistryLoader(ROOT).load()
+    capability = next(
+        item for item in snapshot.capabilities
+        if item.capability_id == "CAP-COMPOSITION-0001"
+    )
+    standard = next(
+        item for item in snapshot.documents
+        if item.document_id == "DOC-COMPOSITION-0001"
+    )
+
+    assert capability.status == "implemented"
+    assert capability.maturity == "M3"
+    assert capability.implementation_status == "implemented"
+    assert capability.required_capabilities == (
+        "CAP-PLANRES-0001",
+        "CAP-TOOLSELECT-0001",
+        "CAP-TOOLCATALOG-0001",
+        "CAP-EXECPATH-0001",
+        "CAP-RUNTIME-0001",
+        "CAP-TOOLADAPTER-CONTRACT-0001",
+    )
+    assert capability.tool_dependencies == ()
+    assert capability.runtime_dependencies == ()
+    assert capability.implementation_references == (
+        "afde/non_executable_composition/__init__.py",
+        "afde/non_executable_composition/models.py",
+        "afde/non_executable_composition/factory.py",
+    )
+    assert standard.path == (
+        "docs/standards/NON_EXECUTABLE_COMPOSITION_STANDARD_v1.md"
+    )
+    assert standard.capability_ids == ("CAP-COMPOSITION-0001",)
 
 
 def test_missing_and_malformed_registry_fail_closed(tmp_path):
