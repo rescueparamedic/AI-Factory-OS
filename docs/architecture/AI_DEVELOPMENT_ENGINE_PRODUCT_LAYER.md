@@ -732,8 +732,14 @@ prerequisites. Stable path identity is derived from structured metadata.
 They never grant authority: `runtime_allowed` and `execution_allowed` remain
 false. Execution Path performs no credential retrieval, adapter invocation,
 Runtime or Worker call, Evidence generation, Product Assembly, or
-orchestration. Actual authorization and handoff belong to a future separately
-governed Runtime Integration capability.
+orchestration.
+
+AFDE-5.4 Runtime Integration consumes that immutable path through a dedicated
+application boundary and an injected immutable readiness policy. A complete
+path may produce deterministic `runtime_ready: true` metadata, but Runtime and
+execution authority remain false. Existing executable Runtime, Worker,
+Provider, Product, Evidence, lifecycle, and orchestration contracts remain
+unchanged and are not imported or invoked.
 
 When several adapters provide the same capability, future selection may
 consider safety, cost, speed, privacy, local execution, licensing, and current

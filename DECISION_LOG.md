@@ -1,5 +1,25 @@
 # Decision Log
 
+## 2026-07-24 - AFDE-5.4 Read-only Runtime Integration
+
+- Implemented `CAP-RUNTIME-0001` at M3 without claiming M4.
+- Kept executable Beta and real-worker Runtime, Worker, Provider, orchestration,
+  lifecycle, persistence, and Evidence contracts unchanged and isolated.
+- Added dedicated `afde.runtime_integration` ownership after Execution Path.
+- Required constructor-injected immutable policy and exact immutable
+  `ExecutionPathResult` input.
+- Distinguished structural `runtime_ready` from authority;
+  `runtime_allowed` and `execution_allowed` remain false.
+- Derived stable projection IDs without time, randomness, filesystem, network,
+  live process state, or discovery.
+- Evaluated Prefect, Dagster, Temporal, Dramatiq, Celery, pluggy, stevedore,
+  transitions, graphlib, NetworkX, Pydantic, attrs, psutil, structlog, and Rich.
+  No dependency was adopted because none reduces this bounded projection
+  without adding excluded execution or unnecessary infrastructure.
+- Deferred session creation, Runtime execution, lifecycle mutation, Worker or
+  adapter invocation, Provider, Evidence, Product Assembly, orchestration,
+  retry, recovery, resume, and operational M4 validation.
+
 ## 2026-07-24 - AFDE-5.3 Non-executable Execution Path
 
 - Implemented `CAP-EXECPATH-0001` at M3 without claiming M4.

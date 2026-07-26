@@ -1,5 +1,23 @@
 # AI Factory OS Project Status
 
+## AFDE-5.4 Runtime Integration Foundation
+
+- `CAP-RUNTIME-0001` is `implemented`, maturity `M3`, with
+  `implementation_status: implemented`.
+- The audit found extensive executable Beta and real-worker Runtime behavior
+  but no immutable non-executable Runtime-ready projection.
+- `afde.runtime_integration` consumes AFDE-5.3 `ExecutionPathResult` and a
+  constructor-injected immutable policy without invoking existing Runtime.
+- A structurally complete path may produce `runtime_ready: true`, while
+  `runtime_allowed` and `execution_allowed` remain false.
+- Projection IDs derive deterministically from stable path, policy, adapter,
+  and Catalog metadata.
+- The external open-source audit evaluated 15 mature candidates. None was
+  adopted because engines, queues, plugins, graphs, monitoring, logging, and UI
+  would add execution authority or unnecessary dependencies to this boundary.
+- Runtime/Worker/adapter execution, lifecycle mutation, Provider, Evidence,
+  Product, orchestration, retry, recovery, resume, and M4 remain deferred.
+
 ## AFDE-5.3 Execution Path Foundation
 
 - `CAP-EXECPATH-0001` is `implemented`, maturity `M3`, with
@@ -96,8 +114,8 @@
 - `CAP-KNOW-0001` is `implemented`, maturity `M3`, with
   `implementation_status: implemented`.
 - PR #38 and AFDE-4.7 architecture are present on the `develop` merge baseline.
-- A governed JSON snapshot projects 14 Document entries, 3 Knowledge entries,
-  6 Capability entries, authority levels, and deterministic reference priority.
+- A governed JSON snapshot projects 15 Document entries, 3 Knowledge entries,
+  7 Capability entries, authority levels, and deterministic reference priority.
 - `afde.knowledge` provides immutable models, repository-contained loading,
   cross-registry fail-closed validation, read-only queries,
   `CapabilityContext`, and explicit typed gaps.

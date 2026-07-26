@@ -17,6 +17,7 @@
 - `docs/standards/CAPABILITY_REGISTRY_STANDARD_v1.md`
 - `docs/standards/TOOL_ADAPTER_CATALOG_STANDARD_v1.md`
 - `docs/standards/EXECUTION_PATH_STANDARD_v1.md`
+- `docs/standards/RUNTIME_INTEGRATION_STANDARD_v1.md`
 - `docs/standards/DOCUMENT_GOVERNANCE_STANDARD_v1.md`
 - `docs/standards/AI_REFERENCE_POLICY_v1.md`
 
@@ -132,8 +133,27 @@ implementation_status: implemented
 
 Execution Path consumes AFDE-5.1 Selection and exact AFDE-5.2 Catalog metadata.
 It may report a structural route and handoff readiness but never grants Runtime
-or execution authority. Actual handoff belongs to a future Runtime Integration
-capability.
+or execution authority.
+
+### Runtime Integration
+
+- `afde/runtime_integration/` — immutable request, injected policy, Runtime
+  projection, result, validation errors, and non-executable projection service
+- `tests/test_runtime_integration*.py` — readiness, blocking, determinism,
+  authority, integration, and architecture-boundary validation
+- `docs/standards/RUNTIME_INTEGRATION_STANDARD_v1.md` — normative ownership,
+  authority, isolation, deterministic policy, and External Open-Source Audit
+
+```yaml
+capability_id: CAP-RUNTIME-0001
+status: implemented
+maturity: M3
+implementation_status: implemented
+```
+
+Runtime Integration turns a structurally ready Execution Path into immutable
+Runtime-ready metadata. It does not create a Runtime session, mutate lifecycle
+state, invoke any executable component, or grant Runtime/execution authority.
 
 ### Knowledge Foundation Capability
 
@@ -147,8 +167,8 @@ implementation_status: implemented
 The standards above are the canonical discovery path for official documents,
 registered knowledge, capability state, governance, and AI reference rules.
 Registry metadata and its JSON projection do not replace linked Source of
-Record documents. Tool Adapter execution, Runtime integration, operational
-Evidence, and M4 validation remain deferred.
+Record documents. Runtime execution, operational Evidence, and M4 validation
+remain deferred.
 
 ## Sprint 9-3 MVP
 

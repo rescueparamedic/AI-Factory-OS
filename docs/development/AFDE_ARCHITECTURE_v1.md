@@ -280,8 +280,43 @@ The boundary does not reuse Planner `ExecutionPlan`, which owns goal/task
 planning, or executable Runtime lifecycle models. It performs no
 Registry/file/network access, Provider call, Runtime or Worker invocation,
 adapter/command/task/process execution, Evidence generation, Product Assembly,
-or orchestration. Actual Runtime authorization and invocation belong to a
-future separately governed Runtime Integration capability.
+or orchestration.
+
+### Runtime Integration Foundation
+
+```yaml
+capability_id: CAP-RUNTIME-0001
+status: implemented
+maturity: M3
+implementation_status: implemented
+```
+
+AFDE-5.4 adds a read-only application boundary:
+
+```text
+Immutable ExecutionPathResult
+        |
+        v
+RuntimeIntegrationService + injected immutable policy
+        |
+        v
+Immutable RuntimeIntegrationResult + RuntimeProjection
+        |
+        v
+future executable Runtime capability
+```
+
+Only a constructed, handoff-ready Execution Path matching the injected
+compatibility and contract policy produces `runtime_ready: true`. This state is
+structural, not authority: `runtime_allowed` and `execution_allowed` remain
+false. Projection identity derives only from stable path and metadata inputs.
+
+The implementation does not reuse executable Beta or real-worker Runtime
+models because they own lifecycle, Worker, Provider, orchestration,
+persistence, and Evidence behavior. It imports or invokes none of those
+surfaces. The AFDE-5.4 External Open-Source Audit found no justified dependency
+for this small immutable projection; mature engines and infrastructure remain
+reference candidates for later executable capabilities.
 
 ### Normative Standards
 
@@ -290,6 +325,7 @@ future separately governed Runtime Integration capability.
 - `docs/standards/CAPABILITY_REGISTRY_STANDARD_v1.md`
 - `docs/standards/TOOL_ADAPTER_CATALOG_STANDARD_v1.md`
 - `docs/standards/EXECUTION_PATH_STANDARD_v1.md`
+- `docs/standards/RUNTIME_INTEGRATION_STANDARD_v1.md`
 - `docs/standards/DOCUMENT_GOVERNANCE_STANDARD_v1.md`
 - `docs/standards/AI_REFERENCE_POLICY_v1.md`
 

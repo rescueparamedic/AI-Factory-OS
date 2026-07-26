@@ -1,5 +1,20 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-5.4 Runtime Integration Foundation (Unreleased)
+
+- Registered `CAP-RUNTIME-0001` as implemented at M3 without claiming M4.
+- Added immutable request, policy, Runtime projection, result, status, errors,
+  and constructor-injected projection service.
+- Reused AFDE-5.3 Execution Path unchanged and preserved exact path, adapter,
+  Capability, Catalog, and trace metadata.
+- Added deterministic Runtime projection identity and explicit structural
+  `runtime_ready` state while keeping Runtime and execution authority false.
+- Added fail-closed handling for blocked, incomplete, prerequisite, mismatched,
+  malformed, or authority-bearing input.
+- Documented the first External Open-Source Audit across 15 candidates and
+  adopted no unnecessary third-party dependency.
+- Added focused integration and architecture-boundary tests.
+
 ## AFDE-5.3 Execution Path Foundation (Unreleased)
 
 - Registered `CAP-EXECPATH-0001` as implemented at M3 without claiming M4.
