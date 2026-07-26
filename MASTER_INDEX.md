@@ -18,6 +18,7 @@
 - `docs/standards/TOOL_ADAPTER_CATALOG_STANDARD_v1.md`
 - `docs/standards/EXECUTION_PATH_STANDARD_v1.md`
 - `docs/standards/RUNTIME_INTEGRATION_STANDARD_v1.md`
+- `docs/standards/TOOL_ADAPTER_EXECUTION_CONTRACT_STANDARD_v1.md`
 - `docs/standards/DOCUMENT_GOVERNANCE_STANDARD_v1.md`
 - `docs/standards/AI_REFERENCE_POLICY_v1.md`
 
@@ -154,6 +155,26 @@ implementation_status: implemented
 Runtime Integration turns a structurally ready Execution Path into immutable
 Runtime-ready metadata. It does not create a Runtime session, mutate lifecycle
 state, invoke any executable component, or grant Runtime/execution authority.
+
+### Tool Adapter Execution Contract
+
+- `afde/tool_adapter_contract/` — immutable request, binding, result, and error
+  contracts plus deterministic validation over an injected read-only lookup
+- `tests/test_tool_adapter_contract*.py` — identity, determinism, fail-closed,
+  immutability, integration, and architecture-boundary validation
+- `docs/standards/TOOL_ADAPTER_EXECUTION_CONTRACT_STANDARD_v1.md` — normative
+  ownership, validation, authority, isolation, and limited external audit
+
+```yaml
+capability_id: CAP-TOOLADAPTER-CONTRACT-0001
+status: implemented
+maturity: M3
+implementation_status: implemented
+```
+
+The foundation validates a Runtime Projection against exact adapter descriptor
+metadata and produces deterministic binding metadata without invoking an
+adapter. Runtime and execution authority remain false.
 
 ### Knowledge Foundation Capability
 

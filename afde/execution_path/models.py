@@ -24,7 +24,9 @@ from .errors import (
 )
 
 
-CAPABILITY_ID_PATTERN = re.compile(r"^CAP-[A-Z0-9]+-[0-9]{4}$")
+CAPABILITY_ID_PATTERN = re.compile(
+    r"^CAP-[A-Z0-9]+(?:-[A-Z0-9]+)*-[0-9]{4}$"
+)
 PATH_ID_PATTERN = re.compile(r"^EXECPATH-[A-F0-9]{16}$")
 VERSION_PATTERN = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 

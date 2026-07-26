@@ -1,5 +1,23 @@
 # AI Factory OS Project Status
 
+## AFDE-5.5 Tool Adapter Execution Contract Foundation
+
+- `CAP-TOOLADAPTER-CONTRACT-0001` is `implemented`, maturity `M3`, with
+  `implementation_status: implemented`.
+- `afde.tool_adapter_contract` consumes one immutable AFDE-5.4
+  `RuntimeProjection` and constructor-injected read-only adapter metadata.
+- Immutable request, binding, result, and error contracts preserve
+  `projection_id`, `path_id`, `capability_id`, and `adapter_id`.
+- Malformed snapshots, duplicate identities, mismatched bindings, and
+  unregistered adapters fail closed with deterministic trace and errors.
+- The Catalog exposes its existing immutable descriptor snapshot through one
+  additive `list_adapters()` lookup method.
+- Runtime and execution authority remain false. No adapter, Worker, Runtime,
+  Provider, command, filesystem, Evidence, approval, credential, lifecycle,
+  Product, Desktop, Operator, or Beta Execute behavior was added.
+- The limited external audit adopted standard-library frozen dataclasses and a
+  structural protocol; no third-party dependency was required.
+
 ## AFDE-5.4 Runtime Integration Foundation
 
 - `CAP-RUNTIME-0001` is `implemented`, maturity `M3`, with

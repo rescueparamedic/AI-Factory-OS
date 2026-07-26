@@ -17,7 +17,9 @@ from afde.knowledge import (
 from .errors import InvalidCapabilityRequirementError
 
 
-CAPABILITY_ID_PATTERN = re.compile(r"^CAP-[A-Z0-9]+-[0-9]{4}$")
+CAPABILITY_ID_PATTERN = re.compile(
+    r"^CAP-[A-Z0-9]+(?:-[A-Z0-9]+)*-[0-9]{4}$"
+)
 KNOWLEDGE_ID_PATTERN = re.compile(r"^KNW-[A-Z0-9]+-[0-9]{4}$")
 MATURITY_LEVELS = ("M0", "M1", "M2", "M3", "M4", "M5", "M6")
 

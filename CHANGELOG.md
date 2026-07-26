@@ -1,5 +1,19 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-5.5 Tool Adapter Execution Contract Foundation (Unreleased)
+
+- Registered `CAP-TOOLADAPTER-CONTRACT-0001` as implemented at M3 without
+  claiming M4.
+- Added immutable Tool Adapter request, binding, result, error, status, and
+  error-code contracts plus a constructor-injected validation service.
+- Preserved Runtime Projection, path, Capability, and adapter identities.
+- Added deterministic binding IDs and trace plus fail-closed malformed,
+  duplicate, mismatch, and unregistered validation.
+- Added the Catalog's additive immutable descriptor snapshot lookup.
+- Expanded the existing Capability ID grammar additively for the approved
+  multi-segment domain identifier.
+- Added no execution behavior or third-party dependency.
+
 ## AFDE-5.4 Runtime Integration Foundation (Unreleased)
 
 - Registered `CAP-RUNTIME-0001` as implemented at M3 without claiming M4.

@@ -318,6 +318,39 @@ surfaces. The AFDE-5.4 External Open-Source Audit found no justified dependency
 for this small immutable projection; mature engines and infrastructure remain
 reference candidates for later executable capabilities.
 
+### Tool Adapter Execution Contract Foundation
+
+```yaml
+capability_id: CAP-TOOLADAPTER-CONTRACT-0001
+status: implemented
+maturity: M3
+implementation_status: implemented
+```
+
+AFDE-5.5 adds a read-only validation boundary after Runtime Projection:
+
+```text
+Immutable RuntimeProjection
+        |
+        v
+ToolAdapterContractService + injected AdapterLookup
+        |
+        v
+Immutable ToolAdapterResult + ToolAdapterBinding or ToolAdapterError
+        |
+        v
+future adapter execution capability
+```
+
+The boundary validates exact adapter identity and governed descriptor metadata,
+rejecting malformed snapshots, duplicates, mismatches, and unregistered
+identities. It preserves projection, path, Capability, and adapter IDs.
+`runtime_allowed` and `execution_allowed` remain false.
+
+The boundary exposes no adapter invocation method and imports no executable
+Runtime, Worker, Provider, Product, Evidence, approval, credential, command,
+process, filesystem, network, Desktop, Operator, or Beta Execute behavior.
+
 ### Normative Standards
 
 - `docs/standards/DOCUMENT_KNOWLEDGE_MANAGEMENT_STANDARD_v1.md`
@@ -326,6 +359,7 @@ reference candidates for later executable capabilities.
 - `docs/standards/TOOL_ADAPTER_CATALOG_STANDARD_v1.md`
 - `docs/standards/EXECUTION_PATH_STANDARD_v1.md`
 - `docs/standards/RUNTIME_INTEGRATION_STANDARD_v1.md`
+- `docs/standards/TOOL_ADAPTER_EXECUTION_CONTRACT_STANDARD_v1.md`
 - `docs/standards/DOCUMENT_GOVERNANCE_STANDARD_v1.md`
 - `docs/standards/AI_REFERENCE_POLICY_v1.md`
 

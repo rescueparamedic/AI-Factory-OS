@@ -741,6 +741,14 @@ execution authority remain false. Existing executable Runtime, Worker,
 Provider, Product, Evidence, lifecycle, and orchestration contracts remain
 unchanged and are not imported or invoked.
 
+AFDE-5.5 establishes only the non-executable contract between that Runtime
+Projection and future Tool Adapter execution. Immutable request, binding,
+result, and structured error models preserve projection, path, Capability, and
+adapter identity. A constructor-injected read-only descriptor snapshot is
+validated for malformed entries, duplicates, exact identity, registration, and
+metadata agreement. Runtime and execution authority remain false; no adapter
+or Worker is invoked.
+
 When several adapters provide the same capability, future selection may
 consider safety, cost, speed, privacy, local execution, licensing, and current
 availability. If selection or execution fails, control may move to another

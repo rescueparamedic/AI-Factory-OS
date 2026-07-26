@@ -24,7 +24,9 @@ from .models import (
 
 DOCUMENT_ID_PATTERN = re.compile(r"^DOC-[A-Z0-9]+-[0-9]{4}$")
 KNOWLEDGE_ID_PATTERN = re.compile(r"^KNW-[A-Z0-9]+-[0-9]{4}$")
-CAPABILITY_ID_PATTERN = re.compile(r"^CAP-[A-Z0-9]+-[0-9]{4}$")
+CAPABILITY_ID_PATTERN = re.compile(
+    r"^CAP-[A-Z0-9]+(?:-[A-Z0-9]+)*-[0-9]{4}$"
+)
 SUPPORTED_SCHEMA_VERSIONS = ("1.0",)
 CAPABILITY_BINDING_RELATIONS = ("required", "supporting", "evidence")
 
