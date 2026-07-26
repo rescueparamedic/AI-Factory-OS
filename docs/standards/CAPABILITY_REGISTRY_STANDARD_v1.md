@@ -21,11 +21,12 @@ authority and does not prove implementation.
 Capability IDs use:
 
 ```text
-CAP-<DOMAIN>-<four-digit sequence>
+CAP-<DOMAIN SEGMENT>[-<DOMAIN SEGMENT>...]-<four-digit sequence>
 ```
 
-IDs are immutable and never reused. Provider- or tool-specific names do not
-belong in the ID when multiple adapters may satisfy the same capability.
+Domain segments use uppercase alphanumeric characters. IDs are immutable and
+never reused. Provider- or tool-specific names do not belong in the ID when
+multiple adapters may satisfy the same capability.
 
 ## Capability Entry Schema
 

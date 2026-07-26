@@ -1,5 +1,16 @@
 # Technical Debt
 
+## AFDE-5.5 Tool Adapter Execution Contract Foundation
+
+- The boundary validates governed descriptor metadata only. Actual adapter and
+  Worker execution remain unimplemented and must be separately authorized.
+- Adapter implementations are not operationally populated or dynamically
+  discovered; the injected lookup remains the authoritative read-only input.
+- Runtime sessions, Provider calls, approval, credentials, Evidence,
+  lifecycle, Product Assembly, Desktop, Operator, and Beta Execute integration
+  remain deferred.
+- Operational Evidence and M4 validation remain incomplete.
+
 ## AFDE-3.9 Runtime History Foundation
 
 - JSONL append is local and lightweight but has no multi-process lock,

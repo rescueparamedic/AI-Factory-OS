@@ -23,7 +23,8 @@
         "CAP-TOOLSELECT-0001",
         "CAP-TOOLCATALOG-0001",
         "CAP-EXECPATH-0001",
-        "CAP-RUNTIME-0001"
+        "CAP-RUNTIME-0001",
+        "CAP-TOOLADAPTER-CONTRACT-0001"
       ]
     },
     {
@@ -46,7 +47,8 @@
         "CAP-TOOLSELECT-0001",
         "CAP-TOOLCATALOG-0001",
         "CAP-EXECPATH-0001",
-        "CAP-RUNTIME-0001"
+        "CAP-RUNTIME-0001",
+        "CAP-TOOLADAPTER-CONTRACT-0001"
       ]
     },
     {
@@ -108,7 +110,8 @@
         "CAP-TOOLSELECT-0001",
         "CAP-TOOLCATALOG-0001",
         "CAP-EXECPATH-0001",
-        "CAP-RUNTIME-0001"
+        "CAP-RUNTIME-0001",
+        "CAP-TOOLADAPTER-CONTRACT-0001"
       ]
     },
     {
@@ -160,6 +163,23 @@
       "knowledge_ids": [],
       "capability_ids": [
         "CAP-RUNTIME-0001"
+      ]
+    },
+    {
+      "document_id": "DOC-TOOLCONTRACT-0001",
+      "title": "Tool Adapter Execution Contract Standard v1",
+      "path": "docs/standards/TOOL_ADAPTER_EXECUTION_CONTRACT_STANDARD_v1.md",
+      "document_type": "standard",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.tool_adapter_contract",
+      "status": "Active",
+      "authority_level": "normative",
+      "version": "v1",
+      "effective_date": "2026-07-26",
+      "supersedes": [],
+      "knowledge_ids": [],
+      "capability_ids": [
+        "CAP-TOOLADAPTER-CONTRACT-0001"
       ]
     },
     {
@@ -780,6 +800,63 @@
         "DOC-ARCH-0002",
         "DOC-CREG-0001",
         "DOC-RUNTIME-0001"
+      ],
+      "supersedes": []
+    },
+    {
+      "capability_id": "CAP-TOOLADAPTER-CONTRACT-0001",
+      "name": "Tool Adapter Execution Contract Foundation",
+      "description": "Validate one Runtime Projection against constructor-injected read-only adapter metadata and produce deterministic immutable binding metadata without execution authority.",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.tool_adapter_contract",
+      "status": "implemented",
+      "maturity": "M3",
+      "implementation_status": "implemented",
+      "required_knowledge": [],
+      "required_capabilities": [
+        "CAP-RUNTIME-0001",
+        "CAP-TOOLCATALOG-0001"
+      ],
+      "tool_dependencies": [],
+      "adapter_dependencies": [
+        "RuntimeProjection",
+        "constructor-injected AdapterLookup"
+      ],
+      "runtime_dependencies": [],
+      "implementation_references": [
+        "afde/tool_adapter_contract/errors.py",
+        "afde/tool_adapter_contract/models.py",
+        "afde/tool_adapter_contract/service.py"
+      ],
+      "validation_evidence": [
+        "tests/test_tool_adapter_contract.py",
+        "tests/test_tool_adapter_contract_boundaries.py"
+      ],
+      "known_gaps": [
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-TOOLADAPTER-CONTRACT-0001",
+          "message": "Adapter and Worker execution remain deferred.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-TOOLADAPTER-CONTRACT-0001",
+          "message": "Runtime session, Provider, Evidence, approval, credential, lifecycle, Product Assembly, Desktop, Operator, and Beta Execute integration remain deferred.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "evidence_gap",
+          "subject_id": "CAP-TOOLADAPTER-CONTRACT-0001",
+          "message": "Operational Evidence and M4 validation are not complete.",
+          "related_ids": []
+        }
+      ],
+      "source_documents": [
+        "DOC-ARCH-0001",
+        "DOC-ARCH-0002",
+        "DOC-CREG-0001",
+        "DOC-TOOLCONTRACT-0001"
       ],
       "supersedes": []
     }

@@ -1,5 +1,25 @@
 # Decision Log
 
+## 2026-07-26 - AFDE-5.5 Non-executable Tool Adapter Contract
+
+- Implemented `CAP-TOOLADAPTER-CONTRACT-0001` at M3 without claiming M4.
+- Added a dedicated boundary after Runtime Projection and before any future
+  adapter invocation; Worker integration remains excluded.
+- Reused immutable `RuntimeProjection` and `ToolAdapterDescriptor` contracts.
+- Added an additive Catalog descriptor-list method satisfying a narrow,
+  constructor-injected, read-only structural protocol.
+- Required exact projection, path, Capability, adapter, version, and governed
+  descriptor metadata agreement.
+- Made malformed snapshots, duplicate identities, mismatches, and unregistered
+  adapters deterministic structured failures.
+- Preserved all four required identities in request, result, binding, and error
+  models while keeping Runtime and execution authority false.
+- Adopted Python frozen dataclasses and `typing.Protocol`; no third-party
+  dependency was added.
+- Deferred adapter/Worker execution, Runtime session behavior, Provider,
+  approval, credential, Evidence, lifecycle, Product, Desktop, Operator, Beta
+  Execute, and operational M4 validation.
+
 ## 2026-07-24 - AFDE-5.4 Read-only Runtime Integration
 
 - Implemented `CAP-RUNTIME-0001` at M3 without claiming M4.

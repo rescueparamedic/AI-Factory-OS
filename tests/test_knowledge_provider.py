@@ -37,7 +37,7 @@ def test_unknown_ids_fail_closed(provider):
 
 
 def test_scope_and_status_filters_are_deterministic(provider):
-    assert len(provider.query_documents(status="active")) == 15
+    assert len(provider.query_documents(status="active")) == 16
     assert provider.query_documents(status="Draft") == ()
 
     product_knowledge = provider.query_knowledge(scope="product_layer")

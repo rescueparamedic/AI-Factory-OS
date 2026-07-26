@@ -108,6 +108,11 @@ class ToolAdapterCatalog:
 
         return self._candidates
 
+    def list_adapters(self) -> tuple[ToolAdapterDescriptor, ...]:
+        """Return the immutable deterministic descriptor snapshot."""
+
+        return self._snapshot.adapters
+
     @staticmethod
     def _mappings(
         descriptors: tuple[ToolAdapterDescriptor, ...],
