@@ -356,6 +356,32 @@ This entry records registration validation and Catalog supply only. Registered
 metadata does not guarantee that an adapter is executable, reachable, healthy,
 credential-ready, or operationally available.
 
+### CAP-PRODUCTIONCOMPOSITION-0001
+
+| Field | Value |
+| --- | --- |
+| Name | Production Composition Foundation |
+| Description | Compose the existing non-executable AFDE services with the authoritative Catalog supplied by the Operational Adapter Registry without binding or executing adapters. |
+| Owner | AI Factory OS Architecture |
+| Scope | `architecture.production_composition` |
+| Status | `implemented` |
+| Maturity | `M3` |
+| Implementation status | `implemented` |
+| Required knowledge | none |
+| Required capabilities | `CAP-COMPOSITION-0001`, `CAP-ADAPTERREGISTRY-0001` |
+| Tool dependencies | none |
+| Adapter dependencies | caller-injected `KnowledgeProvider`, `OperationalAdapterRegistry`, and `RuntimeIntegrationPolicy`; Registry-projected existing `ToolAdapterCatalog` |
+| Runtime dependencies | none |
+| Implementation references | `afde/production_composition/__init__.py`, `afde/production_composition/factory.py` |
+| Validation evidence | `tests/test_production_composition.py`, `tests/test_production_composition_boundaries.py` |
+| Known gaps | Adapter discovery, binding, instantiation, invocation, availability validation, credentials, and concrete production registrations remain deferred.<br>Runtime, Worker, Evidence, Operator, Product Assembly, CLI, Desktop, and lifecycle integration remain deferred.<br>Operational Evidence and M4 validation are not complete. |
+| Source documents | `DOC-ARCH-0001`, `DOC-CREG-0001`, `DOC-COMPOSITION-0001` |
+| Supersedes | none |
+
+This entry records an official dependency composition root, not executable
+authority or production readiness. The Registry remains the authoritative
+Catalog supplier, and `runtime_allowed` and `execution_allowed` remain false.
+
 ## Registry Validation
 
 A capability registry change is valid only when:
@@ -374,7 +400,7 @@ A capability registry change is valid only when:
 
 ## Known Architecture Gaps
 
-- The non-executable composition has no executable production consumer.
+- The production composition is non-executable and has no executable consumer.
 - Concrete production Adapter registrations and discovery remain deferred.
 - Runtime execution and lifecycle integration remain deferred.
 - Multiple-candidate discovery and ranking remain deferred.

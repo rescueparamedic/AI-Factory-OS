@@ -1,5 +1,24 @@
 # Decision Log
 
+## 2026-07-26 - AFDE-5.8 Explicit Production Dependency Composition
+
+- Implemented `CAP-PRODUCTIONCOMPOSITION-0001` at M3 without claiming M4,
+  production readiness, executability, or operational availability.
+- Reused the existing frozen `NonExecutableComposition` and all seven existing
+  AFDE-5.x service types.
+- Made the caller-injected `OperationalAdapterRegistry` the authoritative
+  Catalog supplier and shared that same existing Catalog instance across Tool
+  Selection, Execution Path, and Tool Adapter Contract.
+- Preserved the AFDE-5.6 builder and all upstream public contracts unchanged.
+- Rejected `dependency-injector`, `punq`, and `injector`; their container,
+  resolution, wiring, scope, configuration, and resource features exceed this
+  bounded explicit composition.
+- Kept Adapter binding/execution, discovery, Runtime, Worker, Evidence,
+  Operator, Product, CLI, Desktop, credentials, external I/O, and lifecycle
+  behavior outside this boundary.
+- Deferred concrete production registrations, executable downstream
+  integration, operational Evidence, and M4 validation.
+
 ## 2026-07-26 - AFDE-5.7 Explicit Operational Adapter Registrations
 
 - Implemented `CAP-ADAPTERREGISTRY-0001` at M3 without claiming M4 or

@@ -1,5 +1,22 @@
 # AI Factory OS Project Status
 
+## AFDE-5.8 Production Composition Foundation
+
+- `CAP-PRODUCTIONCOMPOSITION-0001` is `implemented`, maturity `M3`, with
+  `implementation_status: implemented`.
+- `afde.production_composition` accepts an explicit read-only Knowledge
+  Provider, Operational Adapter Registry, and immutable Runtime policy.
+- The Registry-projected existing `ToolAdapterCatalog` is the authoritative
+  Catalog shared by Tool Selection, Execution Path, and Tool Adapter Contract.
+- The existing seven services and frozen `NonExecutableComposition` result are
+  reused without changing the AFDE-5.6 public contract.
+- Runtime and execution authority remain false. No Adapter binding, discovery,
+  import, instantiation, invocation, availability probe, credential,
+  filesystem, network, environment, Worker, Evidence, Operator, Product, CLI,
+  Desktop, or lifecycle behavior was added.
+- Concrete production registrations, downstream executable integration,
+  operational Evidence, and M4 remain deferred.
+
 ## AFDE-5.7 Operational Adapter Registry Foundation
 
 - `CAP-ADAPTERREGISTRY-0001` is `implemented`, maturity `M3`, with

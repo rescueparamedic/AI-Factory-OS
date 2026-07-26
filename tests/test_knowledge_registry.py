@@ -61,6 +61,7 @@ def test_valid_registry_loads_all_three_projections():
         "CAP-TOOLADAPTER-CONTRACT-0001",
         "CAP-COMPOSITION-0001",
         "CAP-ADAPTERREGISTRY-0001",
+        "CAP-PRODUCTIONCOMPOSITION-0001",
     ]
 
 
@@ -262,6 +263,46 @@ def test_operational_adapter_registry_is_registered_at_m3_only():
     )
     assert "CAP-ADAPTERREGISTRY-0001" in architecture.capability_ids
     assert "CAP-ADAPTERREGISTRY-0001" in standard.capability_ids
+
+
+def test_production_composition_is_registered_at_m3_only():
+    snapshot = KnowledgeRegistryLoader(ROOT).load()
+    capability = next(
+        item for item in snapshot.capabilities
+        if item.capability_id == "CAP-PRODUCTIONCOMPOSITION-0001"
+    )
+    architecture = next(
+        item for item in snapshot.documents
+        if item.document_id == "DOC-ARCH-0001"
+    )
+    standard = next(
+        item for item in snapshot.documents
+        if item.document_id == "DOC-CREG-0001"
+    )
+    composition_standard = next(
+        item for item in snapshot.documents
+        if item.document_id == "DOC-COMPOSITION-0001"
+    )
+
+    assert capability.status == "implemented"
+    assert capability.maturity == "M3"
+    assert capability.implementation_status == "implemented"
+    assert capability.required_capabilities == (
+        "CAP-COMPOSITION-0001",
+        "CAP-ADAPTERREGISTRY-0001",
+    )
+    assert capability.tool_dependencies == ()
+    assert capability.runtime_dependencies == ()
+    assert capability.implementation_references == (
+        "afde/production_composition/__init__.py",
+        "afde/production_composition/factory.py",
+    )
+    assert "CAP-PRODUCTIONCOMPOSITION-0001" in architecture.capability_ids
+    assert "CAP-PRODUCTIONCOMPOSITION-0001" in standard.capability_ids
+    assert (
+        "CAP-PRODUCTIONCOMPOSITION-0001"
+        in composition_standard.capability_ids
+    )
 
 
 def test_missing_and_malformed_registry_fail_closed(tmp_path):
