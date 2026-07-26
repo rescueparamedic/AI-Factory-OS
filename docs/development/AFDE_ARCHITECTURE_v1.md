@@ -39,7 +39,7 @@ Evidence, and product projection without replacing that foundation.
 
 ### Canonical Flow
 
-The canonical responsibility order through AFDE-5.5 is:
+The canonical responsibility order through AFDE-5.6 is:
 
 ```text
 Planner
@@ -75,10 +75,10 @@ Evidence
 Product Assembly
 ```
 
-This flow defines responsibility and handoff order. The AFDE-5.x foundations
-through Tool Adapter Execution Contract are implemented as isolated,
-non-executable boundaries, but end-to-end production composition into Worker,
-Evidence, and Product Assembly is not implemented.
+This flow defines responsibility and handoff order. AFDE-5.6 provides explicit
+repeatable construction of the capability services through Tool Adapter
+Execution Contract. It does not call the services or implement the downstream
+production path into Worker, Evidence, and Product Assembly.
 
 ### Knowledge Foundation
 
@@ -370,6 +370,40 @@ The boundary exposes no adapter invocation method and imports no executable
 Runtime, Worker, Provider, Product, Evidence, approval, credential, command,
 process, filesystem, network, Desktop, Operator, or Beta Execute behavior.
 
+### Non-executable Composition Foundation
+
+```yaml
+capability_id: CAP-COMPOSITION-0001
+status: implemented
+maturity: M3
+implementation_status: implemented
+```
+
+AFDE-5.6 adds explicit constructor composition:
+
+```text
+caller-injected KnowledgeProvider
+caller-injected ToolAdapterDescriptor values
+caller-injected RuntimeIntegrationPolicy
+        |
+        v
+build_non_executable_composition
+        |
+        v
+frozen NonExecutableComposition
+```
+
+The builder constructs the existing Capability Resolver, Planner Resolution,
+Tool Adapter Catalog, Tool Adapter Selection, Execution Path, Runtime
+Integration, and Tool Adapter Contract services. Selection, Execution Path,
+and Tool Adapter Contract share the same Catalog instance.
+
+Construction invokes none of the service methods and performs no Registry,
+filesystem, environment, configuration, Provider, Adapter, Runtime, Worker,
+Evidence, Product, Operator, CLI, Desktop, network, or subprocess behavior.
+The composition has no execution facade, identity, trace, dynamic plugin
+container, or lifecycle API. Runtime and execution authority remain false.
+
 ### Normative Standards
 
 - `docs/standards/DOCUMENT_KNOWLEDGE_MANAGEMENT_STANDARD_v1.md`
@@ -379,6 +413,7 @@ process, filesystem, network, Desktop, Operator, or Beta Execute behavior.
 - `docs/standards/EXECUTION_PATH_STANDARD_v1.md`
 - `docs/standards/RUNTIME_INTEGRATION_STANDARD_v1.md`
 - `docs/standards/TOOL_ADAPTER_EXECUTION_CONTRACT_STANDARD_v1.md`
+- `docs/standards/NON_EXECUTABLE_COMPOSITION_STANDARD_v1.md`
 - `docs/standards/DOCUMENT_GOVERNANCE_STANDARD_v1.md`
 - `docs/standards/AI_REFERENCE_POLICY_v1.md`
 

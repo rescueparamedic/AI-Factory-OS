@@ -19,6 +19,7 @@
 - `docs/standards/EXECUTION_PATH_STANDARD_v1.md`
 - `docs/standards/RUNTIME_INTEGRATION_STANDARD_v1.md`
 - `docs/standards/TOOL_ADAPTER_EXECUTION_CONTRACT_STANDARD_v1.md`
+- `docs/standards/NON_EXECUTABLE_COMPOSITION_STANDARD_v1.md`
 - `docs/standards/DOCUMENT_GOVERNANCE_STANDARD_v1.md`
 - `docs/standards/AI_REFERENCE_POLICY_v1.md`
 
@@ -175,6 +176,26 @@ implementation_status: implemented
 The foundation validates a Runtime Projection against exact adapter descriptor
 metadata and produces deterministic binding metadata without invoking an
 adapter. Runtime and execution authority remain false.
+
+### Non-executable Composition
+
+- `afde/non_executable_composition/` — frozen seven-service container and
+  explicit constructor builder
+- `tests/test_non_executable_composition*.py` — construction, shared Catalog,
+  authority, manual-chain, determinism, and architecture-boundary validation
+- `docs/standards/NON_EXECUTABLE_COMPOSITION_STANDARD_v1.md` — normative
+  construction, injection, authority, isolation, and dependency decision
+
+```yaml
+capability_id: CAP-COMPOSITION-0001
+status: implemented
+maturity: M3
+implementation_status: implemented
+```
+
+The foundation assembles existing non-executable capability services without
+calling them. It is not a Runtime, Worker, orchestration facade, Operational
+Adapter Registry, or production composition.
 
 ### Knowledge Foundation Capability
 

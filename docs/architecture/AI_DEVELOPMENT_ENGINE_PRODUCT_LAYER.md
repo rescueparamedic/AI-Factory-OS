@@ -749,6 +749,14 @@ validated for malformed entries, duplicates, exact identity, registration, and
 metadata agreement. Runtime and execution authority remain false; no adapter
 or Worker is invoked.
 
+AFDE-5.6 explicitly constructs the existing capability services through Tool
+Adapter Execution Contract in one frozen non-executable composition. The
+caller supplies the Knowledge Provider, adapter descriptors, and Runtime
+policy. The builder performs no service call, discovery, configuration load,
+Runtime session, Worker handoff, Evidence generation, or Product Assembly.
+This closes repeatable manual construction debt only; executable production
+composition remains deferred.
+
 When several adapters provide the same capability, future selection may
 consider safety, cost, speed, privacy, local execution, licensing, and current
 availability. If selection or execution fails, control may move to another

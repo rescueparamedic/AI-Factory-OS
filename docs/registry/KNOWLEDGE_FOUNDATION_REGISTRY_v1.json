@@ -24,7 +24,8 @@
         "CAP-TOOLCATALOG-0001",
         "CAP-EXECPATH-0001",
         "CAP-RUNTIME-0001",
-        "CAP-TOOLADAPTER-CONTRACT-0001"
+        "CAP-TOOLADAPTER-CONTRACT-0001",
+        "CAP-COMPOSITION-0001"
       ]
     },
     {
@@ -48,7 +49,8 @@
         "CAP-TOOLCATALOG-0001",
         "CAP-EXECPATH-0001",
         "CAP-RUNTIME-0001",
-        "CAP-TOOLADAPTER-CONTRACT-0001"
+        "CAP-TOOLADAPTER-CONTRACT-0001",
+        "CAP-COMPOSITION-0001"
       ]
     },
     {
@@ -111,7 +113,8 @@
         "CAP-TOOLCATALOG-0001",
         "CAP-EXECPATH-0001",
         "CAP-RUNTIME-0001",
-        "CAP-TOOLADAPTER-CONTRACT-0001"
+        "CAP-TOOLADAPTER-CONTRACT-0001",
+        "CAP-COMPOSITION-0001"
       ]
     },
     {
@@ -180,6 +183,23 @@
       "knowledge_ids": [],
       "capability_ids": [
         "CAP-TOOLADAPTER-CONTRACT-0001"
+      ]
+    },
+    {
+      "document_id": "DOC-COMPOSITION-0001",
+      "title": "Non-executable Composition Standard v1",
+      "path": "docs/standards/NON_EXECUTABLE_COMPOSITION_STANDARD_v1.md",
+      "document_type": "standard",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.non_executable_composition",
+      "status": "Active",
+      "authority_level": "normative",
+      "version": "v1",
+      "effective_date": "2026-07-26",
+      "supersedes": [],
+      "knowledge_ids": [],
+      "capability_ids": [
+        "CAP-COMPOSITION-0001"
       ]
     },
     {
@@ -857,6 +877,68 @@
         "DOC-ARCH-0002",
         "DOC-CREG-0001",
         "DOC-TOOLCONTRACT-0001"
+      ],
+      "supersedes": []
+    },
+    {
+      "capability_id": "CAP-COMPOSITION-0001",
+      "name": "Non-executable Composition Foundation",
+      "description": "Construct the existing Planner Resolution, Capability Resolver, Tool Adapter Catalog, Tool Adapter Selection, Execution Path, Runtime Integration, and Tool Adapter Execution Contract services without executing behavior.",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.non_executable_composition",
+      "status": "implemented",
+      "maturity": "M3",
+      "implementation_status": "implemented",
+      "required_knowledge": [],
+      "required_capabilities": [
+        "CAP-PLANRES-0001",
+        "CAP-TOOLSELECT-0001",
+        "CAP-TOOLCATALOG-0001",
+        "CAP-EXECPATH-0001",
+        "CAP-RUNTIME-0001",
+        "CAP-TOOLADAPTER-CONTRACT-0001"
+      ],
+      "tool_dependencies": [],
+      "adapter_dependencies": [
+        "caller-injected KnowledgeProvider",
+        "caller-injected ToolAdapterDescriptor values",
+        "caller-injected RuntimeIntegrationPolicy"
+      ],
+      "runtime_dependencies": [],
+      "implementation_references": [
+        "afde/non_executable_composition/__init__.py",
+        "afde/non_executable_composition/models.py",
+        "afde/non_executable_composition/factory.py"
+      ],
+      "validation_evidence": [
+        "tests/test_non_executable_composition.py",
+        "tests/test_non_executable_composition_boundaries.py"
+      ],
+      "known_gaps": [
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-COMPOSITION-0001",
+          "message": "Executable production composition and operational Adapter Registry remain deferred.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-COMPOSITION-0001",
+          "message": "Worker, Evidence, Product Assembly, Runtime session, Provider, credential, and lifecycle integration remain deferred.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "evidence_gap",
+          "subject_id": "CAP-COMPOSITION-0001",
+          "message": "Operational Evidence and M4 validation are not complete.",
+          "related_ids": []
+        }
+      ],
+      "source_documents": [
+        "DOC-ARCH-0001",
+        "DOC-ARCH-0002",
+        "DOC-CREG-0001",
+        "DOC-COMPOSITION-0001"
       ],
       "supersedes": []
     }

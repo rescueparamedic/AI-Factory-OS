@@ -1,18 +1,18 @@
 # Technical Debt
 
-## AFDE-5.5 Tool Adapter Execution Contract Foundation
+## AFDE-5.6 Non-executable Composition Foundation
 
-- AFDE-5.x foundations are not composed into one production path from Planner
-  through Tool Adapter Execution Contract to Worker, Evidence, and Product
-  Assembly.
+- The seven AFDE-5.x services now have explicit repeatable construction, but
+  executable production composition remains unimplemented.
 - Registry JSON structure and references are validated, but no automated check
   compares capability field values against their Markdown registry entries.
 - Capability ID grammar is duplicated across AFDE model and validation modules
   instead of being owned by one shared definition.
-- Tool Adapter Execution Contract has no production consumer; usage is limited
-  to focused validation and upstream contract tests.
 - No Operational Adapter Registry or governed production adapter population
   exists; the immutable Tool Adapter Catalog remains constructor supplied.
+- Worker, Evidence, and Product Assembly are not integrated with this
+  non-executable composition.
+- Operational Evidence and M4 validation remain incomplete.
 
 ## AFDE-3.9 Runtime History Foundation
 
