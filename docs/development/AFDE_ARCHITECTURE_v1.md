@@ -39,7 +39,7 @@ Evidence, and product projection without replacing that foundation.
 
 ### Canonical Flow
 
-The canonical responsibility order through AFDE-5.7 is:
+The canonical responsibility order through AFDE-5.8 is:
 
 ```text
 Planner
@@ -81,9 +81,11 @@ Product Assembly
 This flow defines responsibility and handoff order. AFDE-5.6 provides explicit
 repeatable construction of the capability services through Tool Adapter
 Execution Contract. AFDE-5.7 validates explicitly supplied registrations and
-supplies the existing Catalog without discovery or execution. Neither
-foundation implements the downstream production path into Worker, Evidence,
-and Product Assembly.
+supplies the existing Catalog without discovery or execution. AFDE-5.8 uses
+that same Registry Catalog as the authoritative source in an explicit
+non-executable production composition root. None of these foundations
+implements the downstream production path into Worker, Evidence, and Product
+Assembly.
 
 ### Knowledge Foundation
 
@@ -444,6 +446,47 @@ adapter construction or invocation, availability probe, credential check,
 filesystem, network, environment, configuration, Provider, Runtime, Worker,
 Evidence, Operator, Product, or lifecycle behavior. Registered metadata does
 not establish executable or operational availability, and M4 is not claimed.
+
+### Production Composition Foundation
+
+```yaml
+capability_id: CAP-PRODUCTIONCOMPOSITION-0001
+status: implemented
+maturity: M3
+implementation_status: implemented
+```
+
+AFDE-5.8 adds one official non-executable production dependency composition
+root:
+
+```text
+caller-injected KnowledgeProvider
+caller-injected OperationalAdapterRegistry
+caller-injected RuntimeIntegrationPolicy
+        |
+        v
+build_production_composition
+        |
+        v
+Registry-projected existing ToolAdapterCatalog
+        |
+        v
+existing frozen NonExecutableComposition
+```
+
+The Registry is the authoritative Catalog supplier. Tool Adapter Selection,
+Execution Path, and Tool Adapter Contract share the exact same projected
+Catalog instance. The existing Resolver, Planner Resolution, Runtime
+Integration service, seven-service result model, and AFDE-5.6 builder contract
+remain unchanged.
+
+Production identifies the official dependency composition root only. It does
+not grant Runtime or execution authority, bind an Adapter, or establish
+production readiness, operational availability, or M4 maturity. Construction
+performs no discovery, dynamic import, Adapter instantiation or invocation,
+availability probe, credential lookup, filesystem, network, environment,
+configuration, Runtime, Worker, Evidence, Operator, Product, CLI, Desktop, or
+lifecycle behavior.
 
 ### Normative Standards
 

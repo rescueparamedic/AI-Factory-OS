@@ -216,6 +216,26 @@ It performs no discovery, import, instantiation, invocation, availability
 probe, credential lookup, Runtime, Worker, Evidence, or Product behavior.
 Registration does not guarantee executable or operational availability.
 
+### Production Composition
+
+- `afde/production_composition/` — explicit production dependency builder over
+  the existing non-executable composition and Operational Adapter Registry
+- `tests/test_production_composition*.py` — Catalog identity, fail-closed,
+  authority, side-effect, and architecture-boundary validation
+
+```yaml
+capability_id: CAP-PRODUCTIONCOMPOSITION-0001
+status: implemented
+maturity: M3
+implementation_status: implemented
+```
+
+The Registry supplies the authoritative existing Catalog shared by Selection,
+Execution Path, and Tool Adapter Contract. Production identifies the official
+composition root only; Runtime, execution, adapter binding, Worker, Evidence,
+Operator, Product, CLI, Desktop, concrete registrations, and M4 remain
+deferred.
+
 ### Knowledge Foundation Capability
 
 ```yaml

@@ -26,7 +26,8 @@
         "CAP-RUNTIME-0001",
         "CAP-TOOLADAPTER-CONTRACT-0001",
         "CAP-COMPOSITION-0001",
-        "CAP-ADAPTERREGISTRY-0001"
+        "CAP-ADAPTERREGISTRY-0001",
+        "CAP-PRODUCTIONCOMPOSITION-0001"
       ]
     },
     {
@@ -116,7 +117,8 @@
         "CAP-RUNTIME-0001",
         "CAP-TOOLADAPTER-CONTRACT-0001",
         "CAP-COMPOSITION-0001",
-        "CAP-ADAPTERREGISTRY-0001"
+        "CAP-ADAPTERREGISTRY-0001",
+        "CAP-PRODUCTIONCOMPOSITION-0001"
       ]
     },
     {
@@ -201,7 +203,8 @@
       "supersedes": [],
       "knowledge_ids": [],
       "capability_ids": [
-        "CAP-COMPOSITION-0001"
+        "CAP-COMPOSITION-0001",
+        "CAP-PRODUCTIONCOMPOSITION-0001"
       ]
     },
     {
@@ -994,6 +997,63 @@
       "source_documents": [
         "DOC-ARCH-0001",
         "DOC-CREG-0001"
+      ],
+      "supersedes": []
+    },
+    {
+      "capability_id": "CAP-PRODUCTIONCOMPOSITION-0001",
+      "name": "Production Composition Foundation",
+      "description": "Compose the existing non-executable AFDE services with the authoritative Tool Adapter Catalog supplied by the Operational Adapter Registry without binding or executing adapters.",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.production_composition",
+      "status": "implemented",
+      "maturity": "M3",
+      "implementation_status": "implemented",
+      "required_knowledge": [],
+      "required_capabilities": [
+        "CAP-COMPOSITION-0001",
+        "CAP-ADAPTERREGISTRY-0001"
+      ],
+      "tool_dependencies": [],
+      "adapter_dependencies": [
+        "caller-injected KnowledgeProvider",
+        "caller-injected OperationalAdapterRegistry",
+        "caller-injected RuntimeIntegrationPolicy",
+        "registry-projected existing ToolAdapterCatalog"
+      ],
+      "runtime_dependencies": [],
+      "implementation_references": [
+        "afde/production_composition/__init__.py",
+        "afde/production_composition/factory.py"
+      ],
+      "validation_evidence": [
+        "tests/test_production_composition.py",
+        "tests/test_production_composition_boundaries.py"
+      ],
+      "known_gaps": [
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PRODUCTIONCOMPOSITION-0001",
+          "message": "Adapter discovery, binding, instantiation, invocation, availability validation, credentials, and concrete production registrations remain deferred.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PRODUCTIONCOMPOSITION-0001",
+          "message": "Runtime, Worker, Evidence, Operator, Product Assembly, CLI, Desktop, and lifecycle integration remain deferred.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "evidence_gap",
+          "subject_id": "CAP-PRODUCTIONCOMPOSITION-0001",
+          "message": "Operational Evidence and M4 validation are not complete.",
+          "related_ids": []
+        }
+      ],
+      "source_documents": [
+        "DOC-ARCH-0001",
+        "DOC-CREG-0001",
+        "DOC-COMPOSITION-0001"
       ],
       "supersedes": []
     }

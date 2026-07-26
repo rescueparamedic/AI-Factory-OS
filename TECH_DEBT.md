@@ -1,5 +1,20 @@
 # Technical Debt
 
+## AFDE-5.8 Production Composition Foundation
+
+- The production composition is intentionally non-executable; Runtime, Worker,
+  Evidence, Operator, Product, CLI, Desktop, and lifecycle integration remain
+  unimplemented.
+- The Operational Adapter Registry has no concrete production registrations,
+  Adapter discovery, binding, import, instantiation, invocation, availability
+  validation, or credential integration.
+- Knowledge Provider, Registry, and Runtime policy dependencies are still
+  supplied by the caller; environment-specific application startup ownership
+  remains future work.
+- Registry JSON structure and references are validated, but no automated check
+  compares capability field values against their Markdown registry entries.
+- Operational Evidence and M4 validation remain incomplete.
+
 ## AFDE-5.7 Operational Adapter Registry Foundation
 
 - The seven AFDE-5.x services now have explicit repeatable construction, but

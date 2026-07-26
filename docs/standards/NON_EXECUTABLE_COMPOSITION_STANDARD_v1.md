@@ -77,6 +77,34 @@ Audit date: 2026-07-26.
 
 Decision: use explicit constructors and the standard library only.
 
+## Production Composition Root
+
+AFDE-5.8 adds `build_production_composition` as an additive, non-executable
+production dependency boundary. It accepts a caller-supplied read-only
+`KnowledgeProvider`, `OperationalAdapterRegistry`, and immutable
+`RuntimeIntegrationPolicy`.
+
+The builder uses `OperationalAdapterRegistry.project_catalog()` as the
+authoritative Catalog supplier. It does not construct another
+`ToolAdapterCatalog`. The resulting existing `NonExecutableComposition` keeps
+that same Catalog instance in Tool Adapter Selection, Execution Path, and Tool
+Adapter Contract.
+
+Production in this contract identifies the official dependency composition
+root only. It does not mean executable, production-ready, operationally
+available, adapter-bound, Runtime-integrated, or M4 validated. Construction
+does not discover, import, instantiate, bind, probe, or invoke adapters and
+does not connect Runtime, Worker, Evidence, Operator, Product, CLI, Desktop,
+filesystem, network, environment, configuration, or credentials.
+
+The AFDE-5.6 `build_non_executable_composition` contract remains unchanged.
+
+The limited AFDE-5.8 dependency-injection audit considered
+`dependency-injector`, `punq`, and `injector`. Their container, resolution,
+wiring, scope, configuration, and resource features do not reduce this bounded
+three-input constructor composition. The decision remains direct construction
+with no third-party dependency.
+
 ## Capability Status
 
 ```yaml
@@ -88,4 +116,16 @@ implementation_status: implemented
 
 Executable production composition, concrete production Adapter registrations,
 Worker/Evidence/Product integration, and operational M4 Evidence remain
+deferred.
+
+```yaml
+capability_id: CAP-PRODUCTIONCOMPOSITION-0001
+status: implemented
+maturity: M3
+implementation_status: implemented
+```
+
+This capability records the non-executable production composition root.
+Adapter binding, Runtime/Worker/Evidence/Product integration, concrete
+production registrations, operational Evidence, and M4 validation remain
 deferred.

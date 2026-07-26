@@ -1,5 +1,19 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-5.8 Production Composition Foundation (Unreleased)
+
+- Registered `CAP-PRODUCTIONCOMPOSITION-0001` as implemented at M3 without
+  claiming M4, production readiness, or operational availability.
+- Added an explicit three-input production dependency composition root.
+- Reused the Registry-projected existing Catalog, seven AFDE-5.x services, and
+  frozen non-executable result without changing upstream public contracts.
+- Required Selection, Execution Path, and Tool Adapter Contract to share the
+  authoritative Registry Catalog instance.
+- Added no Catalog duplication, DI framework, Adapter binding or execution,
+  discovery, Runtime, Worker, Evidence, Operator, Product, CLI, Desktop,
+  filesystem, network, environment, credentials, or lifecycle behavior.
+- Added focused behavior and AST architecture-boundary tests.
+
 ## AFDE-5.7 Operational Adapter Registry Foundation (Unreleased)
 
 - Registered `CAP-ADAPTERREGISTRY-0001` as implemented at M3 without claiming
