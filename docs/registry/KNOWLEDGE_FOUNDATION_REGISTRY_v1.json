@@ -25,7 +25,8 @@
         "CAP-EXECPATH-0001",
         "CAP-RUNTIME-0001",
         "CAP-TOOLADAPTER-CONTRACT-0001",
-        "CAP-COMPOSITION-0001"
+        "CAP-COMPOSITION-0001",
+        "CAP-ADAPTERREGISTRY-0001"
       ]
     },
     {
@@ -114,7 +115,8 @@
         "CAP-EXECPATH-0001",
         "CAP-RUNTIME-0001",
         "CAP-TOOLADAPTER-CONTRACT-0001",
-        "CAP-COMPOSITION-0001"
+        "CAP-COMPOSITION-0001",
+        "CAP-ADAPTERREGISTRY-0001"
       ]
     },
     {
@@ -633,7 +635,7 @@
         {
           "gap_type": "capability_gap",
           "subject_id": "CAP-TOOLSELECT-0001",
-          "message": "Operational Tool Adapter population and the Adapter execution Contract remain deferred.",
+          "message": "Concrete production Tool Adapter registrations and Adapter execution remain deferred.",
           "related_ids": []
         },
         {
@@ -686,7 +688,7 @@
         {
           "gap_type": "capability_gap",
           "subject_id": "CAP-TOOLCATALOG-0001",
-          "message": "Operational Tool Adapter descriptors and external discovery remain deferred.",
+          "message": "Concrete production Tool Adapter registrations and external discovery remain deferred.",
           "related_ids": []
         },
         {
@@ -918,7 +920,7 @@
         {
           "gap_type": "capability_gap",
           "subject_id": "CAP-COMPOSITION-0001",
-          "message": "Executable production composition and operational Adapter Registry remain deferred.",
+          "message": "Executable production composition and concrete production Adapter registrations remain deferred.",
           "related_ids": []
         },
         {
@@ -939,6 +941,59 @@
         "DOC-ARCH-0002",
         "DOC-CREG-0001",
         "DOC-COMPOSITION-0001"
+      ],
+      "supersedes": []
+    },
+    {
+      "capability_id": "CAP-ADAPTERREGISTRY-0001",
+      "name": "Operational Adapter Registry Foundation",
+      "description": "Validate explicitly supplied Tool Adapter registrations and expose one deterministic immutable snapshot and the existing Tool Adapter Catalog without discovery or execution.",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.operational_adapter_registry",
+      "status": "implemented",
+      "maturity": "M3",
+      "implementation_status": "implemented",
+      "required_knowledge": [],
+      "required_capabilities": [
+        "CAP-TOOLCATALOG-0001"
+      ],
+      "tool_dependencies": [],
+      "adapter_dependencies": [
+        "caller-injected ToolAdapterDescriptor registrations",
+        "existing ToolAdapterCatalog projection"
+      ],
+      "runtime_dependencies": [],
+      "implementation_references": [
+        "afde/operational_adapter_registry/__init__.py",
+        "afde/operational_adapter_registry/registry.py"
+      ],
+      "validation_evidence": [
+        "tests/test_operational_adapter_registry.py",
+        "tests/test_operational_adapter_registry_boundaries.py"
+      ],
+      "known_gaps": [
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-ADAPTERREGISTRY-0001",
+          "message": "Adapter discovery, import, instantiation, invocation, availability validation, and concrete production registrations remain deferred.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-ADAPTERREGISTRY-0001",
+          "message": "Executable composition and Runtime, Worker, Evidence, Operator, Product Assembly, credential, and lifecycle integration remain deferred.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "evidence_gap",
+          "subject_id": "CAP-ADAPTERREGISTRY-0001",
+          "message": "Operational Evidence and M4 validation are not complete.",
+          "related_ids": []
+        }
+      ],
+      "source_documents": [
+        "DOC-ARCH-0001",
+        "DOC-CREG-0001"
       ],
       "supersedes": []
     }

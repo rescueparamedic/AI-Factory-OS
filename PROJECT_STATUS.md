@@ -1,5 +1,23 @@
 # AI Factory OS Project Status
 
+## AFDE-5.7 Operational Adapter Registry Foundation
+
+- `CAP-ADAPTERREGISTRY-0001` is `implemented`, maturity `M3`, with
+  `implementation_status: implemented`.
+- `afde.operational_adapter_registry` accepts only explicitly supplied existing
+  `ToolAdapterDescriptor` registrations.
+- Registration validation reuses existing Tool Adapter Catalog errors,
+  duplicate detection, exact Capability mapping validation, deterministic
+  ordering, and immutable snapshot contracts.
+- One projected existing `ToolAdapterCatalog` remains compatible with Tool
+  Selection, Execution Path, and Tool Adapter Contract.
+- No discovery, import, adapter execution, availability probe, credential,
+  filesystem, network, environment, Runtime, Worker, Evidence, Operator,
+  Product, or lifecycle behavior was added.
+- Registered metadata does not guarantee executable or operational
+  availability. Concrete production registrations, executable composition,
+  downstream integration, and M4 remain deferred.
+
 ## AFDE-5.6 Non-executable Composition Foundation
 
 - `CAP-COMPOSITION-0001` is `implemented`, maturity `M3`, with
@@ -13,8 +31,8 @@
   policy. No Registry, filesystem, environment, or configuration is loaded.
 - The frozen composition has no execution facade and always keeps
   `runtime_allowed` and `execution_allowed` false.
-- Executable production composition, Operational Adapter Registry,
-  Worker/Evidence/Product integration, and M4 remain deferred.
+- Executable production composition, concrete production Adapter
+  registrations, Worker/Evidence/Product integration, and M4 remain deferred.
 
 ## AFDE-5.5 Tool Adapter Execution Contract Foundation
 
@@ -107,7 +125,8 @@
 - Invalid metadata, invalid or non-selectable resolution, no match, and
   ambiguous matches fail closed. Runtime and execution are always disallowed.
 - Adapter execution, Runtime, Worker, Provider, Product Assembly, Evidence,
-  discovery/ranking, operational Catalog population, and M4 remain deferred.
+  discovery/ranking, concrete production Adapter registrations, and M4 remain
+  deferred.
   The read-only Catalog foundation is implemented separately at M3.
 
 ## AFDE-5.0 Planner-Resolver Integration

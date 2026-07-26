@@ -189,7 +189,7 @@ tool or Runtime, alter Planner output, or claim operational validation.
 | Runtime dependencies | none |
 | Implementation references | `afde/tool_selection/` |
 | Validation evidence | AFDE-5.1 focused tests and full repository regression |
-| Known gaps | Operational Adapter Registry, adapter execution, production contract use, Worker, Provider, Evidence, Product Assembly, and M4 validation |
+| Known gaps | Concrete production Adapter registrations, adapter execution, production contract use, Worker, Provider, Evidence, Product Assembly, and M4 validation |
 | Source documents | `DOC-ARCH-0001`, `DOC-ARCH-0002`, `DOC-CREG-0001` |
 | Supersedes | none |
 
@@ -215,7 +215,7 @@ fallback, production composition, operational Evidence, and M4 remain deferred.
 | Runtime dependencies | none |
 | Implementation references | `afde/tool_catalog/` |
 | Validation evidence | AFDE-5.2 focused tests and full repository regression |
-| Known gaps | Operational Adapter Registry, execution, external discovery, production composition, Worker/Provider/Evidence/Product integration, and M4 |
+| Known gaps | Concrete production Adapter registrations, execution, external discovery, production composition, Worker/Provider/Evidence/Product integration, and M4 |
 | Source documents | `DOC-ARCH-0001`, `DOC-ARCH-0002`, `DOC-CREG-0001`, `DOC-TCAT-0001` |
 | Supersedes | none |
 
@@ -322,13 +322,39 @@ deferred.
 | Runtime dependencies | none |
 | Implementation references | `afde/non_executable_composition/__init__.py`, `afde/non_executable_composition/models.py`, `afde/non_executable_composition/factory.py` |
 | Validation evidence | `tests/test_non_executable_composition.py`, `tests/test_non_executable_composition_boundaries.py` |
-| Known gaps | Executable production composition and operational Adapter Registry remain deferred.<br>Worker, Evidence, Product Assembly, Runtime session, Provider, credential, and lifecycle integration remain deferred.<br>Operational Evidence and M4 validation are not complete. |
+| Known gaps | Executable production composition and concrete production Adapter registrations remain deferred.<br>Worker, Evidence, Product Assembly, Runtime session, Provider, credential, and lifecycle integration remain deferred.<br>Operational Evidence and M4 validation are not complete. |
 | Source documents | `DOC-ARCH-0001`, `DOC-ARCH-0002`, `DOC-CREG-0001`, `DOC-COMPOSITION-0001` |
 | Supersedes | none |
 
 This entry records explicit construction only. It does not grant execution
 authority or call the constructed services. The caller owns all injected
 dependencies, and `runtime_allowed` and `execution_allowed` remain false.
+
+### CAP-ADAPTERREGISTRY-0001
+
+| Field | Value |
+| --- | --- |
+| Name | Operational Adapter Registry Foundation |
+| Description | Validate explicitly supplied Tool Adapter registrations and expose one deterministic immutable snapshot and the existing Tool Adapter Catalog without discovery or execution. |
+| Owner | AI Factory OS Architecture |
+| Scope | `architecture.operational_adapter_registry` |
+| Status | `implemented` |
+| Maturity | `M3` |
+| Implementation status | `implemented` |
+| Required knowledge | none |
+| Required capabilities | `CAP-TOOLCATALOG-0001` |
+| Tool dependencies | none |
+| Adapter dependencies | caller-injected `ToolAdapterDescriptor` registrations, existing `ToolAdapterCatalog` projection |
+| Runtime dependencies | none |
+| Implementation references | `afde/operational_adapter_registry/__init__.py`, `afde/operational_adapter_registry/registry.py` |
+| Validation evidence | `tests/test_operational_adapter_registry.py`, `tests/test_operational_adapter_registry_boundaries.py` |
+| Known gaps | Adapter discovery, import, instantiation, invocation, availability validation, and concrete production registrations remain deferred.<br>Executable composition and Runtime, Worker, Evidence, Operator, Product Assembly, credential, and lifecycle integration remain deferred.<br>Operational Evidence and M4 validation are not complete. |
+| Source documents | `DOC-ARCH-0001`, `DOC-CREG-0001` |
+| Supersedes | none |
+
+This entry records registration validation and Catalog supply only. Registered
+metadata does not guarantee that an adapter is executable, reachable, healthy,
+credential-ready, or operationally available.
 
 ## Registry Validation
 
@@ -349,7 +375,7 @@ A capability registry change is valid only when:
 ## Known Architecture Gaps
 
 - The non-executable composition has no executable production consumer.
-- Governed Operational Adapter Registry and population remain deferred.
+- Concrete production Adapter registrations and discovery remain deferred.
 - Runtime execution and lifecycle integration remain deferred.
 - Multiple-candidate discovery and ranking remain deferred.
 - M4 validation and operational integration are not complete.

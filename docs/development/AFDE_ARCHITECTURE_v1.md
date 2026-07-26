@@ -39,7 +39,7 @@ Evidence, and product projection without replacing that foundation.
 
 ### Canonical Flow
 
-The canonical responsibility order through AFDE-5.6 is:
+The canonical responsibility order through AFDE-5.7 is:
 
 ```text
 Planner
@@ -49,6 +49,9 @@ Planner Resolution
     |
     v
 Capability Resolver
+    |
+    v
+Operational Adapter Registry
     |
     v
 Tool Adapter Catalog
@@ -77,8 +80,10 @@ Product Assembly
 
 This flow defines responsibility and handoff order. AFDE-5.6 provides explicit
 repeatable construction of the capability services through Tool Adapter
-Execution Contract. It does not call the services or implement the downstream
-production path into Worker, Evidence, and Product Assembly.
+Execution Contract. AFDE-5.7 validates explicitly supplied registrations and
+supplies the existing Catalog without discovery or execution. Neither
+foundation implements the downstream production path into Worker, Evidence,
+and Product Assembly.
 
 ### Knowledge Foundation
 
@@ -213,7 +218,7 @@ and ordered trace remain available in the result.
 The selection policy performs no Registry or filesystem access, Provider or
 network call, Runtime or Worker invocation, adapter execution, orchestration,
 ranking, Evidence generation, or Product Assembly. `runtime_allowed` and
-`execution_allowed` are always false. Operational adapter population,
+`execution_allowed` are always false. Concrete production registrations,
 execution, fallback, and M4 validation remain deferred.
 
 ### Tool Adapter Catalog Foundation
@@ -257,7 +262,7 @@ Existing runtime adapters are not cataloged because they do not yet carry the
 complete governed metadata contract. Catalog policy performs no Registry or
 filesystem access, network or Provider call, Runtime or Worker invocation,
 adapter execution, Evidence generation, Product Assembly, or orchestration.
-Operational adapter population, execution, external discovery, ranking,
+Concrete production registrations, execution, external discovery, ranking,
 fallback, credential storage, and M4 validation remain deferred.
 
 ### Execution Path Foundation
@@ -403,6 +408,42 @@ filesystem, environment, configuration, Provider, Adapter, Runtime, Worker,
 Evidence, Product, Operator, CLI, Desktop, network, or subprocess behavior.
 The composition has no execution facade, identity, trace, dynamic plugin
 container, or lifecycle API. Runtime and execution authority remain false.
+
+### Operational Adapter Registry Foundation
+
+```yaml
+capability_id: CAP-ADAPTERREGISTRY-0001
+status: implemented
+maturity: M3
+implementation_status: implemented
+```
+
+AFDE-5.7 adds one explicit non-executable registration front door:
+
+```text
+caller-injected ToolAdapterDescriptor registrations
+        |
+        v
+OperationalAdapterRegistry
+        |
+        v
+existing immutable ToolAdapterCatalog
+        |
+        v
+existing Selection / Execution Path / Tool Adapter Contract services
+```
+
+The Registry reuses the existing descriptor validation, Catalog errors,
+deterministic ordering, immutable Catalog snapshot, lookup, and candidate
+projection. Empty registrations are valid. Duplicate adapter identities,
+malformed descriptors, invalid Capability mappings, and ambiguous selectable
+mappings fail closed.
+
+Registration and Catalog projection perform no discovery, dynamic import,
+adapter construction or invocation, availability probe, credential check,
+filesystem, network, environment, configuration, Provider, Runtime, Worker,
+Evidence, Operator, Product, or lifecycle behavior. Registered metadata does
+not establish executable or operational availability, and M4 is not claimed.
 
 ### Normative Standards
 
