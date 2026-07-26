@@ -231,7 +231,10 @@ def test_non_executable_composition_is_registered_at_m3_only():
     assert standard.path == (
         "docs/standards/NON_EXECUTABLE_COMPOSITION_STANDARD_v1.md"
     )
-    assert standard.capability_ids == ("CAP-COMPOSITION-0001",)
+    assert standard.capability_ids == (
+        "CAP-COMPOSITION-0001",
+        "CAP-PRODUCTIONCOMPOSITION-0001",
+    )
 
 
 def test_operational_adapter_registry_is_registered_at_m3_only():
