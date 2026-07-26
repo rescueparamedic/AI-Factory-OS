@@ -2,14 +2,17 @@
 
 ## AFDE-5.5 Tool Adapter Execution Contract Foundation
 
-- The boundary validates governed descriptor metadata only. Actual adapter and
-  Worker execution remain unimplemented and must be separately authorized.
-- Adapter implementations are not operationally populated or dynamically
-  discovered; the injected lookup remains the authoritative read-only input.
-- Runtime sessions, Provider calls, approval, credentials, Evidence,
-  lifecycle, Product Assembly, Desktop, Operator, and Beta Execute integration
-  remain deferred.
-- Operational Evidence and M4 validation remain incomplete.
+- AFDE-5.x foundations are not composed into one production path from Planner
+  through Tool Adapter Execution Contract to Worker, Evidence, and Product
+  Assembly.
+- Registry JSON structure and references are validated, but no automated check
+  compares capability field values against their Markdown registry entries.
+- Capability ID grammar is duplicated across AFDE model and validation modules
+  instead of being owned by one shared definition.
+- Tool Adapter Execution Contract has no production consumer; usage is limited
+  to focused validation and upstream contract tests.
+- No Operational Adapter Registry or governed production adapter population
+  exists; the immutable Tool Adapter Catalog remains constructor supplied.
 
 ## AFDE-3.9 Runtime History Foundation
 

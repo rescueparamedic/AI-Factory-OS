@@ -1,6 +1,6 @@
 # Sprint AFDE-2 Changelog
 
-## AFDE-5.5 Tool Adapter Execution Contract Foundation (Unreleased)
+## AFDE-5.5 Tool Adapter Execution Contract Foundation (Merged, PR #46)
 
 - Registered `CAP-TOOLADAPTER-CONTRACT-0001` as implemented at M3 without
   claiming M4.

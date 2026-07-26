@@ -37,22 +37,36 @@ Sprints added the Product Layer, Operator application path, Planner,
 RealWorkerRuntime, ToolAction boundary, controlled execution, approval,
 Evidence, and product projection without replacing that foundation.
 
-AFDE-4.7 adds the Knowledge Foundation architecture:
+### Canonical Flow
+
+The canonical responsibility order through AFDE-5.5 is:
 
 ```text
-Capability
+Planner
     |
     v
-Knowledge Foundation
+Planner Resolution
     |
     v
 Capability Resolver
     |
     v
-Tool Adapter
+Tool Adapter Catalog
     |
     v
-Runtime
+Tool Adapter Selection
+    |
+    v
+Execution Path
+    |
+    v
+Runtime Integration
+    |
+    v
+Tool Adapter Execution Contract
+    |
+    v
+Worker
     |
     v
 Evidence
@@ -60,6 +74,11 @@ Evidence
     v
 Product Assembly
 ```
+
+This flow defines responsibility and handoff order. The AFDE-5.x foundations
+through Tool Adapter Execution Contract are implemented as isolated,
+non-executable boundaries, but end-to-end production composition into Worker,
+Evidence, and Product Assembly is not implemented.
 
 ### Knowledge Foundation
 

@@ -112,8 +112,8 @@ A document, registry entry, test plan, or architecture approval alone cannot.
 - Tool, Adapter, and Runtime dependencies must name the owning contract rather
   than grant direct execution authority.
 - The Capability Resolver foundation may evaluate only registered eligible
-  capabilities. Multiple-candidate discovery, implementation ranking, and Tool
-  Adapter selection require a future approved Sprint.
+  capabilities. Exact Tool Adapter selection is implemented separately;
+  multiple-candidate discovery and implementation ranking remain deferred.
 - Runtime remains responsible for execution, lifecycle, approval, and Evidence.
 - Known gaps remain visible and fail closed where a required dependency cannot
   be established.
@@ -138,7 +138,7 @@ A document, registry entry, test plan, or architecture approval alone cannot.
 | Runtime dependencies | none |
 | Implementation references | `afde/knowledge/`, `docs/registry/KNOWLEDGE_FOUNDATION_REGISTRY_v1.json` |
 | Validation evidence | AFDE-4.8 focused tests and full repository regression |
-| Known gaps | Tool Adapter implementation, operational integration, and M4 validation remain deferred |
+| Known gaps | operational Tool Adapter execution, production composition, and M4 validation remain deferred |
 | Source documents | `DOC-ARCH-0001`, `DOC-ARCH-0002`, `DOC-DKM-0001`, `DOC-KREG-0001`, `DOC-CREG-0001`, `DOC-DGOV-0001`, `DOC-AIREF-0001` |
 | Supersedes | none |
 
@@ -163,7 +163,7 @@ does not claim Tool Adapter or Runtime integration, operational use, or M4.
 | Runtime dependencies | none |
 | Implementation references | `afde/resolver/` |
 | Validation evidence | AFDE-4.9 focused tests and full repository regression |
-| Known gaps | Planner, Tool Adapter, and Runtime integration; multiple-candidate discovery/ranking; operational Evidence; M4 validation |
+| Known gaps | AFDE-5.x production composition, multiple-candidate discovery/ranking, operational Evidence, and M4 validation |
 | Source documents | `DOC-ARCH-0001`, `DOC-ARCH-0002`, `DOC-CREG-0001` |
 | Supersedes | none |
 
@@ -189,13 +189,13 @@ tool or Runtime, alter Planner output, or claim operational validation.
 | Runtime dependencies | none |
 | Implementation references | `afde/tool_selection/` |
 | Validation evidence | AFDE-5.1 focused tests and full repository regression |
-| Known gaps | operational adapter catalog and execution contract; Runtime, Worker, Provider, Evidence, and Product Assembly integration; M4 validation |
+| Known gaps | Operational Adapter Registry, adapter execution, production contract use, Worker, Provider, Evidence, Product Assembly, and M4 validation |
 | Source documents | `DOC-ARCH-0001`, `DOC-ARCH-0002`, `DOC-CREG-0001` |
 | Supersedes | none |
 
 This entry records selection only. Registry metadata and selection results grant
 no execution authority. Candidate discovery/ranking, adapter execution,
-fallback, Runtime integration, operational Evidence, and M4 remain deferred.
+fallback, production composition, operational Evidence, and M4 remain deferred.
 
 ### CAP-TOOLCATALOG-0001
 
@@ -215,7 +215,7 @@ fallback, Runtime integration, operational Evidence, and M4 remain deferred.
 | Runtime dependencies | none |
 | Implementation references | `afde/tool_catalog/` |
 | Validation evidence | AFDE-5.2 focused tests and full repository regression |
-| Known gaps | operational adapter descriptors, execution, external discovery, Runtime/Worker/Provider/Evidence/Product integration, and M4 |
+| Known gaps | Operational Adapter Registry, execution, external discovery, production composition, Worker/Provider/Evidence/Product integration, and M4 |
 | Source documents | `DOC-ARCH-0001`, `DOC-ARCH-0002`, `DOC-CREG-0001`, `DOC-TCAT-0001` |
 | Supersedes | none |
 
@@ -246,9 +246,9 @@ and document lifecycle only. Catalog metadata grants no execution authority.
 | Supersedes | none |
 
 This entry records structural path construction and handoff readiness only.
-`runtime_allowed` and `execution_allowed` remain false. Actual Runtime handoff,
-authorization, adapter invocation, credential access, and operational Evidence
-belong to a future separately governed capability.
+`runtime_allowed` and `execution_allowed` remain false. Runtime handoff
+authority, adapter invocation, credential access, and operational Evidence
+remain deferred to separately governed executable capabilities.
 
 ### CAP-RUNTIME-0001
 
@@ -276,6 +276,34 @@ This entry records readiness projection only. `runtime_ready` is structural;
 `runtime_allowed` and `execution_allowed` remain false. Existing executable
 Runtime contracts remain unchanged and isolated.
 
+### CAP-TOOLADAPTER-CONTRACT-0001
+
+| Field | Value |
+| --- | --- |
+| Name | Tool Adapter Execution Contract Foundation |
+| Description | Validate one Runtime Projection against constructor-injected read-only adapter metadata and produce deterministic immutable binding metadata without execution authority. |
+| Owner | AI Factory OS Architecture |
+| Scope | `architecture.tool_adapter_contract` |
+| Status | `implemented` |
+| Maturity | `M3` |
+| Implementation status | `implemented` |
+| Required knowledge | none |
+| Required capabilities | `CAP-RUNTIME-0001`, `CAP-TOOLCATALOG-0001` |
+| Tool dependencies | none |
+| Adapter dependencies | `RuntimeProjection`, constructor-injected `AdapterLookup` |
+| Runtime dependencies | none |
+| Implementation references | `afde/tool_adapter_contract/errors.py`, `afde/tool_adapter_contract/models.py`, `afde/tool_adapter_contract/service.py` |
+| Validation evidence | `tests/test_tool_adapter_contract.py`, `tests/test_tool_adapter_contract_boundaries.py` |
+| Known gaps | Adapter and Worker execution remain deferred.<br>Runtime session, Provider, Evidence, approval, credential, lifecycle, Product Assembly, Desktop, Operator, and Beta Execute integration remain deferred.<br>Operational Evidence and M4 validation are not complete. |
+| Source documents | `DOC-ARCH-0001`, `DOC-ARCH-0002`, `DOC-CREG-0001`, `DOC-TOOLCONTRACT-0001` |
+| Supersedes | none |
+
+This entry records deterministic non-executable binding validation between
+Runtime Projection and Tool Adapter. It preserves projection, path,
+Capability, and adapter identity while `runtime_allowed` and
+`execution_allowed` remain false. Adapter and Worker execution remain
+deferred.
+
 ## Registry Validation
 
 A capability registry change is valid only when:
@@ -294,10 +322,10 @@ A capability registry change is valid only when:
 
 ## Known Architecture Gaps
 
-- Tool Adapter execution Contract remains a future architecture item.
-- Governed operational adapter population remains deferred.
+- Tool Adapter Execution Contract has no production composition or consumer.
+- Governed Operational Adapter Registry and population remain deferred.
 - Runtime execution and lifecycle integration remain deferred.
 - Multiple-candidate discovery and ranking remain deferred.
 - M4 validation and operational integration are not complete.
 - RAG, vector databases, embeddings, and multimodal adapters are outside
-  AFDE-5.4.
+  the current foundation scope.
