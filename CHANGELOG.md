@@ -1,5 +1,20 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-5.7 Operational Adapter Registry Foundation (Unreleased)
+
+- Registered `CAP-ADAPTERREGISTRY-0001` as implemented at M3 without claiming
+  M4 or operational availability.
+- Added an explicit registration front door for caller-injected existing
+  `ToolAdapterDescriptor` values.
+- Reused existing Catalog validation, errors, deterministic immutable snapshot,
+  lookup, and candidate projection contracts unchanged.
+- Supplied one existing `ToolAdapterCatalog` compatible with Selection,
+  Execution Path, and Tool Adapter Contract.
+- Added no discovery, dynamic import, adapter instantiation or invocation,
+  availability probe, credential, filesystem, network, environment, Runtime,
+  Worker, Evidence, Operator, Product, lifecycle, or external dependency.
+- Added focused registry and AST architecture-boundary tests.
+
 ## AFDE-5.6 Non-executable Composition Foundation (Unreleased)
 
 - Registered `CAP-COMPOSITION-0001` as implemented at M3 without claiming M4.

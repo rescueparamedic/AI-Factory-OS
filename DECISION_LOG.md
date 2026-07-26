@@ -1,5 +1,23 @@
 # Decision Log
 
+## 2026-07-26 - AFDE-5.7 Explicit Operational Adapter Registrations
+
+- Implemented `CAP-ADAPTERREGISTRY-0001` at M3 without claiming M4 or
+  operational availability.
+- Accepted only caller-injected existing `ToolAdapterDescriptor` registrations;
+  rejected discovery, files, entry points, dynamic imports, and plugins.
+- Reused `ToolAdapterCatalog` as the validation, immutable snapshot, lookup,
+  and candidate-projection owner rather than creating another Catalog.
+- Returned one Catalog instance so Selection, Execution Path, and Tool Adapter
+  Contract retain their existing public contracts and shared metadata source.
+- Kept Adapter construction/invocation, availability probes, credentials,
+  Provider, Runtime, Worker, Evidence, Operator, Product, and lifecycle outside
+  the registration boundary.
+- Added no third-party dependency and preserved the AFDE-5.6 non-executable
+  boundary.
+- Deferred concrete production registrations, discovery, executable
+  composition, downstream integration, and operational M4 evidence.
+
 ## 2026-07-26 - AFDE-5.6 Explicit Non-executable Composition
 
 - Implemented `CAP-COMPOSITION-0001` at M3 without claiming M4.

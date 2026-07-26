@@ -86,6 +86,6 @@ maturity: M3
 implementation_status: implemented
 ```
 
-Executable production composition, Operational Adapter Registry,
+Executable production composition, concrete production Adapter registrations,
 Worker/Evidence/Product integration, and operational M4 Evidence remain
 deferred.

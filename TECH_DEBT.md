@@ -1,6 +1,6 @@
 # Technical Debt
 
-## AFDE-5.6 Non-executable Composition Foundation
+## AFDE-5.7 Operational Adapter Registry Foundation
 
 - The seven AFDE-5.x services now have explicit repeatable construction, but
   executable production composition remains unimplemented.
@@ -8,8 +8,9 @@
   compares capability field values against their Markdown registry entries.
 - Capability ID grammar is duplicated across AFDE model and validation modules
   instead of being owned by one shared definition.
-- No Operational Adapter Registry or governed production adapter population
-  exists; the immutable Tool Adapter Catalog remains constructor supplied.
+- The Operational Adapter Registry foundation accepts explicit registrations,
+  but concrete production Adapter registrations, discovery, availability
+  validation, import, instantiation, and invocation remain unimplemented.
 - Worker, Evidence, and Product Assembly are not integrated with this
   non-executable composition.
 - Operational Evidence and M4 validation remain incomplete.

@@ -60,6 +60,7 @@ def test_valid_registry_loads_all_three_projections():
         "CAP-RUNTIME-0001",
         "CAP-TOOLADAPTER-CONTRACT-0001",
         "CAP-COMPOSITION-0001",
+        "CAP-ADAPTERREGISTRY-0001",
     ]
 
 
@@ -230,6 +231,37 @@ def test_non_executable_composition_is_registered_at_m3_only():
         "docs/standards/NON_EXECUTABLE_COMPOSITION_STANDARD_v1.md"
     )
     assert standard.capability_ids == ("CAP-COMPOSITION-0001",)
+
+
+def test_operational_adapter_registry_is_registered_at_m3_only():
+    snapshot = KnowledgeRegistryLoader(ROOT).load()
+    capability = next(
+        item for item in snapshot.capabilities
+        if item.capability_id == "CAP-ADAPTERREGISTRY-0001"
+    )
+    architecture = next(
+        item for item in snapshot.documents
+        if item.document_id == "DOC-ARCH-0001"
+    )
+    standard = next(
+        item for item in snapshot.documents
+        if item.document_id == "DOC-CREG-0001"
+    )
+
+    assert capability.status == "implemented"
+    assert capability.maturity == "M3"
+    assert capability.implementation_status == "implemented"
+    assert capability.required_capabilities == (
+        "CAP-TOOLCATALOG-0001",
+    )
+    assert capability.tool_dependencies == ()
+    assert capability.runtime_dependencies == ()
+    assert capability.implementation_references == (
+        "afde/operational_adapter_registry/__init__.py",
+        "afde/operational_adapter_registry/registry.py",
+    )
+    assert "CAP-ADAPTERREGISTRY-0001" in architecture.capability_ids
+    assert "CAP-ADAPTERREGISTRY-0001" in standard.capability_ids
 
 
 def test_missing_and_malformed_registry_fail_closed(tmp_path):

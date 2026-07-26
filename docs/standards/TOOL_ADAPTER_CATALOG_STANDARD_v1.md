@@ -79,6 +79,6 @@ maturity: M3
 implementation_status: implemented
 ```
 
-M4 validation, operational adapter population, execution integration, dynamic
+M4 validation, concrete production registrations, execution integration, dynamic
 discovery, ranking, fallback, and credential or secret management remain
 deferred.

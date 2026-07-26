@@ -197,6 +197,25 @@ The foundation assembles existing non-executable capability services without
 calling them. It is not a Runtime, Worker, orchestration facade, Operational
 Adapter Registry, or production composition.
 
+### Operational Adapter Registry
+
+- `afde/operational_adapter_registry/` —explicit registration validation and
+  projection to the existing immutable Tool Adapter Catalog
+- `tests/test_operational_adapter_registry*.py` —focused determinism,
+  fail-closed, downstream compatibility, and architecture-boundary validation
+
+```yaml
+capability_id: CAP-ADAPTERREGISTRY-0001
+status: implemented
+maturity: M3
+implementation_status: implemented
+```
+
+The foundation accepts only caller-injected `ToolAdapterDescriptor` values.
+It performs no discovery, import, instantiation, invocation, availability
+probe, credential lookup, Runtime, Worker, Evidence, or Product behavior.
+Registration does not guarantee executable or operational availability.
+
 ### Knowledge Foundation Capability
 
 ```yaml
