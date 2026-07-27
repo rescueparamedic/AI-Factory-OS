@@ -488,6 +488,46 @@ availability probe, credential lookup, filesystem, network, environment,
 configuration, Runtime, Worker, Evidence, Operator, Product, CLI, Desktop, or
 lifecycle behavior.
 
+### Production Adapter Registration Foundation
+
+```yaml
+capability_id: CAP-PRODUCTIONADAPTERREGISTRATION-0001
+status: implemented
+maturity: M3
+implementation_status: implemented
+required_capabilities:
+  - CAP-ADAPTERREGISTRY-0001
+```
+
+AFDE-5.9 adds one official static registration factory:
+
+```text
+approved immutable Codex Automation Bridge metadata
+        |
+        v
+build_production_adapter_registry
+        |
+        v
+existing OperationalAdapterRegistry
+        |
+        v
+existing immutable ToolAdapterCatalog
+```
+
+Each call creates an independent Registry and Catalog with a deterministically
+equal frozen snapshot containing exactly one descriptor:
+`adapter.codex_automation_bridge`. The returned Registry is directly
+compatible with `build_production_composition`, which preserves the exact
+Catalog identity across Selection, Execution Path, and Tool Adapter Contract.
+
+The registration stores only metadata reference strings for the existing
+bridge implementation. It does not import, inspect, instantiate, bind, invoke,
+or probe the bridge, and it performs no credential, discovery, filesystem,
+network, environment, configuration, Provider, Runtime, Worker, Evidence,
+Operator, Product, CLI, Desktop, startup, or lifecycle behavior. Runtime and
+execution authority remain false. Production readiness, operational Evidence,
+and M4 are not claimed.
+
 ### Normative Standards
 
 - `docs/standards/DOCUMENT_KNOWLEDGE_MANAGEMENT_STANDARD_v1.md`
@@ -498,6 +538,7 @@ lifecycle behavior.
 - `docs/standards/RUNTIME_INTEGRATION_STANDARD_v1.md`
 - `docs/standards/TOOL_ADAPTER_EXECUTION_CONTRACT_STANDARD_v1.md`
 - `docs/standards/NON_EXECUTABLE_COMPOSITION_STANDARD_v1.md`
+- `docs/standards/PRODUCTION_ADAPTER_REGISTRATION_STANDARD_v1.md`
 - `docs/standards/DOCUMENT_GOVERNANCE_STANDARD_v1.md`
 - `docs/standards/AI_REFERENCE_POLICY_v1.md`
 

@@ -48,14 +48,40 @@ Default ownership:
 
 AFDE-4.7 is a C2 document change. It is not authorization for a C3 change.
 
+## Collaboration Workflow Governance
+
+Chat classifies every Sprint before implementation begins.
+
+| Sprint type | Typical scope | Required workflow |
+| --- | --- | --- |
+| General Sprint | Existing Capability extension; Adapter; Provider; UI; Presenter; Projection; Contract-preserving Repository implementation; Persistence; tests; bug fixes; documentation | `Chat → Codex → Chat → PowerShell` |
+| Architecture Sprint | Runtime; Architecture; Public or Repository Contract; new Layer; Build vs Buy; Open Source research; large-scale refactoring | `Chat → Work → Codex → Chat → PowerShell` |
+
+Work is limited to Repository Audit, Existing Capability Audit, Open Source
+Audit, Architecture Audit, and Architecture Review. It is not used for a
+General Sprint and is not repeated after Codex.
+
+Chat owns Sprint classification, the Work decision, Codex prompt generation,
+result review, and merge approval. Codex owns implementation, tests,
+repository-defined builds, and the final report. After explicit Chat approval,
+PowerShell owns merge, `develop` synchronization, and authorized branch
+cleanup.
+
+The former default workflow is retired. There is no post-Codex Work stage.
+
 ## Review and Approval Gate
 
 Before approval:
 
-1. audit current `develop` and working-tree state;
-2. identify canonical and untracked documents;
-3. map reused capabilities and gaps;
-4. identify exact files to modify, create, and preserve.
+1. Chat classifies the Sprint as General or Architecture;
+2. for an Architecture Sprint, Work completes only the required Repository,
+   Existing Capability, Open Source, Architecture Audit, or Architecture
+   Review;
+3. Codex audits current `develop` and working-tree state within the approved
+   implementation scope;
+4. identify canonical and untracked documents;
+5. map reused capabilities and gaps;
+6. identify exact files to modify, create, and preserve.
 
 Before merge:
 
@@ -66,7 +92,7 @@ Before merge:
    contract, or Evidence schema change entered the Sprint;
 4. review the complete diff;
 5. record the decision, status, and changelog entry;
-6. obtain Product Owner approval for merge.
+6. obtain Chat and Product Owner approval for merge.
 
 Approval of architecture edits does not imply approval of implementation,
 external calls, publication, deployment, or merge.
@@ -74,14 +100,18 @@ external calls, publication, deployment, or merge.
 ## Git Workflow
 
 - `develop` is the repository Source of Truth.
-- Work occurs on a dedicated `feature/*` branch based on synchronized
+- Changes occur on a dedicated `feature/*` branch based on synchronized
   `develop`.
 - Unrelated dirty or untracked user work is preserved.
 - Commits are focused and auditable.
 - Pull requests target `develop`.
 - Merge Commit only is the accepted merge strategy.
 - Direct push to protected branches and automatic merge are prohibited.
-- Merge requires explicit user approval.
+- Merge requires explicit Chat and user approval.
+- Codex commits and pushes validated changes and updates or opens the pull
+  request.
+- PowerShell performs merge, `develop` synchronization, and authorized branch
+  cleanup only after approval.
 
 ## Registry Synchronization
 

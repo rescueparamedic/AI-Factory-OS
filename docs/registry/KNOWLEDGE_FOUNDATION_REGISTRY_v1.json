@@ -27,7 +27,8 @@
         "CAP-TOOLADAPTER-CONTRACT-0001",
         "CAP-COMPOSITION-0001",
         "CAP-ADAPTERREGISTRY-0001",
-        "CAP-PRODUCTIONCOMPOSITION-0001"
+        "CAP-PRODUCTIONCOMPOSITION-0001",
+        "CAP-PRODUCTIONADAPTERREGISTRATION-0001"
       ]
     },
     {
@@ -118,7 +119,8 @@
         "CAP-TOOLADAPTER-CONTRACT-0001",
         "CAP-COMPOSITION-0001",
         "CAP-ADAPTERREGISTRY-0001",
-        "CAP-PRODUCTIONCOMPOSITION-0001"
+        "CAP-PRODUCTIONCOMPOSITION-0001",
+        "CAP-PRODUCTIONADAPTERREGISTRATION-0001"
       ]
     },
     {
@@ -205,6 +207,23 @@
       "capability_ids": [
         "CAP-COMPOSITION-0001",
         "CAP-PRODUCTIONCOMPOSITION-0001"
+      ]
+    },
+    {
+      "document_id": "DOC-PADREG-0001",
+      "title": "Production Adapter Registration Standard v1",
+      "path": "docs/standards/PRODUCTION_ADAPTER_REGISTRATION_STANDARD_v1.md",
+      "document_type": "standard",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.production_adapter_registration",
+      "status": "Active",
+      "authority_level": "normative",
+      "version": "v1",
+      "effective_date": "2026-07-27",
+      "supersedes": [],
+      "knowledge_ids": [],
+      "capability_ids": [
+        "CAP-PRODUCTIONADAPTERREGISTRATION-0001"
       ]
     },
     {
@@ -1054,6 +1073,61 @@
         "DOC-ARCH-0001",
         "DOC-CREG-0001",
         "DOC-COMPOSITION-0001"
+      ],
+      "supersedes": []
+    },
+    {
+      "capability_id": "CAP-PRODUCTIONADAPTERREGISTRATION-0001",
+      "name": "Production Adapter Registration Foundation",
+      "description": "Construct an independent Operational Adapter Registry containing the single approved static Codex Automation Bridge descriptor without importing, binding, or invoking the adapter.",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.production_adapter_registration",
+      "status": "implemented",
+      "maturity": "M3",
+      "implementation_status": "implemented",
+      "required_knowledge": [],
+      "required_capabilities": [
+        "CAP-ADAPTERREGISTRY-0001"
+      ],
+      "tool_dependencies": [],
+      "adapter_dependencies": [
+        "static Codex Automation Bridge metadata references",
+        "existing OperationalAdapterRegistry",
+        "existing ToolAdapterCatalog"
+      ],
+      "runtime_dependencies": [],
+      "implementation_references": [
+        "afde/production_adapter_registration/__init__.py",
+        "afde/production_adapter_registration/factory.py"
+      ],
+      "validation_evidence": [
+        "tests/test_production_adapter_registration.py",
+        "tests/test_production_adapter_registration_boundaries.py"
+      ],
+      "known_gaps": [
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERREGISTRATION-0001",
+          "message": "Adapter discovery, binding, instantiation, invocation, availability probes, and credential lookup, validation, or storage remain deferred.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERREGISTRATION-0001",
+          "message": "Runtime, Worker, Evidence, Operator, Product, Provider, CLI, Desktop, startup, and lifecycle integration remain deferred.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "evidence_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERREGISTRATION-0001",
+          "message": "Operational Evidence, production readiness, and M4 validation are not complete.",
+          "related_ids": []
+        }
+      ],
+      "source_documents": [
+        "DOC-ARCH-0001",
+        "DOC-CREG-0001",
+        "DOC-PADREG-0001"
       ],
       "supersedes": []
     }

@@ -1,5 +1,37 @@
 # Sprint AFDE-2 Changelog
 
+## Chat–Work–Codex Development Operations Workflow (Unreleased)
+
+- Required Chat to classify each Sprint as General or Architecture before
+  implementation begins.
+- Adopted `Chat → Codex → Chat → PowerShell` for General Sprints and
+  `Chat → Work → Codex → Chat → PowerShell` for Architecture Sprints.
+- Limited Work to Repository, Existing Capability, Open Source, and
+  Architecture audits and Architecture Review.
+- Assigned implementation, tests, builds, and final reporting to Codex and
+  post-approval merge, `develop` synchronization, and branch cleanup to
+  PowerShell.
+- Retained feature-branch isolation, explicit user approval, auditable pull
+  requests, and the existing development philosophy.
+- Changed operational documentation only; source, tests, Architecture,
+  Runtime, public contracts, and Capabilities are unchanged.
+
+## AFDE-5.9 Production Adapter Registration Foundation (Unreleased)
+
+- Registered `CAP-PRODUCTIONADAPTERREGISTRATION-0001` as implemented at M3
+  without claiming M4, production readiness, or execution authority.
+- Added the package-scoped `build_production_adapter_registry()` public
+  contract with exactly one immutable Codex Automation Bridge descriptor.
+- Reused the existing descriptor, Registry, Catalog, production composition,
+  and non-executable authority contracts unchanged.
+- Added deterministic independent construction, same-Registry Catalog
+  identity, composition Catalog sharing, and reciprocal Knowledge Registry
+  document/capability binding.
+- Added no discovery, dynamic import, adapter binding or invocation,
+  availability probe, credential operation, filesystem, network, environment,
+  Runtime, Worker, Provider, application startup, lifecycle, or dependency.
+- Added focused behavior, composition, Registry, and AST boundary tests.
+
 ## AFDE-5.8 Production Composition Foundation (Unreleased)
 
 - Registered `CAP-PRODUCTIONCOMPOSITION-0001` as implemented at M3 without

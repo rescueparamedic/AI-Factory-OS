@@ -1,12 +1,23 @@
 # Technical Debt
 
+## AFDE-5.9 Production Adapter Registration Foundation
+
+- Only the Codex Automation Bridge has approved static production metadata;
+  additional internal adapters and Providers remain unregistered.
+- Registration deliberately provides no discovery, binding, instantiation,
+  invocation, availability probe, credential lookup/validation/storage,
+  executable downstream integration, or application-startup ownership.
+- Static `available` and `compatible` classifications are governance metadata,
+  not health, reachability, credential readiness, or operational Evidence.
+- Operational Evidence, production-ready validation, and M4 remain incomplete.
+
 ## AFDE-5.8 Production Composition Foundation
 
 - The production composition is intentionally non-executable; Runtime, Worker,
   Evidence, Operator, Product, CLI, Desktop, and lifecycle integration remain
   unimplemented.
-- The Operational Adapter Registry has no concrete production registrations,
-  Adapter discovery, binding, import, instantiation, invocation, availability
+- The Operational Adapter Registry has one static production registration but
+  no discovery, binding, import, instantiation, invocation, availability
   validation, or credential integration.
 - Knowledge Provider, Registry, and Runtime policy dependencies are still
   supplied by the caller; environment-specific application startup ownership
@@ -24,7 +35,7 @@
 - Capability ID grammar is duplicated across AFDE model and validation modules
   instead of being owned by one shared definition.
 - The Operational Adapter Registry foundation accepts explicit registrations,
-  but concrete production Adapter registrations, discovery, availability
+  but additional production Adapter registrations, discovery, availability
   validation, import, instantiation, and invocation remain unimplemented.
 - Worker, Evidence, and Product Assembly are not integrated with this
   non-executable composition.
