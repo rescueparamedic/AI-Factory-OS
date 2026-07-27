@@ -44,7 +44,7 @@ def test_valid_registry_loads_all_three_projections():
     snapshot = KnowledgeRegistryLoader(ROOT).load()
 
     assert snapshot.schema_version == "1.0"
-    assert len(snapshot.documents) == 17
+    assert len(snapshot.documents) == 18
     assert [item.knowledge_id for item in snapshot.knowledge] == [
         "KNW-KNOW-0001",
         "KNW-KNOW-0002",
@@ -62,6 +62,7 @@ def test_valid_registry_loads_all_three_projections():
         "CAP-COMPOSITION-0001",
         "CAP-ADAPTERREGISTRY-0001",
         "CAP-PRODUCTIONCOMPOSITION-0001",
+        "CAP-PRODUCTIONADAPTERREGISTRATION-0001",
     ]
 
 
@@ -305,6 +306,44 @@ def test_production_composition_is_registered_at_m3_only():
     assert (
         "CAP-PRODUCTIONCOMPOSITION-0001"
         in composition_standard.capability_ids
+    )
+
+
+def test_production_adapter_registration_has_reciprocal_m3_binding():
+    snapshot = KnowledgeRegistryLoader(ROOT).load()
+    capability = next(
+        item for item in snapshot.capabilities
+        if item.capability_id
+        == "CAP-PRODUCTIONADAPTERREGISTRATION-0001"
+    )
+    documents = {
+        item.document_id: item for item in snapshot.documents
+    }
+
+    assert capability.status == "implemented"
+    assert capability.maturity == "M3"
+    assert capability.implementation_status == "implemented"
+    assert capability.required_capabilities == (
+        "CAP-ADAPTERREGISTRY-0001",
+    )
+    assert capability.tool_dependencies == ()
+    assert capability.runtime_dependencies == ()
+    assert capability.implementation_references == (
+        "afde/production_adapter_registration/__init__.py",
+        "afde/production_adapter_registration/factory.py",
+    )
+    assert capability.source_documents == (
+        "DOC-ARCH-0001",
+        "DOC-CREG-0001",
+        "DOC-PADREG-0001",
+    )
+    for document_id in capability.source_documents:
+        assert (
+            "CAP-PRODUCTIONADAPTERREGISTRATION-0001"
+            in documents[document_id].capability_ids
+        )
+    assert documents["DOC-PADREG-0001"].path == (
+        "docs/standards/PRODUCTION_ADAPTER_REGISTRATION_STANDARD_v1.md"
     )
 
 

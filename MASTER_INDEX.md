@@ -20,6 +20,7 @@
 - `docs/standards/RUNTIME_INTEGRATION_STANDARD_v1.md`
 - `docs/standards/TOOL_ADAPTER_EXECUTION_CONTRACT_STANDARD_v1.md`
 - `docs/standards/NON_EXECUTABLE_COMPOSITION_STANDARD_v1.md`
+- `docs/standards/PRODUCTION_ADAPTER_REGISTRATION_STANDARD_v1.md`
 - `docs/standards/DOCUMENT_GOVERNANCE_STANDARD_v1.md`
 - `docs/standards/AI_REFERENCE_POLICY_v1.md`
 
@@ -235,6 +236,29 @@ Execution Path, and Tool Adapter Contract. Production identifies the official
 composition root only; Runtime, execution, adapter binding, Worker, Evidence,
 Operator, Product, CLI, Desktop, concrete registrations, and M4 remain
 deferred.
+
+### Production Adapter Registration
+
+- `afde/production_adapter_registration/` — package-scoped static production
+  Registry factory
+- `tests/test_production_adapter_registration*.py` — descriptor, determinism,
+  Catalog identity, composition, authority, and architecture-boundary checks
+- `docs/standards/PRODUCTION_ADAPTER_REGISTRATION_STANDARD_v1.md` — normative
+  static registration, identity, authority, and isolation rules
+
+```yaml
+capability_id: CAP-PRODUCTIONADAPTERREGISTRATION-0001
+status: implemented
+maturity: M3
+implementation_status: implemented
+```
+
+Exactly one immutable descriptor registers the existing Codex Automation
+Bridge by metadata reference only. Each call returns an independent existing
+Operational Adapter Registry with a deterministically equal snapshot. No
+discovery, adapter import/binding/invocation, credential operation, Runtime,
+Worker, Provider, startup, or lifecycle behavior is added; authority remains
+false and M4 is not claimed.
 
 ### Knowledge Foundation Capability
 

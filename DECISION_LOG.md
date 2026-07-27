@@ -1,5 +1,21 @@
 # Decision Log
 
+## 2026-07-27 - AFDE-5.9 Static Production Adapter Registration
+
+- Implemented `CAP-PRODUCTIONADAPTERREGISTRATION-0001` at M3 without claiming
+  M4, production readiness, execution authority, or operational health.
+- Registered exactly one frozen `adapter.codex_automation_bridge` descriptor
+  through a package-scoped factory.
+- Reused the existing `ToolAdapterDescriptor`,
+  `OperationalAdapterRegistry`, and `ToolAdapterCatalog`; each call produces
+  an independent Registry and Catalog with a deterministically equal snapshot.
+- Kept bridge implementation paths as metadata strings and rejected discovery,
+  entry points, dynamic imports, bridge construction, binding, invocation,
+  availability probes, and credential operations.
+- Confirmed direct injection into the existing production composition while
+  retaining the exact Catalog identity and false Runtime/execution authority.
+- Added no dependency and changed no existing builder or root package export.
+
 ## 2026-07-26 - AFDE-5.8 Explicit Production Dependency Composition
 
 - Implemented `CAP-PRODUCTIONCOMPOSITION-0001` at M3 without claiming M4,
@@ -16,7 +32,7 @@
 - Kept Adapter binding/execution, discovery, Runtime, Worker, Evidence,
   Operator, Product, CLI, Desktop, credentials, external I/O, and lifecycle
   behavior outside this boundary.
-- Deferred concrete production registrations, executable downstream
+- Deferred additional production registrations, executable downstream
   integration, operational Evidence, and M4 validation.
 
 ## 2026-07-26 - AFDE-5.7 Explicit Operational Adapter Registrations
@@ -34,7 +50,7 @@
   the registration boundary.
 - Added no third-party dependency and preserved the AFDE-5.6 non-executable
   boundary.
-- Deferred concrete production registrations, discovery, executable
+- Deferred additional production registrations, discovery, executable
   composition, downstream integration, and operational M4 evidence.
 
 ## 2026-07-26 - AFDE-5.6 Explicit Non-executable Composition

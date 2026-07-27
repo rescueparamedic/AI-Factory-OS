@@ -382,6 +382,32 @@ This entry records an official dependency composition root, not executable
 authority or production readiness. The Registry remains the authoritative
 Catalog supplier, and `runtime_allowed` and `execution_allowed` remain false.
 
+### CAP-PRODUCTIONADAPTERREGISTRATION-0001
+
+| Field | Value |
+| --- | --- |
+| Name | Production Adapter Registration Foundation |
+| Description | Construct an independent Operational Adapter Registry containing the single approved static Codex Automation Bridge descriptor without importing, binding, or invoking the adapter. |
+| Owner | AI Factory OS Architecture |
+| Scope | `architecture.production_adapter_registration` |
+| Status | `implemented` |
+| Maturity | `M3` |
+| Implementation status | `implemented` |
+| Required knowledge | none |
+| Required capabilities | `CAP-ADAPTERREGISTRY-0001` |
+| Tool dependencies | none |
+| Adapter dependencies | static Codex Automation Bridge metadata references, existing `OperationalAdapterRegistry`, existing `ToolAdapterCatalog` |
+| Runtime dependencies | none |
+| Implementation references | `afde/production_adapter_registration/__init__.py`, `afde/production_adapter_registration/factory.py` |
+| Validation evidence | `tests/test_production_adapter_registration.py`, `tests/test_production_adapter_registration_boundaries.py` |
+| Known gaps | Discovery, binding, instantiation, invocation, availability probes, and credential operations remain deferred.<br>Runtime, Worker, Evidence, Operator, Product, Provider, CLI, Desktop, startup, and lifecycle integration remain deferred.<br>Operational Evidence, production readiness, and M4 validation are not complete. |
+| Source documents | `DOC-ARCH-0001`, `DOC-CREG-0001`, `DOC-PADREG-0001` |
+| Supersedes | none |
+
+This entry governs static registration metadata only. It grants no Runtime or
+execution authority and makes no availability, credential-readiness,
+production-readiness, or M4 claim.
+
 ## Registry Validation
 
 A capability registry change is valid only when:

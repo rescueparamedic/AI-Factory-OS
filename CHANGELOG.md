@@ -1,5 +1,21 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-5.9 Production Adapter Registration Foundation (Unreleased)
+
+- Registered `CAP-PRODUCTIONADAPTERREGISTRATION-0001` as implemented at M3
+  without claiming M4, production readiness, or execution authority.
+- Added the package-scoped `build_production_adapter_registry()` public
+  contract with exactly one immutable Codex Automation Bridge descriptor.
+- Reused the existing descriptor, Registry, Catalog, production composition,
+  and non-executable authority contracts unchanged.
+- Added deterministic independent construction, same-Registry Catalog
+  identity, composition Catalog sharing, and reciprocal Knowledge Registry
+  document/capability binding.
+- Added no discovery, dynamic import, adapter binding or invocation,
+  availability probe, credential operation, filesystem, network, environment,
+  Runtime, Worker, Provider, application startup, lifecycle, or dependency.
+- Added focused behavior, composition, Registry, and AST boundary tests.
+
 ## AFDE-5.8 Production Composition Foundation (Unreleased)
 
 - Registered `CAP-PRODUCTIONCOMPOSITION-0001` as implemented at M3 without

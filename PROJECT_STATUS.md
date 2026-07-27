@@ -1,5 +1,23 @@
 # AI Factory OS Project Status
 
+## AFDE-5.9 Production Adapter Registration Foundation
+
+- `CAP-PRODUCTIONADAPTERREGISTRATION-0001` is `implemented`, maturity `M3`,
+  with `implementation_status: implemented`.
+- `build_production_adapter_registry()` returns an independent existing
+  `OperationalAdapterRegistry` containing exactly one frozen Codex Automation
+  Bridge descriptor.
+- Descriptor fields and the three approved implementation/report metadata
+  references are static and deterministic.
+- Each Registry retains one existing `ToolAdapterCatalog`; its Catalog is
+  shared unchanged when injected into `build_production_composition()`.
+- Runtime and execution authority remain false. No bridge import, binding,
+  instantiation, invocation, probe, credential operation, discovery, external
+  I/O, Runtime, Worker, Provider, application startup, or lifecycle behavior
+  was added.
+- Additional production registrations, downstream executable integration,
+  operational Evidence, production-ready claims, and M4 remain deferred.
+
 ## AFDE-5.8 Production Composition Foundation
 
 - `CAP-PRODUCTIONCOMPOSITION-0001` is `implemented`, maturity `M3`, with
@@ -14,7 +32,7 @@
   import, instantiation, invocation, availability probe, credential,
   filesystem, network, environment, Worker, Evidence, Operator, Product, CLI,
   Desktop, or lifecycle behavior was added.
-- Concrete production registrations, downstream executable integration,
+- Additional production registrations, downstream executable integration,
   operational Evidence, and M4 remain deferred.
 
 ## AFDE-5.7 Operational Adapter Registry Foundation
@@ -32,7 +50,7 @@
   filesystem, network, environment, Runtime, Worker, Evidence, Operator,
   Product, or lifecycle behavior was added.
 - Registered metadata does not guarantee executable or operational
-  availability. Concrete production registrations, executable composition,
+  availability. Additional production registrations, executable composition,
   downstream integration, and M4 remain deferred.
 
 ## AFDE-5.6 Non-executable Composition Foundation
