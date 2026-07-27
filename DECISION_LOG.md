@@ -1,5 +1,20 @@
 # Decision Log
 
+## 2026-07-27 - Chat–Work–Codex Sprint Classification
+
+- Required Chat to classify every Sprint before implementation.
+- Adopted `Chat → Codex → Chat → PowerShell` for General Sprints and prohibited
+  Work in that flow.
+- Adopted `Chat → Work → Codex → Chat → PowerShell` for Architecture Sprints.
+- Limited Work to Repository Audit, Existing Capability Audit, Open Source
+  Audit, Architecture Audit, and Architecture Review.
+- Assigned implementation, tests, builds, and final reporting to Codex.
+- Retained explicit merge approval and assigned merge, `develop`
+  synchronization, and authorized branch cleanup to PowerShell.
+- Retired the previous default workflow and its post-Codex Work stage.
+- Changed development operations only; Architecture, Runtime, public
+  contracts, Capabilities, source code, and tests remain unchanged.
+
 ## 2026-07-27 - AFDE-5.9 Static Production Adapter Registration
 
 - Implemented `CAP-PRODUCTIONADAPTERREGISTRATION-0001` at M3 without claiming

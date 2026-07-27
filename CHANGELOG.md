@@ -1,5 +1,21 @@
 # Sprint AFDE-2 Changelog
 
+## Chat–Work–Codex Development Operations Workflow (Unreleased)
+
+- Required Chat to classify each Sprint as General or Architecture before
+  implementation begins.
+- Adopted `Chat → Codex → Chat → PowerShell` for General Sprints and
+  `Chat → Work → Codex → Chat → PowerShell` for Architecture Sprints.
+- Limited Work to Repository, Existing Capability, Open Source, and
+  Architecture audits and Architecture Review.
+- Assigned implementation, tests, builds, and final reporting to Codex and
+  post-approval merge, `develop` synchronization, and branch cleanup to
+  PowerShell.
+- Retained feature-branch isolation, explicit user approval, auditable pull
+  requests, and the existing development philosophy.
+- Changed operational documentation only; source, tests, Architecture,
+  Runtime, public contracts, and Capabilities are unchanged.
+
 ## AFDE-5.9 Production Adapter Registration Foundation (Unreleased)
 
 - Registered `CAP-PRODUCTIONADAPTERREGISTRATION-0001` as implemented at M3

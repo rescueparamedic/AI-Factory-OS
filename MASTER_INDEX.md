@@ -10,6 +10,15 @@
   future capability, Resolver, Adapter, Runtime, Evidence, and Product Assembly
   boundaries
 
+### Development Operations
+
+- `docs/development/AFDE_WORKFLOW_v1.md` — canonical Chat–Work–Codex Sprint
+  classification, collaboration roles, development process, and PowerShell
+  handoff
+- `docs/standards/DOCUMENT_GOVERNANCE_STANDARD_v1.md` — document ownership,
+  review, approval, synchronization, Git workflow, and collaboration
+  governance
+
 ### Knowledge Foundation Standards
 
 - `docs/standards/DOCUMENT_KNOWLEDGE_MANAGEMENT_STANDARD_v1.md`
