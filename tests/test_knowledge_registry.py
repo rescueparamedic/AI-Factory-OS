@@ -44,7 +44,7 @@ def test_valid_registry_loads_all_three_projections():
     snapshot = KnowledgeRegistryLoader(ROOT).load()
 
     assert snapshot.schema_version == "1.0"
-    assert len(snapshot.documents) == 18
+    assert len(snapshot.documents) == 19
     assert [item.knowledge_id for item in snapshot.knowledge] == [
         "KNW-KNOW-0001",
         "KNW-KNOW-0002",
@@ -63,6 +63,7 @@ def test_valid_registry_loads_all_three_projections():
         "CAP-ADAPTERREGISTRY-0001",
         "CAP-PRODUCTIONCOMPOSITION-0001",
         "CAP-PRODUCTIONADAPTERREGISTRATION-0001",
+        "CAP-PRODUCTIONADAPTERDISCOVERY-0001",
     ]
 
 
@@ -344,6 +345,46 @@ def test_production_adapter_registration_has_reciprocal_m3_binding():
         )
     assert documents["DOC-PADREG-0001"].path == (
         "docs/standards/PRODUCTION_ADAPTER_REGISTRATION_STANDARD_v1.md"
+    )
+
+
+def test_production_adapter_discovery_has_reciprocal_m3_binding():
+    snapshot = KnowledgeRegistryLoader(ROOT).load()
+    capability = next(
+        item for item in snapshot.capabilities
+        if item.capability_id
+        == "CAP-PRODUCTIONADAPTERDISCOVERY-0001"
+    )
+    documents = {
+        item.document_id: item for item in snapshot.documents
+    }
+
+    assert capability.status == "implemented"
+    assert capability.maturity == "M3"
+    assert capability.implementation_status == "implemented"
+    assert capability.required_capabilities == (
+        "CAP-PRODUCTIONADAPTERREGISTRATION-0001",
+        "CAP-ADAPTERREGISTRY-0001",
+    )
+    assert capability.runtime_dependencies == ()
+    assert capability.implementation_references == (
+        "afde/production_adapter_discovery/__init__.py",
+        "afde/production_adapter_discovery/errors.py",
+        "afde/production_adapter_discovery/models.py",
+        "afde/production_adapter_discovery/discovery.py",
+    )
+    assert capability.source_documents == (
+        "DOC-ARCH-0001",
+        "DOC-CREG-0001",
+        "DOC-PADDISC-0001",
+    )
+    for document_id in capability.source_documents:
+        assert (
+            "CAP-PRODUCTIONADAPTERDISCOVERY-0001"
+            in documents[document_id].capability_ids
+        )
+    assert documents["DOC-PADDISC-0001"].path == (
+        "docs/standards/PRODUCTION_ADAPTER_DISCOVERY_STANDARD_v1.md"
     )
 
 

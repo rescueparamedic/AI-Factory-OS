@@ -1,5 +1,25 @@
 # Decision Log
 
+## 2026-07-28 - AFDE-6.0 Production Adapter Metadata Discovery
+
+- Implemented `CAP-PRODUCTIONADAPTERDISCOVERY-0001` at M3 without claiming
+  M4, operational health, production readiness, or execution authority.
+- Selected only Python standard-library `importlib.metadata` and the exact
+  `ai_factory_os.tool_adapters` entry-point group.
+- Added an injectable structural discovery-source boundary so focused tests
+  require no installed adapter distribution.
+- Required every entry point to load exactly one existing
+  `ToolAdapterDescriptor`; source, load, and type failures fail closed with
+  typed discovery errors.
+- Merged discovered metadata with unchanged static registrations through the
+  existing `OperationalAdapterRegistry` and reused the existing Catalog's
+  duplicate identity, Capability mapping, and ambiguity validation.
+- Preserved both existing builder signatures, production composition, Runtime
+  startup/lifecycle, and false Runtime/execution authority.
+- Excluded Adapter factories, binding, invocation, credentials, probes, hot
+  reload, filesystem/namespace scans, Providers, Workers, CLI, Desktop,
+  Pluggy, Stevedore, and DI containers.
+
 ## 2026-07-27 - Chat–Work–Codex Sprint Classification
 
 - Required Chat to classify every Sprint before implementation.

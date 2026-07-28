@@ -28,7 +28,8 @@
         "CAP-COMPOSITION-0001",
         "CAP-ADAPTERREGISTRY-0001",
         "CAP-PRODUCTIONCOMPOSITION-0001",
-        "CAP-PRODUCTIONADAPTERREGISTRATION-0001"
+        "CAP-PRODUCTIONADAPTERREGISTRATION-0001",
+        "CAP-PRODUCTIONADAPTERDISCOVERY-0001"
       ]
     },
     {
@@ -120,7 +121,8 @@
         "CAP-COMPOSITION-0001",
         "CAP-ADAPTERREGISTRY-0001",
         "CAP-PRODUCTIONCOMPOSITION-0001",
-        "CAP-PRODUCTIONADAPTERREGISTRATION-0001"
+        "CAP-PRODUCTIONADAPTERREGISTRATION-0001",
+        "CAP-PRODUCTIONADAPTERDISCOVERY-0001"
       ]
     },
     {
@@ -224,6 +226,23 @@
       "knowledge_ids": [],
       "capability_ids": [
         "CAP-PRODUCTIONADAPTERREGISTRATION-0001"
+      ]
+    },
+    {
+      "document_id": "DOC-PADDISC-0001",
+      "title": "Production Adapter Discovery Standard v1",
+      "path": "docs/standards/PRODUCTION_ADAPTER_DISCOVERY_STANDARD_v1.md",
+      "document_type": "standard",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.production_adapter_discovery",
+      "status": "Active",
+      "authority_level": "normative",
+      "version": "v1",
+      "effective_date": "2026-07-28",
+      "supersedes": [],
+      "knowledge_ids": [],
+      "capability_ids": [
+        "CAP-PRODUCTIONADAPTERDISCOVERY-0001"
       ]
     },
     {
@@ -1128,6 +1147,69 @@
         "DOC-ARCH-0001",
         "DOC-CREG-0001",
         "DOC-PADREG-0001"
+      ],
+      "supersedes": []
+    },
+    {
+      "capability_id": "CAP-PRODUCTIONADAPTERDISCOVERY-0001",
+      "name": "Production Adapter Discovery Foundation",
+      "description": "Discover installed entry-point metadata that loads exactly one existing ToolAdapterDescriptor per entry point, then merge it with unchanged static registrations through the existing Registry and Catalog.",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.production_adapter_discovery",
+      "status": "implemented",
+      "maturity": "M3",
+      "implementation_status": "implemented",
+      "required_knowledge": [],
+      "required_capabilities": [
+        "CAP-PRODUCTIONADAPTERREGISTRATION-0001",
+        "CAP-ADAPTERREGISTRY-0001"
+      ],
+      "tool_dependencies": [
+        "Python standard-library importlib.metadata"
+      ],
+      "adapter_dependencies": [
+        "caller-injected ProductionAdapterDiscoverySource",
+        "existing ToolAdapterDescriptor",
+        "static production registrations",
+        "existing OperationalAdapterRegistry",
+        "existing ToolAdapterCatalog"
+      ],
+      "runtime_dependencies": [],
+      "implementation_references": [
+        "afde/production_adapter_discovery/__init__.py",
+        "afde/production_adapter_discovery/errors.py",
+        "afde/production_adapter_discovery/models.py",
+        "afde/production_adapter_discovery/discovery.py"
+      ],
+      "validation_evidence": [
+        "tests/test_production_adapter_discovery.py",
+        "tests/test_production_adapter_discovery_compatibility.py",
+        "tests/test_production_adapter_discovery_boundaries.py"
+      ],
+      "known_gaps": [
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERDISCOVERY-0001",
+          "message": "Adapter binding, invocation, health checks, network probes, credential handling, hot reload, filesystem scans, and namespace-package scans remain excluded.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERDISCOVERY-0001",
+          "message": "Runtime, Worker, Provider, CLI, Desktop, startup, and lifecycle integration remain deferred.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "evidence_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERDISCOVERY-0001",
+          "message": "Operational Evidence, production readiness, and M4 validation are not complete.",
+          "related_ids": []
+        }
+      ],
+      "source_documents": [
+        "DOC-ARCH-0001",
+        "DOC-CREG-0001",
+        "DOC-PADDISC-0001"
       ],
       "supersedes": []
     }

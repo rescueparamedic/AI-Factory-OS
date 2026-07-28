@@ -528,6 +528,48 @@ Operator, Product, CLI, Desktop, startup, or lifecycle behavior. Runtime and
 execution authority remain false. Production readiness, operational Evidence,
 and M4 are not claimed.
 
+### Production Adapter Discovery Foundation
+
+```yaml
+capability_id: CAP-PRODUCTIONADAPTERDISCOVERY-0001
+status: implemented
+maturity: M3
+implementation_status: implemented
+required_capabilities:
+  - CAP-PRODUCTIONADAPTERREGISTRATION-0001
+  - CAP-ADAPTERREGISTRY-0001
+```
+
+AFDE-6.0 adds one metadata-only installed descriptor boundary:
+
+```text
+importlib.metadata or caller-injected fake Discovery Source
+        |
+        v
+ai_factory_os.tool_adapters entry points
+        |
+        v
+existing ToolAdapterDescriptor values + unchanged static registrations
+        |
+        v
+existing OperationalAdapterRegistry
+        |
+        v
+existing immutable ToolAdapterCatalog
+```
+
+Each entry point must load exactly one existing descriptor. Source
+enumeration, entry-point loading, and loaded-value type failures are typed and
+fail closed. The existing Catalog continues to own duplicate identity and
+selectable Capability ambiguity rejection.
+
+The static Registry builder, production composition signature, Runtime
+composition, Catalog contracts, and Runtime lifecycle are unchanged. Discovery
+adds no Adapter creation, binding, invocation, health check, network probe,
+credential handling, filesystem or namespace scan, hot reload, Provider,
+Worker, CLI, Desktop, startup, third-party plugin framework, or DI container.
+Runtime and execution authority remain false; M4 is not claimed.
+
 ### Normative Standards
 
 - `docs/standards/DOCUMENT_KNOWLEDGE_MANAGEMENT_STANDARD_v1.md`
@@ -539,6 +581,7 @@ and M4 are not claimed.
 - `docs/standards/TOOL_ADAPTER_EXECUTION_CONTRACT_STANDARD_v1.md`
 - `docs/standards/NON_EXECUTABLE_COMPOSITION_STANDARD_v1.md`
 - `docs/standards/PRODUCTION_ADAPTER_REGISTRATION_STANDARD_v1.md`
+- `docs/standards/PRODUCTION_ADAPTER_DISCOVERY_STANDARD_v1.md`
 - `docs/standards/DOCUMENT_GOVERNANCE_STANDARD_v1.md`
 - `docs/standards/AI_REFERENCE_POLICY_v1.md`
 
