@@ -1,5 +1,26 @@
 # Decision Log
 
+## 2026-07-28 - AFDE-6.4 Explicit Caller-supplied Invocation Target
+
+- Implemented `CAP-PRODUCTIONADAPTERINVOCATION-0001` at M3 as a
+  package-scoped metadata-only invocation contract.
+- Kept `ProductionAdapterInstance` inert and unchanged; invocation behavior is
+  owned only by an explicit caller-supplied `InvocationTarget`.
+- Required exact object and adapter identity continuity across Creation Result,
+  Instance, Descriptor, Availability, Credential Readiness, Tool Adapter
+  request, Binding, Target, and target return.
+- Separated `InvocationTargetResult` from `InvocationResult` so return type,
+  identity, safe opaque metadata, and denied authority are independently
+  validated.
+- Fail closed before the target call for invalid preconditions and wrap target
+  exceptions in a typed error without copying internal exception text.
+- Preserved Registry, Catalog, Discovery, Creation, Tool Adapter Contract,
+  Execution Path, Runtime Integration, builders, Root exports, startup,
+  lifecycle, and session unchanged.
+- Excluded target discovery/registry, Provider SDK, HTTP/network, secrets,
+  health probes, retry, timeout, streaming, Worker dispatch, Runtime
+  integration, DI, and plugin frameworks.
+
 ## 2026-07-28 - AFDE-6.3 Explicit Inert Adapter Creation
 
 - Implemented `CAP-PRODUCTIONADAPTERCREATION-0001` at M3 without invocation,

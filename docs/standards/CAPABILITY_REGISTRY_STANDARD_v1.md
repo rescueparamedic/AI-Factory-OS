@@ -514,6 +514,33 @@ factories or instances. Factories are caller-supplied and exact-identity
 scoped. Creation returns only an inert immutable instance; it grants no
 invocation, execution, Runtime, health, or production-ready authority.
 
+### CAP-PRODUCTIONADAPTERINVOCATION-0001
+
+| Field | Value |
+| --- | --- |
+| Name | Production Adapter Invocation Contract Foundation |
+| Description | Validate an existing creation, instance, binding, request, availability, and credential-readiness identity chain before calling one explicit caller-supplied metadata-only InvocationTarget. |
+| Owner | AI Factory OS Architecture |
+| Scope | `architecture.production_adapter_invocation` |
+| Status | `implemented` |
+| Maturity | `M3` |
+| Implementation status | `implemented` |
+| Required knowledge | none |
+| Required capabilities | `CAP-PRODUCTIONADAPTERCREATION-0001`, `CAP-PRODUCTIONADAPTERAVAILABILITY-0001`, `CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001`, `CAP-TOOLADAPTER-CONTRACT-0001`, `CAP-TOOLCATALOG-0001`, `CAP-EXECPATH-0001`, `CAP-RUNTIME-0001` |
+| Tool dependencies | none |
+| Adapter dependencies | existing `ProductionAdapterCreationResult`, `ProductionAdapterInstance`, `ToolAdapterRequest`, `ToolAdapterBinding`, `ToolAdapterDescriptor`, `ProductionAdapterAvailabilityResult`, `ProductionAdapterCredentialReadinessResult`, caller-supplied `InvocationTarget` |
+| Runtime dependencies | existing non-executable Execution Path, Runtime Projection, and Tool Adapter Binding compatibility only; no Runtime startup, lifecycle, session, or integration |
+| Implementation references | `afde/production_adapter_invocation/__init__.py`, `afde/production_adapter_invocation/errors.py`, `afde/production_adapter_invocation/models.py`, `afde/production_adapter_invocation/service.py` |
+| Validation evidence | `tests/test_production_adapter_invocation.py`, `tests/test_production_adapter_invocation_compatibility.py`, `tests/test_production_adapter_invocation_boundaries.py` |
+| Known gaps | Target inputs and outputs contain only safe opaque metadata references; Provider payload, network, retry, timeout, streaming, and operational execution semantics are absent.<br>Target discovery, mutable target registries, Runtime integration, Worker dispatch, credentials, Provider clients, and lifecycle ownership remain excluded.<br>Operational Evidence, production readiness, and M4 validation remain incomplete. |
+| Source documents | `DOC-CREG-0001` |
+| Supersedes | none |
+
+The target is supplied explicitly for each service call and must match the
+complete immutable identity chain. The existing instance stays inert. Neither
+request, target result, nor service result can grant Runtime or execution
+authority.
+
 ## Registry Validation
 
 A capability registry change is valid only when:
@@ -540,6 +567,8 @@ A capability registry change is valid only when:
   validation, authorization, or secret handling.
 - Adapter creation remains separated from invocation, execution, Runtime
   binding, and lifecycle ownership.
+- Adapter invocation remains caller-target scoped, metadata-only, and
+  separated from Provider, Worker, Network, and Runtime integration.
 - Runtime execution and lifecycle integration remain deferred.
 - Multiple-candidate discovery and ranking remain deferred.
 - M4 validation and operational integration are not complete.

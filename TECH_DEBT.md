@@ -1,5 +1,19 @@
 # Technical Debt
 
+## AFDE-6.4 Production Adapter Invocation Contract Foundation
+
+- Invocation exchanges only safe opaque metadata references. It does not
+  define Provider request/response payloads, transport, streaming, retry,
+  timeout, cancellation, or execution semantics.
+- Targets are supplied explicitly per call. Automatic discovery, ranking,
+  fallback, mutable registration, service location, and hot reload are absent.
+- Required-credential adapters remain constrained by the existing
+  non-executable Execution Path and Runtime Projection prerequisite behavior;
+  this Sprint does not couple readiness to Runtime Integration.
+- Provider clients, network, credential secrets, health probes, Worker
+  dispatch, Runtime startup/lifecycle/session, Product, CLI, Desktop,
+  operational validation, production readiness, and M4 remain incomplete.
+
 ## AFDE-6.3 Production Adapter Creation Foundation
 
 - Created instances are inert structural metadata contracts and cannot be

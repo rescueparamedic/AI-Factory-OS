@@ -125,7 +125,8 @@
         "CAP-PRODUCTIONADAPTERDISCOVERY-0001",
         "CAP-PRODUCTIONADAPTERAVAILABILITY-0001",
         "CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001",
-        "CAP-PRODUCTIONADAPTERCREATION-0001"
+        "CAP-PRODUCTIONADAPTERCREATION-0001",
+        "CAP-PRODUCTIONADAPTERINVOCATION-0001"
       ]
     },
     {
@@ -1412,6 +1413,77 @@
         {
           "gap_type": "evidence_gap",
           "subject_id": "CAP-PRODUCTIONADAPTERCREATION-0001",
+          "message": "Operational validation, production readiness, and M4 validation are not complete.",
+          "related_ids": []
+        }
+      ],
+      "source_documents": [
+        "DOC-CREG-0001"
+      ],
+      "supersedes": []
+    },
+    {
+      "capability_id": "CAP-PRODUCTIONADAPTERINVOCATION-0001",
+      "name": "Production Adapter Invocation Contract Foundation",
+      "description": "Validate an existing creation, instance, binding, request, availability, and credential-readiness identity chain before calling one explicit caller-supplied metadata-only InvocationTarget.",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.production_adapter_invocation",
+      "status": "implemented",
+      "maturity": "M3",
+      "implementation_status": "implemented",
+      "required_knowledge": [],
+      "required_capabilities": [
+        "CAP-PRODUCTIONADAPTERCREATION-0001",
+        "CAP-PRODUCTIONADAPTERAVAILABILITY-0001",
+        "CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001",
+        "CAP-TOOLADAPTER-CONTRACT-0001",
+        "CAP-TOOLCATALOG-0001",
+        "CAP-EXECPATH-0001",
+        "CAP-RUNTIME-0001"
+      ],
+      "tool_dependencies": [],
+      "adapter_dependencies": [
+        "existing ProductionAdapterCreationResult",
+        "existing ProductionAdapterInstance",
+        "existing ToolAdapterRequest",
+        "existing ToolAdapterBinding",
+        "existing ToolAdapterDescriptor",
+        "existing ProductionAdapterAvailabilityResult",
+        "existing ProductionAdapterCredentialReadinessResult",
+        "caller-supplied InvocationTarget"
+      ],
+      "runtime_dependencies": [
+        "existing non-executable Execution Path compatibility",
+        "existing Runtime Projection compatibility",
+        "existing Tool Adapter Binding compatibility"
+      ],
+      "implementation_references": [
+        "afde/production_adapter_invocation/__init__.py",
+        "afde/production_adapter_invocation/errors.py",
+        "afde/production_adapter_invocation/models.py",
+        "afde/production_adapter_invocation/service.py"
+      ],
+      "validation_evidence": [
+        "tests/test_production_adapter_invocation.py",
+        "tests/test_production_adapter_invocation_compatibility.py",
+        "tests/test_production_adapter_invocation_boundaries.py"
+      ],
+      "known_gaps": [
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERINVOCATION-0001",
+          "message": "The target contract exchanges only safe opaque metadata references and does not provide Provider payload, streaming, retry, timeout, network, or execution semantics.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERINVOCATION-0001",
+          "message": "Target discovery, target registries, Runtime integration, Worker dispatch, credentials, Provider clients, and lifecycle ownership remain excluded.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "evidence_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERINVOCATION-0001",
           "message": "Operational validation, production readiness, and M4 validation are not complete.",
           "related_ids": []
         }

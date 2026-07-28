@@ -1,5 +1,24 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-6.4 Production Adapter Invocation Contract Foundation (Unreleased)
+
+- Registered `CAP-PRODUCTIONADAPTERINVOCATION-0001` as implemented at M3
+  without Runtime, execution, Provider, network, or production-ready authority.
+- Added package-scoped immutable Invocation Request, Target Protocol, Target
+  Result, service Result, typed errors, and explicit Invocation Service.
+- Added exact identity-chain, Availability, Credential Readiness, return type,
+  target exception, and false-authority fail-closed validation.
+- Kept `ProductionAdapterInstance` inert and unchanged and used only an
+  explicit caller-supplied target, with a test-only Fake Target.
+- Preserved Registry, Catalog, Discovery, Creation, Tool Adapter Contract,
+  Execution Path, Runtime contracts, builders, Root exports, startup,
+  lifecycle, and session unchanged.
+- Added no automatic target discovery, mutable registry, credential secret,
+  Provider SDK, HTTP/network, retry, timeout, streaming, Worker dispatch,
+  Runtime integration, DI, or plugin framework.
+- Added focused, compatibility, governance, and AST Architecture Boundary
+  tests.
+
 ## AFDE-6.3 Production Adapter Creation Foundation (Unreleased)
 
 - Registered `CAP-PRODUCTIONADAPTERCREATION-0001` as implemented at M3 without
