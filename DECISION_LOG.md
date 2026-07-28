@@ -1,5 +1,26 @@
 # Decision Log
 
+## 2026-07-28 - AFDE-6.2 Caller-supplied Credential Readiness
+
+- Implemented `CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001` at M3 without
+  credential validity, authorization, expiry, access, health, M4, or
+  production-readiness claims.
+- Reused the existing `ToolAdapterDescriptor.credentials_required` metadata as
+  the sole requirement declaration.
+- Accepted only explicit caller readiness evidence containing adapter
+  identity, a boolean, a safe opaque reference, and allowlisted source
+  metadata; added no credential or secret-value field.
+- Adopted `NOT_REQUIRED`, `READY`, and `NOT_READY`; required credentials
+  without explicit ready evidence fail closed as the normal `NOT_READY`
+  outcome.
+- Preserved Registry, Catalog, Discovery, Availability, Registration,
+  Execution Path, Runtime Handoff/Projection, Runtime policy, builder
+  signatures, Root public contract, and Runtime lifecycle unchanged.
+- Excluded lookup, validation, authorization, storage, encryption, secret
+  stores, OAuth, refresh, Adapter creation/binding/invocation/execution,
+  probes, Runtime startup/lifecycle/session, Worker, Provider, Product, CLI,
+  and Desktop.
+
 ## 2026-07-28 - AFDE-6.1 Descriptor-declared Adapter Availability
 
 - Implemented `CAP-PRODUCTIONADAPTERAVAILABILITY-0001` at M3 without claiming

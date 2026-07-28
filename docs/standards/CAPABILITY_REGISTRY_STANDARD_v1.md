@@ -460,6 +460,33 @@ This entry performs an exact metadata projection only. It does not inspect
 credentials or call Adapter, Runtime, Worker, Provider, Product, CLI, or
 Desktop behavior. `runtime_allowed` and `execution_allowed` remain false.
 
+### CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001
+
+| Field | Value |
+| --- | --- |
+| Name | Production Adapter Credential Readiness Foundation |
+| Description | Determine one registered ToolAdapterDescriptor's credential readiness from existing credentials_required metadata and caller-supplied safe opaque evidence without accessing credential or secret material. |
+| Owner | AI Factory OS Architecture |
+| Scope | `architecture.production_adapter_credential_readiness` |
+| Status | `implemented` |
+| Maturity | `M3` |
+| Implementation status | `implemented` |
+| Required knowledge | none |
+| Required capabilities | `CAP-PRODUCTIONADAPTERDISCOVERY-0001`, `CAP-PRODUCTIONADAPTERAVAILABILITY-0001`, `CAP-PRODUCTIONADAPTERREGISTRATION-0001`, `CAP-ADAPTERREGISTRY-0001`, `CAP-TOOLCATALOG-0001`, `CAP-EXECPATH-0001`, `CAP-RUNTIME-0001` |
+| Tool dependencies | none |
+| Adapter dependencies | existing `ToolAdapterDescriptor.credentials_required`, existing `OperationalAdapterRegistry`, existing `ToolAdapterCatalog` |
+| Runtime dependencies | existing non-executable `ExecutionPathService`, `RuntimeHandoffProjection`, `RuntimeProjection`, and `RuntimeIntegrationPolicy` compatibility only; no Runtime invocation |
+| Implementation references | `afde/production_adapter_credential_readiness/__init__.py`, `afde/production_adapter_credential_readiness/errors.py`, `afde/production_adapter_credential_readiness/models.py`, `afde/production_adapter_credential_readiness/service.py` |
+| Validation evidence | `tests/test_production_adapter_credential_readiness.py`, `tests/test_production_adapter_credential_readiness_compatibility.py`, `tests/test_production_adapter_credential_readiness_boundaries.py` |
+| Known gaps | Caller evidence is a readiness assertion, not credential validity, authorization, expiry, API access, network reachability, health, or production Evidence.<br>Credential lookup, validation, storage, encryption, secret stores, OAuth, refresh, Adapter binding/invocation/execution, and Runtime startup/lifecycle/session remain excluded.<br>Worker, Provider, Product, CLI, Desktop, operational validation, production readiness, and M4 remain incomplete. |
+| Source documents | `DOC-CREG-0001` |
+| Supersedes | none |
+
+This entry accepts only an allowlisted evidence source, boolean readiness, and
+safe opaque evidence reference supplied explicitly by the caller. It has no
+field or dependency for credential values or secret material, performs no
+automatic lookup, and grants no Runtime or execution authority.
+
 ## Registry Validation
 
 A capability registry change is valid only when:
@@ -482,6 +509,8 @@ A capability registry change is valid only when:
 - Additional production Adapter registrations remain deferred.
 - Discovery remains metadata-only and has no binding or executable consumer.
 - Availability remains declared metadata and is not a health or network probe.
+- Credential readiness remains caller-declared metadata and is not credential
+  validation, authorization, or secret handling.
 - Runtime execution and lifecycle integration remain deferred.
 - Multiple-candidate discovery and ranking remain deferred.
 - M4 validation and operational integration are not complete.

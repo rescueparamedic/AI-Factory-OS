@@ -1,5 +1,19 @@
 # Technical Debt
 
+## AFDE-6.2 Production Adapter Credential Readiness Foundation
+
+- Readiness is an explicit caller assertion and does not establish credential
+  validity, authorization, expiry, API access, reachability, Adapter health,
+  operational Evidence, or production readiness.
+- No credential lookup, validation, storage, encryption, masking framework,
+  environment lookup, secret-store/Vault integration, OAuth, or token refresh
+  is implemented.
+- Readiness is not wired into existing Execution Path or Runtime Projection;
+  required credential metadata continues to produce the existing prerequisite
+  path regardless of a separate readiness assessment.
+- Runtime lifecycle/session, Adapter binding/execution, Worker, Provider,
+  Product, CLI, Desktop, operational validation, and M4 remain incomplete.
+
 ## AFDE-6.1 Production Adapter Availability Foundation
 
 - Availability is derived only from declared `AdapterAvailability` metadata;

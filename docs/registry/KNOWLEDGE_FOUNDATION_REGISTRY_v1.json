@@ -123,7 +123,8 @@
         "CAP-PRODUCTIONCOMPOSITION-0001",
         "CAP-PRODUCTIONADAPTERREGISTRATION-0001",
         "CAP-PRODUCTIONADAPTERDISCOVERY-0001",
-        "CAP-PRODUCTIONADAPTERAVAILABILITY-0001"
+        "CAP-PRODUCTIONADAPTERAVAILABILITY-0001",
+        "CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001"
       ]
     },
     {
@@ -1272,6 +1273,73 @@
           "gap_type": "evidence_gap",
           "subject_id": "CAP-PRODUCTIONADAPTERAVAILABILITY-0001",
           "message": "Runtime integration, operational validation, production readiness, and M4 validation are not complete.",
+          "related_ids": []
+        }
+      ],
+      "source_documents": [
+        "DOC-CREG-0001"
+      ],
+      "supersedes": []
+    },
+    {
+      "capability_id": "CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001",
+      "name": "Production Adapter Credential Readiness Foundation",
+      "description": "Determine one registered ToolAdapterDescriptor's credential readiness from existing credentials_required metadata and caller-supplied safe opaque evidence without accessing credential or secret material.",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.production_adapter_credential_readiness",
+      "status": "implemented",
+      "maturity": "M3",
+      "implementation_status": "implemented",
+      "required_knowledge": [],
+      "required_capabilities": [
+        "CAP-PRODUCTIONADAPTERDISCOVERY-0001",
+        "CAP-PRODUCTIONADAPTERAVAILABILITY-0001",
+        "CAP-PRODUCTIONADAPTERREGISTRATION-0001",
+        "CAP-ADAPTERREGISTRY-0001",
+        "CAP-TOOLCATALOG-0001",
+        "CAP-EXECPATH-0001",
+        "CAP-RUNTIME-0001"
+      ],
+      "tool_dependencies": [],
+      "adapter_dependencies": [
+        "existing ToolAdapterDescriptor.credentials_required",
+        "existing OperationalAdapterRegistry",
+        "existing ToolAdapterCatalog"
+      ],
+      "runtime_dependencies": [
+        "existing non-executable ExecutionPathService compatibility",
+        "existing RuntimeHandoffProjection compatibility",
+        "existing RuntimeProjection compatibility",
+        "existing RuntimeIntegrationPolicy compatibility"
+      ],
+      "implementation_references": [
+        "afde/production_adapter_credential_readiness/__init__.py",
+        "afde/production_adapter_credential_readiness/errors.py",
+        "afde/production_adapter_credential_readiness/models.py",
+        "afde/production_adapter_credential_readiness/service.py"
+      ],
+      "validation_evidence": [
+        "tests/test_production_adapter_credential_readiness.py",
+        "tests/test_production_adapter_credential_readiness_compatibility.py",
+        "tests/test_production_adapter_credential_readiness_boundaries.py"
+      ],
+      "known_gaps": [
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001",
+          "message": "Caller evidence is a readiness assertion, not credential validity, authorization, expiry, API access, network reachability, health, or production Evidence.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001",
+          "message": "Credential lookup, validation, storage, encryption, secret stores, OAuth, refresh, Adapter binding, invocation, execution, and Runtime startup, lifecycle, or session remain excluded.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "evidence_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001",
+          "message": "Operational validation, production readiness, and M4 validation are not complete.",
           "related_ids": []
         }
       ],
