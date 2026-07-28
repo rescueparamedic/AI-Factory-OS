@@ -1,5 +1,26 @@
 # AI Factory OS Project Status
 
+## AFDE-6.3 Production Adapter Creation Foundation
+
+- `CAP-PRODUCTIONADAPTERCREATION-0001` is `implemented`, maturity `M3`, with
+  `implementation_status: implemented`.
+- `ProductionAdapterCreationService` accepts an immutable caller-supplied
+  factory snapshot and performs deterministic exact adapter identity lookup.
+- Creation Context preserves the existing descriptor, Availability result,
+  Credential Readiness result, optional existing `ToolAdapterBinding`, and
+  allowlisted opaque configuration references.
+- Creation fails closed for missing/duplicate/invalid factories, identity
+  mismatches, unavailable metadata, insufficient credential readiness,
+  invalid returns, and result invariant violations.
+- Successful creation returns one inert immutable `ProductionAdapterInstance`
+  with no invoke, execute, run, start, connect, call, or dispatch method.
+- Registry and Catalog remain metadata authorities and are not instance
+  stores. Discovery and factories remain separate; no automatic factory
+  discovery is added.
+- Runtime and execution authority remain false. Runtime binding/startup/
+  lifecycle/session, credentials, Provider clients, probes, Worker, Product,
+  CLI, Desktop, M4, and production-ready claims remain excluded.
+
 ## AFDE-6.2 Production Adapter Credential Readiness Foundation
 
 - `CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001` is `implemented`, maturity

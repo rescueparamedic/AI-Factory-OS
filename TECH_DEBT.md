@@ -1,5 +1,19 @@
 # Technical Debt
 
+## AFDE-6.3 Production Adapter Creation Foundation
+
+- Created instances are inert structural metadata contracts and cannot be
+  invoked, executed, connected, started, or dispatched.
+- Factories are explicitly supplied per creation service; automatic discovery,
+  package installation wiring, hot reload, ranking, fallback, global instance
+  storage, and service-location semantics are not implemented.
+- Safe configuration and creation references do not provide environment
+  resolution, credentials, Provider clients, network access, health checks, or
+  operational Evidence.
+- Creation readiness is not wired into existing Execution Path or Runtime
+  Projection. Runtime binding, startup, lifecycle, session, Worker, Product,
+  CLI, Desktop, production validation, and M4 remain incomplete.
+
 ## AFDE-6.2 Production Adapter Credential Readiness Foundation
 
 - Readiness is an explicit caller assertion and does not establish credential

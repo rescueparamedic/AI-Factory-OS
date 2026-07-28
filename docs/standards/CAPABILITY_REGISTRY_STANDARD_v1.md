@@ -487,6 +487,33 @@ safe opaque evidence reference supplied explicitly by the caller. It has no
 field or dependency for credential values or secret material, performs no
 automatic lookup, and grants no Runtime or execution authority.
 
+### CAP-PRODUCTIONADAPTERCREATION-0001
+
+| Field | Value |
+| --- | --- |
+| Name | Production Adapter Creation Foundation |
+| Description | Validate descriptor, availability, credential readiness, optional existing binding, and caller-supplied factory metadata before creating one inert non-executable ProductionAdapterInstance. |
+| Owner | AI Factory OS Architecture |
+| Scope | `architecture.production_adapter_creation` |
+| Status | `implemented` |
+| Maturity | `M3` |
+| Implementation status | `implemented` |
+| Required knowledge | none |
+| Required capabilities | `CAP-PRODUCTIONADAPTERDISCOVERY-0001`, `CAP-PRODUCTIONADAPTERREGISTRATION-0001`, `CAP-PRODUCTIONADAPTERAVAILABILITY-0001`, `CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001`, `CAP-ADAPTERREGISTRY-0001`, `CAP-TOOLCATALOG-0001`, `CAP-TOOLADAPTER-CONTRACT-0001`, `CAP-EXECPATH-0001`, `CAP-RUNTIME-0001` |
+| Tool dependencies | none |
+| Adapter dependencies | existing `ToolAdapterDescriptor`, `OperationalAdapterRegistry`, `ToolAdapterCatalog`, `ToolAdapterBinding`, `ProductionAdapterAvailabilityResult`, `ProductionAdapterCredentialReadinessResult`, caller-supplied `ProductionAdapterFactory` |
+| Runtime dependencies | existing non-executable Execution Path, Runtime Projection, and Tool Adapter Binding compatibility only; no Runtime binding, startup, lifecycle, session, or invocation |
+| Implementation references | `afde/production_adapter_creation/__init__.py`, `afde/production_adapter_creation/errors.py`, `afde/production_adapter_creation/models.py`, `afde/production_adapter_creation/service.py` |
+| Validation evidence | `tests/test_production_adapter_creation.py`, `tests/test_production_adapter_creation_compatibility.py`, `tests/test_production_adapter_creation_boundaries.py` |
+| Known gaps | Instances are inert structural contracts and expose no invocation or execution behavior.<br>Factory automatic discovery, global instance registries, service locators, ranking, fallback, hot reload, Provider clients, credentials, probes, and Runtime integration remain excluded.<br>Operational Evidence, production readiness, M4, Worker, Product, CLI, and Desktop integration remain incomplete. |
+| Source documents | `DOC-CREG-0001` |
+| Supersedes | none |
+
+Descriptor, Registry, and Catalog remain metadata authorities and do not own
+factories or instances. Factories are caller-supplied and exact-identity
+scoped. Creation returns only an inert immutable instance; it grants no
+invocation, execution, Runtime, health, or production-ready authority.
+
 ## Registry Validation
 
 A capability registry change is valid only when:
@@ -511,6 +538,8 @@ A capability registry change is valid only when:
 - Availability remains declared metadata and is not a health or network probe.
 - Credential readiness remains caller-declared metadata and is not credential
   validation, authorization, or secret handling.
+- Adapter creation remains separated from invocation, execution, Runtime
+  binding, and lifecycle ownership.
 - Runtime execution and lifecycle integration remain deferred.
 - Multiple-candidate discovery and ranking remain deferred.
 - M4 validation and operational integration are not complete.
