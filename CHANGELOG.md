@@ -1,5 +1,25 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-6.3 Production Adapter Creation Foundation (Unreleased)
+
+- Registered `CAP-PRODUCTIONADAPTERCREATION-0001` as implemented at M3 without
+  invocation, execution, Runtime, health, or production-ready authority.
+- Added package-scoped immutable factory protocol, Creation Context, safe
+  configuration metadata, inert instance/result contracts, typed errors, and
+  explicit creation service.
+- Added deterministic factory identity snapshot, duplicate rejection, exact
+  lookup, Availability and Credential Readiness preconditions, optional
+  existing binding validation, and factory return validation.
+- Kept Descriptor, Registry, Catalog, Registration, Discovery, Availability,
+  Credential Readiness, Tool Adapter Contract, Execution Path, Runtime,
+  builders, and Root public contract unchanged.
+- Added no instance Registry, factory auto-discovery, service locator, external
+  DI/plugin framework, credential/secret handling, Provider client, network,
+  probe, invocation/execution method, Runtime integration, Worker, Product,
+  CLI, or Desktop behavior.
+- Added focused, compatibility, secret-non-exposure, governance, and AST
+  Architecture Boundary tests.
+
 ## AFDE-6.2 Production Adapter Credential Readiness Foundation (Unreleased)
 
 - Registered `CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001` as implemented at

@@ -124,7 +124,8 @@
         "CAP-PRODUCTIONADAPTERREGISTRATION-0001",
         "CAP-PRODUCTIONADAPTERDISCOVERY-0001",
         "CAP-PRODUCTIONADAPTERAVAILABILITY-0001",
-        "CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001"
+        "CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001",
+        "CAP-PRODUCTIONADAPTERCREATION-0001"
       ]
     },
     {
@@ -1339,6 +1340,78 @@
         {
           "gap_type": "evidence_gap",
           "subject_id": "CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001",
+          "message": "Operational validation, production readiness, and M4 validation are not complete.",
+          "related_ids": []
+        }
+      ],
+      "source_documents": [
+        "DOC-CREG-0001"
+      ],
+      "supersedes": []
+    },
+    {
+      "capability_id": "CAP-PRODUCTIONADAPTERCREATION-0001",
+      "name": "Production Adapter Creation Foundation",
+      "description": "Validate descriptor, availability, credential readiness, optional existing binding, and caller-supplied factory metadata before creating one inert non-executable ProductionAdapterInstance.",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.production_adapter_creation",
+      "status": "implemented",
+      "maturity": "M3",
+      "implementation_status": "implemented",
+      "required_knowledge": [],
+      "required_capabilities": [
+        "CAP-PRODUCTIONADAPTERDISCOVERY-0001",
+        "CAP-PRODUCTIONADAPTERREGISTRATION-0001",
+        "CAP-PRODUCTIONADAPTERAVAILABILITY-0001",
+        "CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001",
+        "CAP-ADAPTERREGISTRY-0001",
+        "CAP-TOOLCATALOG-0001",
+        "CAP-TOOLADAPTER-CONTRACT-0001",
+        "CAP-EXECPATH-0001",
+        "CAP-RUNTIME-0001"
+      ],
+      "tool_dependencies": [],
+      "adapter_dependencies": [
+        "existing ToolAdapterDescriptor",
+        "existing OperationalAdapterRegistry",
+        "existing ToolAdapterCatalog",
+        "existing ToolAdapterBinding",
+        "existing ProductionAdapterAvailabilityResult",
+        "existing ProductionAdapterCredentialReadinessResult",
+        "caller-supplied ProductionAdapterFactory"
+      ],
+      "runtime_dependencies": [
+        "existing non-executable Execution Path compatibility",
+        "existing Runtime Projection compatibility",
+        "existing Tool Adapter Binding compatibility"
+      ],
+      "implementation_references": [
+        "afde/production_adapter_creation/__init__.py",
+        "afde/production_adapter_creation/errors.py",
+        "afde/production_adapter_creation/models.py",
+        "afde/production_adapter_creation/service.py"
+      ],
+      "validation_evidence": [
+        "tests/test_production_adapter_creation.py",
+        "tests/test_production_adapter_creation_compatibility.py",
+        "tests/test_production_adapter_creation_boundaries.py"
+      ],
+      "known_gaps": [
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERCREATION-0001",
+          "message": "Instances are inert structural contracts and expose no invocation, execution, connection, startup, call, or dispatch behavior.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERCREATION-0001",
+          "message": "Factory automatic discovery, global instance registries, service locators, credentials, Provider clients, probes, and Runtime integration remain excluded.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "evidence_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERCREATION-0001",
           "message": "Operational validation, production readiness, and M4 validation are not complete.",
           "related_ids": []
         }

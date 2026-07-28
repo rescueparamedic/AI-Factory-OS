@@ -1,5 +1,27 @@
 # Decision Log
 
+## 2026-07-28 - AFDE-6.3 Explicit Inert Adapter Creation
+
+- Implemented `CAP-PRODUCTIONADAPTERCREATION-0001` at M3 without invocation,
+  execution, Runtime binding, operational-health, or production-ready claims.
+- Kept `ToolAdapterDescriptor`, `OperationalAdapterRegistry`, and
+  `ToolAdapterCatalog` as unchanged metadata authorities and separated them
+  from caller-supplied factories and inert instances.
+- Added an explicit immutable factory identity snapshot inside the creation
+  service; duplicate identities and missing exact factories fail closed.
+- Required descriptor, context, Availability, Credential Readiness, optional
+  existing `ToolAdapterBinding`, factory, and returned instance identities to
+  agree before returning a result.
+- Limited configuration and creation metadata to allowlisted safe opaque
+  references with no credential or secret-value field.
+- Preserved Discovery entry-point returns, all existing builders, Tool Adapter
+  Contract, Execution Path, Runtime Integration, Root exports, and Runtime
+  lifecycle unchanged.
+- Excluded invocation/execution, factory auto-discovery, global instance
+  registries, service locators, DI/plugin frameworks, credentials, Provider
+  clients, probes, retry/timeout/circuit breaker, Worker, Product, CLI, and
+  Desktop.
+
 ## 2026-07-28 - AFDE-6.2 Caller-supplied Credential Readiness
 
 - Implemented `CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001` at M3 without
