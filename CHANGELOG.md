@@ -1,5 +1,24 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-6.0 Production Adapter Discovery Foundation (Unreleased)
+
+- Registered `CAP-PRODUCTIONADAPTERDISCOVERY-0001` as implemented at M3
+  without claiming M4, production readiness, or execution authority.
+- Added package-scoped standard-library entry-point metadata discovery for
+  `ai_factory_os.tool_adapters` with an injectable fakeable source.
+- Required exactly one existing `ToolAdapterDescriptor` per entry point and
+  added typed fail-closed source, load, and type failures.
+- Merged discovery results with unchanged static registrations through the
+  existing `OperationalAdapterRegistry` and reused all existing Catalog
+  validation, mapping, duplicate, ambiguity, and projection behavior.
+- Preserved the static Registry builder, production composition contract,
+  Runtime startup/lifecycle, and false Runtime/execution authority.
+- Added no binding, invocation, credentials, probes, hot reload, scans,
+  Provider/Worker/CLI/Desktop wiring, third-party plugin framework, DI
+  container, or external dependency.
+- Added fake-source focused, Registry/composition compatibility, governance,
+  and AST architecture-boundary tests.
+
 ## Chat–Work–Codex Development Operations Workflow (Unreleased)
 
 - Required Chat to classify each Sprint as General or Architecture before

@@ -1,5 +1,20 @@
 # Technical Debt
 
+## AFDE-6.0 Production Adapter Discovery Foundation
+
+- Discovery is an explicit one-shot metadata operation; hot reload, caching,
+  change notification, filesystem scans, and namespace-package scans are not
+  implemented.
+- Installed entry points must expose already-constructed
+  `ToolAdapterDescriptor` values. Adapter factories, binding, invocation,
+  health/network probes, credentials, and Provider/Worker wiring remain
+  outside the boundary.
+- The static production descriptor and discovered descriptors are merged only
+  through the new additive builder; existing application startup and Runtime
+  lifecycle do not call discovery.
+- Operational Evidence, installed third-party adapter certification,
+  production readiness, and M4 validation remain incomplete.
+
 ## AFDE-5.9 Production Adapter Registration Foundation
 
 - Only the Codex Automation Bridge has approved static production metadata;

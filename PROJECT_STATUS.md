@@ -1,5 +1,25 @@
 # AI Factory OS Project Status
 
+## AFDE-6.0 Production Adapter Discovery Foundation
+
+- `CAP-PRODUCTIONADAPTERDISCOVERY-0001` is `implemented`, maturity `M3`,
+  with `implementation_status: implemented`.
+- `afde.production_adapter_discovery` queries only the exact
+  `ai_factory_os.tool_adapters` entry-point group through an injectable source;
+  the default source uses standard-library `importlib.metadata`.
+- Every entry point must load exactly one existing `ToolAdapterDescriptor`.
+  Fake sources provide installation-free focused validation.
+- Discovered descriptors merge with unchanged static registrations through the
+  existing `OperationalAdapterRegistry` and `ToolAdapterCatalog`.
+- Entry-point source/load/type failures and existing Catalog duplicate and
+  Capability ambiguity failures remain typed and fail closed.
+- `build_production_adapter_registry()` and `build_production_composition()`
+  are unchanged. Runtime startup, lifecycle, composition, and authority remain
+  unchanged; `runtime_allowed` and `execution_allowed` remain false.
+- Binding, invocation, credential handling, health/network probes, hot reload,
+  scans, Provider/Worker/CLI/Desktop integration, M4, and production readiness
+  remain excluded.
+
 ## AFDE-5.9 Production Adapter Registration Foundation
 
 - `CAP-PRODUCTIONADAPTERREGISTRATION-0001` is `implemented`, maturity `M3`,

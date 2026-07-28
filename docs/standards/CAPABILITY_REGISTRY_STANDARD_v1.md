@@ -408,6 +408,32 @@ This entry governs static registration metadata only. It grants no Runtime or
 execution authority and makes no availability, credential-readiness,
 production-readiness, or M4 claim.
 
+### CAP-PRODUCTIONADAPTERDISCOVERY-0001
+
+| Field | Value |
+| --- | --- |
+| Name | Production Adapter Discovery Foundation |
+| Description | Discover installed entry-point metadata that loads exactly one existing ToolAdapterDescriptor per entry point, then merge it with unchanged static registrations through the existing Registry and Catalog. |
+| Owner | AI Factory OS Architecture |
+| Scope | `architecture.production_adapter_discovery` |
+| Status | `implemented` |
+| Maturity | `M3` |
+| Implementation status | `implemented` |
+| Required knowledge | none |
+| Required capabilities | `CAP-PRODUCTIONADAPTERREGISTRATION-0001`, `CAP-ADAPTERREGISTRY-0001` |
+| Tool dependencies | Python standard-library `importlib.metadata` |
+| Adapter dependencies | caller-injected `ProductionAdapterDiscoverySource`, existing `ToolAdapterDescriptor`, static production registrations, existing `OperationalAdapterRegistry`, existing `ToolAdapterCatalog` |
+| Runtime dependencies | none |
+| Implementation references | `afde/production_adapter_discovery/__init__.py`, `afde/production_adapter_discovery/errors.py`, `afde/production_adapter_discovery/models.py`, `afde/production_adapter_discovery/discovery.py` |
+| Validation evidence | `tests/test_production_adapter_discovery.py`, `tests/test_production_adapter_discovery_compatibility.py`, `tests/test_production_adapter_discovery_boundaries.py` |
+| Known gaps | Adapter binding, invocation, health checks, network probes, credential handling, hot reload, filesystem and namespace scans remain excluded.<br>Runtime, Worker, Provider, CLI, Desktop, startup, and lifecycle integration remain deferred.<br>Operational Evidence, production readiness, and M4 validation are not complete. |
+| Source documents | `DOC-ARCH-0001`, `DOC-CREG-0001`, `DOC-PADDISC-0001` |
+| Supersedes | none |
+
+This entry governs descriptor metadata discovery only. Entry-point failures,
+invalid types, duplicate identities, and selectable Capability ambiguity fail
+closed. `runtime_allowed` and `execution_allowed` remain false.
+
 ## Registry Validation
 
 A capability registry change is valid only when:
@@ -427,7 +453,8 @@ A capability registry change is valid only when:
 ## Known Architecture Gaps
 
 - The production composition is non-executable and has no executable consumer.
-- Concrete production Adapter registrations and discovery remain deferred.
+- Additional production Adapter registrations remain deferred.
+- Discovery remains metadata-only and has no binding or executable consumer.
 - Runtime execution and lifecycle integration remain deferred.
 - Multiple-candidate discovery and ranking remain deferred.
 - M4 validation and operational integration are not complete.
