@@ -1,5 +1,23 @@
 # Decision Log
 
+## 2026-07-28 - AFDE-6.1 Descriptor-declared Adapter Availability
+
+- Implemented `CAP-PRODUCTIONADAPTERAVAILABILITY-0001` at M3 without claiming
+  operational health, reachability, credential readiness, M4, or production
+  readiness.
+- Reused the existing `ToolAdapterDescriptor.availability` and
+  `AdapterAvailability` as the only assessment input and policy.
+- Returned one frozen deterministic metadata result that preserves the exact
+  descriptor and denies Runtime and execution authority.
+- Reused Discovery, static Registration, Registry, and Catalog unchanged as
+  the source path for registered descriptors.
+- Confirmed compatibility with the existing `ExecutionPathService`,
+  `RuntimeProjection`, and `RuntimeIntegrationPolicy` without integrating or
+  invoking Runtime behavior.
+- Excluded credentials, Adapter construction/factories/binding/invocation,
+  health checks, network probes, execution, Runtime startup/lifecycle/session,
+  Worker, Provider, Product, CLI, and Desktop.
+
 ## 2026-07-28 - AFDE-6.0 Production Adapter Metadata Discovery
 
 - Implemented `CAP-PRODUCTIONADAPTERDISCOVERY-0001` at M3 without claiming

@@ -122,7 +122,8 @@
         "CAP-ADAPTERREGISTRY-0001",
         "CAP-PRODUCTIONCOMPOSITION-0001",
         "CAP-PRODUCTIONADAPTERREGISTRATION-0001",
-        "CAP-PRODUCTIONADAPTERDISCOVERY-0001"
+        "CAP-PRODUCTIONADAPTERDISCOVERY-0001",
+        "CAP-PRODUCTIONADAPTERAVAILABILITY-0001"
       ]
     },
     {
@@ -1210,6 +1211,72 @@
         "DOC-ARCH-0001",
         "DOC-CREG-0001",
         "DOC-PADDISC-0001"
+      ],
+      "supersedes": []
+    },
+    {
+      "capability_id": "CAP-PRODUCTIONADAPTERAVAILABILITY-0001",
+      "name": "Production Adapter Availability Foundation",
+      "description": "Project one registered ToolAdapterDescriptor's exact AdapterAvailability metadata into an immutable non-executable availability result.",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.production_adapter_availability",
+      "status": "implemented",
+      "maturity": "M3",
+      "implementation_status": "implemented",
+      "required_knowledge": [],
+      "required_capabilities": [
+        "CAP-PRODUCTIONADAPTERDISCOVERY-0001",
+        "CAP-PRODUCTIONADAPTERREGISTRATION-0001",
+        "CAP-ADAPTERREGISTRY-0001",
+        "CAP-TOOLCATALOG-0001",
+        "CAP-EXECPATH-0001",
+        "CAP-RUNTIME-0001"
+      ],
+      "tool_dependencies": [],
+      "adapter_dependencies": [
+        "existing ToolAdapterDescriptor",
+        "existing AdapterAvailability",
+        "existing OperationalAdapterRegistry",
+        "existing ToolAdapterCatalog"
+      ],
+      "runtime_dependencies": [
+        "existing non-executable ExecutionPathService compatibility",
+        "existing RuntimeProjection compatibility",
+        "existing RuntimeIntegrationPolicy compatibility"
+      ],
+      "implementation_references": [
+        "afde/production_adapter_availability/__init__.py",
+        "afde/production_adapter_availability/errors.py",
+        "afde/production_adapter_availability/models.py",
+        "afde/production_adapter_availability/service.py"
+      ],
+      "validation_evidence": [
+        "tests/test_production_adapter_availability.py",
+        "tests/test_production_adapter_availability_compatibility.py",
+        "tests/test_production_adapter_availability_boundaries.py"
+      ],
+      "known_gaps": [
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERAVAILABILITY-0001",
+          "message": "Availability is declared descriptor metadata, not health, reachability, credential readiness, or operational Evidence.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERAVAILABILITY-0001",
+          "message": "Adapter creation, binding, invocation, execution, credential operations, health checks, and network probes remain excluded.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "evidence_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERAVAILABILITY-0001",
+          "message": "Runtime integration, operational validation, production readiness, and M4 validation are not complete.",
+          "related_ids": []
+        }
+      ],
+      "source_documents": [
+        "DOC-CREG-0001"
       ],
       "supersedes": []
     }
