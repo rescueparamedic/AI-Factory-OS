@@ -65,6 +65,7 @@ def test_valid_registry_loads_all_three_projections():
         "CAP-PRODUCTIONADAPTERREGISTRATION-0001",
         "CAP-PRODUCTIONADAPTERDISCOVERY-0001",
         "CAP-PRODUCTIONADAPTERAVAILABILITY-0001",
+        "CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001",
     ]
 
 
@@ -425,6 +426,48 @@ def test_production_adapter_availability_has_reciprocal_m3_binding():
     assert capability.source_documents == ("DOC-CREG-0001",)
     assert (
         "CAP-PRODUCTIONADAPTERAVAILABILITY-0001"
+        in documents["DOC-CREG-0001"].capability_ids
+    )
+
+
+def test_production_adapter_credential_readiness_has_reciprocal_m3_binding():
+    snapshot = KnowledgeRegistryLoader(ROOT).load()
+    capability = next(
+        item for item in snapshot.capabilities
+        if item.capability_id
+        == "CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001"
+    )
+    documents = {
+        item.document_id: item for item in snapshot.documents
+    }
+
+    assert capability.status == "implemented"
+    assert capability.maturity == "M3"
+    assert capability.implementation_status == "implemented"
+    assert capability.required_capabilities == (
+        "CAP-PRODUCTIONADAPTERDISCOVERY-0001",
+        "CAP-PRODUCTIONADAPTERAVAILABILITY-0001",
+        "CAP-PRODUCTIONADAPTERREGISTRATION-0001",
+        "CAP-ADAPTERREGISTRY-0001",
+        "CAP-TOOLCATALOG-0001",
+        "CAP-EXECPATH-0001",
+        "CAP-RUNTIME-0001",
+    )
+    assert capability.runtime_dependencies == (
+        "existing non-executable ExecutionPathService compatibility",
+        "existing RuntimeHandoffProjection compatibility",
+        "existing RuntimeProjection compatibility",
+        "existing RuntimeIntegrationPolicy compatibility",
+    )
+    assert capability.implementation_references == (
+        "afde/production_adapter_credential_readiness/__init__.py",
+        "afde/production_adapter_credential_readiness/errors.py",
+        "afde/production_adapter_credential_readiness/models.py",
+        "afde/production_adapter_credential_readiness/service.py",
+    )
+    assert capability.source_documents == ("DOC-CREG-0001",)
+    assert (
+        "CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001"
         in documents["DOC-CREG-0001"].capability_ids
     )
 

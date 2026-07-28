@@ -1,5 +1,24 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-6.2 Production Adapter Credential Readiness Foundation (Unreleased)
+
+- Registered `CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001` as implemented at
+  M3 without credential-validity, authorization, or production-readiness
+  claims.
+- Added package-scoped immutable caller evidence, readiness status/result,
+  typed errors, and assessment service.
+- Added deterministic `NOT_REQUIRED`, `READY`, and fail-closed `NOT_READY`
+  outcomes using only existing `credentials_required` metadata and safe opaque
+  caller evidence.
+- Added no credential or secret-value contract, lookup, validation, storage,
+  encryption, store/provider integration, OAuth, refresh, Adapter behavior,
+  Runtime behavior, probe, Worker, Provider, Product, CLI, or Desktop feature.
+- Preserved Registry, Catalog, Discovery, Availability, Registration,
+  Execution Path, Runtime contracts, builders, Root exports, and false
+  Runtime/execution authority.
+- Added focused, compatibility, secret-non-exposure, governance, and AST
+  Architecture Boundary tests.
+
 ## AFDE-6.1 Production Adapter Availability Foundation (Unreleased)
 
 - Registered `CAP-PRODUCTIONADAPTERAVAILABILITY-0001` as implemented at M3

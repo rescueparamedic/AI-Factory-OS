@@ -1,5 +1,25 @@
 # AI Factory OS Project Status
 
+## AFDE-6.2 Production Adapter Credential Readiness Foundation
+
+- `CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001` is `implemented`, maturity
+  `M3`, with `implementation_status: implemented`.
+- `ProductionAdapterCredentialReadinessService` uses only the existing
+  `ToolAdapterDescriptor.credentials_required` metadata and caller-supplied
+  `CredentialReadinessEvidence`.
+- The result is `NOT_REQUIRED` when credentials are not declared as required,
+  `READY` only for required credentials with explicit ready evidence, and
+  otherwise `NOT_READY`. Missing evidence is a normal fail-closed result.
+- Evidence contains only adapter identity, boolean readiness, a format-limited
+  opaque reference, and allowlisted source metadata. No credential or secret
+  value can be supplied to the contract.
+- Existing Discovery, Availability, Registration, Registry, Catalog,
+  Execution Path, Runtime Projection, policy, builders, and Runtime lifecycle
+  remain unchanged. Runtime and execution authority remain false.
+- Credential lookup/validation/storage, authorization, encryption, secret
+  stores, OAuth, refresh, Adapter behavior, probes, Runtime integration,
+  Worker, Provider, Product, CLI, and Desktop remain excluded.
+
 ## AFDE-6.1 Production Adapter Availability Foundation
 
 - `CAP-PRODUCTIONADAPTERAVAILABILITY-0001` is `implemented`, maturity `M3`,
