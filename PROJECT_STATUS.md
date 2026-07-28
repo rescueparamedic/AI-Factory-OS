@@ -1,5 +1,22 @@
 # AI Factory OS Project Status
 
+## AFDE-6.1 Production Adapter Availability Foundation
+
+- `CAP-PRODUCTIONADAPTERAVAILABILITY-0001` is `implemented`, maturity `M3`,
+  with `implementation_status: implemented`.
+- `ProductionAdapterAvailabilityService` accepts exactly one existing
+  `ToolAdapterDescriptor` and projects only its exact `AdapterAvailability`
+  metadata into an immutable deterministic result.
+- Available and unavailable metadata are distinguished without credential
+  lookup/validation, health checks, network probes, Adapter creation,
+  invocation, execution, or external I/O.
+- Discovery, static Registration, `OperationalAdapterRegistry`,
+  `ToolAdapterCatalog`, `ExecutionPathService`, `RuntimeProjection`, and
+  `RuntimeIntegrationPolicy` remain unchanged and compatible.
+- The result always keeps `runtime_allowed` and `execution_allowed` false.
+  Runtime startup, lifecycle, session, Worker, Provider, Product, CLI, and
+  Desktop integration remain excluded.
+
 ## AFDE-6.0 Production Adapter Discovery Foundation
 
 - `CAP-PRODUCTIONADAPTERDISCOVERY-0001` is `implemented`, maturity `M3`,

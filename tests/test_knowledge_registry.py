@@ -64,6 +64,7 @@ def test_valid_registry_loads_all_three_projections():
         "CAP-PRODUCTIONCOMPOSITION-0001",
         "CAP-PRODUCTIONADAPTERREGISTRATION-0001",
         "CAP-PRODUCTIONADAPTERDISCOVERY-0001",
+        "CAP-PRODUCTIONADAPTERAVAILABILITY-0001",
     ]
 
 
@@ -385,6 +386,46 @@ def test_production_adapter_discovery_has_reciprocal_m3_binding():
         )
     assert documents["DOC-PADDISC-0001"].path == (
         "docs/standards/PRODUCTION_ADAPTER_DISCOVERY_STANDARD_v1.md"
+    )
+
+
+def test_production_adapter_availability_has_reciprocal_m3_binding():
+    snapshot = KnowledgeRegistryLoader(ROOT).load()
+    capability = next(
+        item for item in snapshot.capabilities
+        if item.capability_id
+        == "CAP-PRODUCTIONADAPTERAVAILABILITY-0001"
+    )
+    documents = {
+        item.document_id: item for item in snapshot.documents
+    }
+
+    assert capability.status == "implemented"
+    assert capability.maturity == "M3"
+    assert capability.implementation_status == "implemented"
+    assert capability.required_capabilities == (
+        "CAP-PRODUCTIONADAPTERDISCOVERY-0001",
+        "CAP-PRODUCTIONADAPTERREGISTRATION-0001",
+        "CAP-ADAPTERREGISTRY-0001",
+        "CAP-TOOLCATALOG-0001",
+        "CAP-EXECPATH-0001",
+        "CAP-RUNTIME-0001",
+    )
+    assert capability.runtime_dependencies == (
+        "existing non-executable ExecutionPathService compatibility",
+        "existing RuntimeProjection compatibility",
+        "existing RuntimeIntegrationPolicy compatibility",
+    )
+    assert capability.implementation_references == (
+        "afde/production_adapter_availability/__init__.py",
+        "afde/production_adapter_availability/errors.py",
+        "afde/production_adapter_availability/models.py",
+        "afde/production_adapter_availability/service.py",
+    )
+    assert capability.source_documents == ("DOC-CREG-0001",)
+    assert (
+        "CAP-PRODUCTIONADAPTERAVAILABILITY-0001"
+        in documents["DOC-CREG-0001"].capability_ids
     )
 
 

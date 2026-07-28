@@ -1,5 +1,16 @@
 # Technical Debt
 
+## AFDE-6.1 Production Adapter Availability Foundation
+
+- Availability is derived only from declared `AdapterAvailability` metadata;
+  it is not health, reachability, credential readiness, or operational
+  Evidence.
+- There is no live refresh, health check, network probe, Adapter invocation,
+  credential operation, or environment-specific availability policy.
+- The service is package-scoped and is not wired into Runtime startup,
+  lifecycle, session, Worker, Provider, Product, CLI, or Desktop flows.
+- Operational validation, production readiness, and M4 remain incomplete.
+
 ## AFDE-6.0 Production Adapter Discovery Foundation
 
 - Discovery is an explicit one-shot metadata operation; hot reload, caching,

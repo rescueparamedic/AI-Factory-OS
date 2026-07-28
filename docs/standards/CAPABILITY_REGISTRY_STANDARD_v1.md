@@ -434,6 +434,32 @@ This entry governs descriptor metadata discovery only. Entry-point failures,
 invalid types, duplicate identities, and selectable Capability ambiguity fail
 closed. `runtime_allowed` and `execution_allowed` remain false.
 
+### CAP-PRODUCTIONADAPTERAVAILABILITY-0001
+
+| Field | Value |
+| --- | --- |
+| Name | Production Adapter Availability Foundation |
+| Description | Project one registered ToolAdapterDescriptor's exact AdapterAvailability metadata into an immutable non-executable availability result. |
+| Owner | AI Factory OS Architecture |
+| Scope | `architecture.production_adapter_availability` |
+| Status | `implemented` |
+| Maturity | `M3` |
+| Implementation status | `implemented` |
+| Required knowledge | none |
+| Required capabilities | `CAP-PRODUCTIONADAPTERDISCOVERY-0001`, `CAP-PRODUCTIONADAPTERREGISTRATION-0001`, `CAP-ADAPTERREGISTRY-0001`, `CAP-TOOLCATALOG-0001`, `CAP-EXECPATH-0001`, `CAP-RUNTIME-0001` |
+| Tool dependencies | none |
+| Adapter dependencies | existing `ToolAdapterDescriptor`, existing `AdapterAvailability`, existing `OperationalAdapterRegistry`, existing `ToolAdapterCatalog` |
+| Runtime dependencies | existing non-executable `ExecutionPathService`, `RuntimeProjection`, and `RuntimeIntegrationPolicy` compatibility only; no Runtime invocation |
+| Implementation references | `afde/production_adapter_availability/__init__.py`, `afde/production_adapter_availability/errors.py`, `afde/production_adapter_availability/models.py`, `afde/production_adapter_availability/service.py` |
+| Validation evidence | `tests/test_production_adapter_availability.py`, `tests/test_production_adapter_availability_compatibility.py`, `tests/test_production_adapter_availability_boundaries.py` |
+| Known gaps | Availability is declared descriptor metadata, not health, reachability, credential readiness, or operational Evidence.<br>Adapter creation, binding, invocation, execution, credential operations, health checks, and network probes remain excluded.<br>Runtime startup/lifecycle/session, Worker, Provider, Product, CLI, Desktop, production readiness, and M4 validation remain incomplete. |
+| Source documents | `DOC-CREG-0001` |
+| Supersedes | none |
+
+This entry performs an exact metadata projection only. It does not inspect
+credentials or call Adapter, Runtime, Worker, Provider, Product, CLI, or
+Desktop behavior. `runtime_allowed` and `execution_allowed` remain false.
+
 ## Registry Validation
 
 A capability registry change is valid only when:
@@ -455,6 +481,7 @@ A capability registry change is valid only when:
 - The production composition is non-executable and has no executable consumer.
 - Additional production Adapter registrations remain deferred.
 - Discovery remains metadata-only and has no binding or executable consumer.
+- Availability remains declared metadata and is not a health or network probe.
 - Runtime execution and lifecycle integration remain deferred.
 - Multiple-candidate discovery and ranking remain deferred.
 - M4 validation and operational integration are not complete.

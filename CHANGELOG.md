@@ -1,5 +1,19 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-6.1 Production Adapter Availability Foundation (Unreleased)
+
+- Registered `CAP-PRODUCTIONADAPTERAVAILABILITY-0001` as implemented at M3
+  without claiming operational health, production readiness, or M4.
+- Added a package-scoped immutable assessment result and service using only
+  existing `ToolAdapterDescriptor` and `AdapterAvailability` metadata.
+- Reused Discovery, static Registration, Registry, Catalog, Execution Path,
+  Runtime Projection, and Runtime policy contracts unchanged.
+- Preserved false Runtime/execution authority and added no Runtime startup,
+  lifecycle, session, Adapter execution, credential, probe, Worker, Provider,
+  Product, CLI, or Desktop behavior.
+- Added focused, compatibility, governance, and AST architecture-boundary
+  tests.
+
 ## AFDE-6.0 Production Adapter Discovery Foundation (Unreleased)
 
 - Registered `CAP-PRODUCTIONADAPTERDISCOVERY-0001` as implemented at M3
