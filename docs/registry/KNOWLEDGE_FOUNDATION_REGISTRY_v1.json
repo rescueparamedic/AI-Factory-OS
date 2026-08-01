@@ -1568,7 +1568,7 @@
     {
       "capability_id": "CAP-PRODUCTIONADAPTERRUNTIMEEXECUTION-0001",
       "name": "Production Adapter Runtime Execution Foundation",
-      "description": "Execute one explicitly Runtime-authorized production adapter creation and invocation operation through the existing startup composition while preserving existing Runtime lifecycle and public contracts.",
+      "description": "Atomically consume one explicitly Runtime-authorized identity for at most one production adapter creation and invocation operation through the existing startup composition, returning authority-free completion evidence while preserving existing Runtime lifecycle and public contracts.",
       "owner": "AI Factory OS Architecture",
       "scope": "architecture.production_adapter_runtime_execution",
       "status": "implemented",
@@ -1593,6 +1593,7 @@
       ],
       "runtime_dependencies": [
         "explicit immutable Runtime execution authority identity",
+        "process-local atomic single-use authority consumption",
         "existing Runtime projection identity compatibility",
         "existing Runtime lifecycle ownership unchanged"
       ],
@@ -1604,6 +1605,10 @@
       ],
       "validation_evidence": [
         "tests/test_production_adapter_runtime_execution.py",
+        "tests/test_production_adapter_runtime_execution.py::test_completed_result_does_not_expose_request_or_authority",
+        "tests/test_production_adapter_runtime_execution.py::test_same_request_cannot_reuse_consumed_authority",
+        "tests/test_production_adapter_runtime_execution.py::test_new_request_cannot_reuse_same_authority",
+        "tests/test_production_adapter_runtime_execution.py::test_concurrent_authority_reuse_allows_exactly_one_execution",
         "tests/test_production_adapter_runtime_execution_compatibility.py",
         "tests/test_production_adapter_runtime_execution_boundaries.py"
       ],
@@ -1611,7 +1616,7 @@
         {
           "gap_type": "capability_gap",
           "subject_id": "CAP-PRODUCTIONADAPTERRUNTIMEEXECUTION-0001",
-          "message": "Authority issuance, revocation, persistence, replay protection, and Runtime lifecycle transitions remain owned outside this additive execution boundary.",
+          "message": "Authority issuance, revocation, durable cross-process consumption persistence, and Runtime lifecycle transitions remain owned outside this additive execution boundary; in-process sequential and concurrent reuse fail closed.",
           "related_ids": []
         },
         {

@@ -10,8 +10,11 @@
   to its existing Creation and Invocation services without changing them.
 - Missing, malformed, denied, or mismatched authority fails before factory or
   target behavior. Creation and invocation failures remain stage-specific.
-- Authority exists only at the new execution boundary; request, reused
-  contracts, and completed result do not propagate it.
+- Each validated authority reference is atomically consumed once before factory behavior;
+  same-request, same-identity new-request, and concurrent reuse are rejected
+  before factory or target calls.
+- The completed result retains neither the original request nor authority data;
+  it exposes only non-authoritative identity metadata and existing results.
 - Existing Runtime lifecycle/session ownership, root exports, Worker,
   Provider, Product, CLI, Desktop, network, background services, operational
   validation, production readiness, and M4 remain unchanged or excluded.

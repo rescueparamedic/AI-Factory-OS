@@ -1,5 +1,7 @@
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import FrozenInstanceError, dataclass, replace
 from pathlib import Path
+from uuid import uuid4
 
 import pytest
 
@@ -18,6 +20,7 @@ from afde.production_adapter_runtime_execution import (
     InvalidProductionAdapterRuntimeExecutionResultError,
     ProductionAdapterRuntimeCreationCallError,
     ProductionAdapterRuntimeExecutionAuthority,
+    ProductionAdapterRuntimeExecutionAuthorityReuseError,
     ProductionAdapterRuntimeExecutionIdentityMismatchError,
     ProductionAdapterRuntimeExecutionRequest,
     ProductionAdapterRuntimeExecutionService,
@@ -36,7 +39,6 @@ from afde.tool_catalog import (
     RuntimeCompatibility,
     ToolAdapterDescriptor,
 )
-
 
 ROOT = Path(__file__).resolve().parents[1]
 ADAPTER_ID = "adapter.runtime_execution_fixture"
@@ -168,7 +170,9 @@ def _request(*, factory=None, target=None):
         tool_request
     ).binding
     authority = ProductionAdapterRuntimeExecutionAuthority(
-        authority_reference="RUNTIME-EXECUTION-AUTHORITY-AFDE-6.6-001",
+        authority_reference=(
+            f"RUNTIME-EXECUTION-AUTHORITY-{uuid4().hex.upper()}"
+        ),
         adapter_id=binding.adapter_id,
         projection_id=binding.projection_id,
         path_id=binding.path_id,
@@ -202,11 +206,76 @@ def test_authorized_runtime_execution_reuses_creation_and_invocation_once():
     assert result.invocation_result.request.binding is request.binding
     assert result.creation_result.factory_adapter_id == ADAPTER_ID
     assert result.invocation_result.target_adapter_id == ADAPTER_ID
+    assert result.adapter_id == ADAPTER_ID
+    assert result.binding_id == request.binding.binding_id
     assert result.runtime_allowed is False
     assert result.execution_allowed is False
     assert result.creation_result.runtime_allowed is False
     assert result.invocation_result.runtime_allowed is False
     assert result.trace[-1] == "07.authority.not_propagated"
+
+
+def test_completed_result_does_not_expose_request_or_authority():
+    request, _, _ = _request()
+
+    result = ProductionAdapterRuntimeExecutionService().execute(request)
+
+    assert not hasattr(result, "request")
+    assert not hasattr(result, "authority")
+    assert not hasattr(result, "authority_reference")
+    assert request.authority not in vars(result).values()
+    assert request not in vars(result).values()
+
+
+def test_same_request_cannot_reuse_consumed_authority():
+    request, factory, target = _request()
+    service = ProductionAdapterRuntimeExecutionService()
+
+    service.execute(request)
+    with pytest.raises(ProductionAdapterRuntimeExecutionAuthorityReuseError):
+        service.execute(request)
+
+    assert len(factory.contexts) == 1
+    assert len(target.requests) == 1
+
+
+def test_new_request_cannot_reuse_same_authority():
+    request, factory, target = _request()
+    second_request = replace(
+        request,
+        authority=replace(request.authority),
+        invocation_metadata_references=(
+            "INVOCATION-REFERENCE-RUNTIME-EXECUTION-002",
+        ),
+    )
+    assert second_request.authority is not request.authority
+
+    ProductionAdapterRuntimeExecutionService().execute(request)
+    factory.contexts.clear()
+    target.requests.clear()
+    with pytest.raises(ProductionAdapterRuntimeExecutionAuthorityReuseError):
+        ProductionAdapterRuntimeExecutionService().execute(second_request)
+
+    assert factory.contexts == []
+    assert target.requests == []
+
+
+def test_concurrent_authority_reuse_allows_exactly_one_execution():
+    request, factory, target = _request()
+
+    def execute_once():
+        try:
+            ProductionAdapterRuntimeExecutionService().execute(request)
+        except ProductionAdapterRuntimeExecutionAuthorityReuseError:
+            return "rejected"
+        return "completed"
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        outcomes = tuple(executor.map(lambda _: execute_once(), range(2)))
+
+    assert sorted(outcomes) == ["completed", "rejected"]
+    assert len(factory.contexts) == 1
+    assert len(target.requests) == 1
 
 
 def test_authority_is_immutable_explicit_and_execution_scoped():
@@ -269,6 +338,20 @@ def test_creation_and_invocation_failures_are_stage_specific():
     assert len(target.requests) == 1
 
 
+def test_authority_is_consumed_before_factory_failure():
+    factory = FakeFactory(failure=RuntimeError("creation failure"))
+    request, factory, target = _request(factory=factory)
+    service = ProductionAdapterRuntimeExecutionService()
+
+    with pytest.raises(ProductionAdapterRuntimeCreationCallError):
+        service.execute(request)
+    with pytest.raises(ProductionAdapterRuntimeExecutionAuthorityReuseError):
+        service.execute(request)
+
+    assert len(factory.contexts) == 1
+    assert target.requests == []
+
+
 def test_result_is_immutable_and_does_not_regrant_authority():
     request, _, _ = _request()
     result = ProductionAdapterRuntimeExecutionService().execute(request)
@@ -290,6 +373,7 @@ def test_public_contract_is_additive_and_package_scoped():
         "InvalidProductionAdapterRuntimeExecutionResultError",
         "ProductionAdapterRuntimeCreationCallError",
         "ProductionAdapterRuntimeExecutionAuthority",
+        "ProductionAdapterRuntimeExecutionAuthorityReuseError",
         "ProductionAdapterRuntimeExecutionError",
         "ProductionAdapterRuntimeExecutionIdentityMismatchError",
         "ProductionAdapterRuntimeExecutionRequest",

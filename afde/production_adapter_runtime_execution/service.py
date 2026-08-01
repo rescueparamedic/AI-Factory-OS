@@ -1,18 +1,45 @@
 """Authorized Runtime boundary composed from existing adapter capabilities."""
 from __future__ import annotations
 
+from threading import Lock
+
 from afde.production_adapter_creation import ProductionAdapterCreationContext
 from afde.production_adapter_invocation import InvocationRequest
 
 from .errors import (
     InvalidProductionAdapterRuntimeExecutionRequestError,
     ProductionAdapterRuntimeCreationCallError,
+    ProductionAdapterRuntimeExecutionAuthorityReuseError,
     ProductionAdapterRuntimeInvocationCallError,
 )
 from .models import (
+    ProductionAdapterRuntimeExecutionAuthority,
     ProductionAdapterRuntimeExecutionRequest,
     ProductionAdapterRuntimeExecutionResult,
 )
+
+
+class _AuthorityConsumptionLedger:
+    """Process-local atomic guard with no Runtime lifecycle integration."""
+
+    def __init__(self) -> None:
+        self._lock = Lock()
+        self._consumed: set[str] = set()
+
+    def consume(
+        self,
+        authority: ProductionAdapterRuntimeExecutionAuthority,
+    ) -> None:
+        identity = authority.authority_reference
+        with self._lock:
+            if identity in self._consumed:
+                raise ProductionAdapterRuntimeExecutionAuthorityReuseError(
+                    "Runtime execution authority has already been consumed"
+                )
+            self._consumed.add(identity)
+
+
+_AUTHORITY_CONSUMPTION_LEDGER = _AuthorityConsumptionLedger()
 
 
 class ProductionAdapterRuntimeExecutionService:
@@ -28,6 +55,7 @@ class ProductionAdapterRuntimeExecutionService:
             raise InvalidProductionAdapterRuntimeExecutionRequestError(
                 "request must be exactly one ProductionAdapterRuntimeExecutionRequest"
             )
+        _AUTHORITY_CONSUMPTION_LEDGER.consume(request.authority)
         startup = request.startup_composition
         creation_context = ProductionAdapterCreationContext(
             adapter_id=startup.creation_context.adapter_id,
@@ -74,11 +102,15 @@ class ProductionAdapterRuntimeExecutionService:
             ) from exc
 
         return ProductionAdapterRuntimeExecutionResult(
-            request=request,
+            adapter_id=request.binding.adapter_id,
+            projection_id=request.binding.projection_id,
+            path_id=request.binding.path_id,
+            capability_id=request.binding.capability_id,
+            binding_id=request.binding.binding_id,
             creation_result=creation_result,
             invocation_result=invocation_result,
             trace=(
-                f"01.runtime.authority.accepted:{request.authority.authority_reference}",
+                "01.runtime.authority.consumed",
                 "02.startup.composition.accepted",
                 "03.binding.identity.validated",
                 "04.adapter.created",

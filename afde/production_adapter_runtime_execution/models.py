@@ -1,9 +1,9 @@
 """Immutable contracts for authorized production adapter Runtime execution."""
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable
 from dataclasses import dataclass
-import re
 from typing import cast
 
 from afde.production_adapter_creation import ProductionAdapterCreationResult
@@ -19,7 +19,6 @@ from .errors import (
     InvalidProductionAdapterRuntimeExecutionResultError,
     ProductionAdapterRuntimeExecutionIdentityMismatchError,
 )
-
 
 AUTHORITY_REFERENCE_PATTERN = re.compile(
     r"^RUNTIME-EXECUTION-AUTHORITY-[A-Z0-9][A-Z0-9._-]{0,63}$"
@@ -154,7 +153,11 @@ class ProductionAdapterRuntimeExecutionRequest:
 class ProductionAdapterRuntimeExecutionResult:
     """Completed execution evidence that does not propagate Runtime authority."""
 
-    request: ProductionAdapterRuntimeExecutionRequest
+    adapter_id: str
+    projection_id: str
+    path_id: str
+    capability_id: str
+    binding_id: str
     creation_result: ProductionAdapterCreationResult
     invocation_result: InvocationResult
     trace: tuple[str, ...]
@@ -163,23 +166,25 @@ class ProductionAdapterRuntimeExecutionResult:
 
     def __post_init__(self) -> None:
         error = InvalidProductionAdapterRuntimeExecutionResultError
-        if type(self.request) is not ProductionAdapterRuntimeExecutionRequest:
-            raise error("request contract type is invalid")
         if type(self.creation_result) is not ProductionAdapterCreationResult:
             raise error("creation_result contract type is invalid")
         if type(self.invocation_result) is not InvocationResult:
             raise error("invocation_result contract type is invalid")
-        startup = self.request.startup_composition
         invocation_request = self.invocation_result.request
         if (
             self.creation_result is not invocation_request.creation_result
-            or self.creation_result.context.binding is not self.request.binding
-            or invocation_request.tool_adapter_request
-            is not self.request.tool_adapter_request
-            or invocation_request.binding is not self.request.binding
-            or self.creation_result.context.descriptor is not startup.descriptor
-            or self.creation_result.factory_adapter_id != startup.adapter_id
-            or self.invocation_result.target_adapter_id != startup.adapter_id
+            or self.creation_result.context.binding is not invocation_request.binding
+            or self.creation_result.context.descriptor
+            is not invocation_request.descriptor
+            or self.adapter_id != invocation_request.adapter_id
+            or self.adapter_id != self.creation_result.factory_adapter_id
+            or self.adapter_id != self.invocation_result.target_adapter_id
+            or self.projection_id
+            != invocation_request.tool_adapter_request.projection_id
+            or self.path_id != invocation_request.tool_adapter_request.path_id
+            or self.capability_id
+            != invocation_request.tool_adapter_request.capability_id
+            or self.binding_id != invocation_request.binding.binding_id
         ):
             raise error("execution result conflicts with the request identity chain")
         trace = _strings(self.trace, error, "trace")

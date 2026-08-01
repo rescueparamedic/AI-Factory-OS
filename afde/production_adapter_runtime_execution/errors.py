@@ -26,6 +26,12 @@ class ProductionAdapterRuntimeExecutionIdentityMismatchError(
     """Raised when an authority or request identity chain conflicts."""
 
 
+class ProductionAdapterRuntimeExecutionAuthorityReuseError(
+    ProductionAdapterRuntimeExecutionError,
+):
+    """Raised when an already-consumed Runtime authority is reused."""
+
+
 class ProductionAdapterRuntimeCreationCallError(
     ProductionAdapterRuntimeExecutionError,
 ):

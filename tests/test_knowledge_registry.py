@@ -1,5 +1,5 @@
-from copy import deepcopy
 import json
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
@@ -11,7 +11,6 @@ from afde.knowledge import (
     RegistryPathError,
     RegistryValidationError,
 )
-
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "docs" / "registry" / "KNOWLEDGE_FOUNDATION_REGISTRY_v1.json"
@@ -621,6 +620,7 @@ def test_production_adapter_runtime_execution_has_reciprocal_m3_binding():
     assert capability.tool_dependencies == ()
     assert capability.runtime_dependencies == (
         "explicit immutable Runtime execution authority identity",
+        "process-local atomic single-use authority consumption",
         "existing Runtime projection identity compatibility",
         "existing Runtime lifecycle ownership unchanged",
     )

@@ -9,13 +9,16 @@
   capability contracts unchanged.
 - Bound authority to exact adapter, projection, path, Capability, and binding
   identities and fail closed before behavior on malformed or mismatched input.
-- Executed exactly one Creation-to-Invocation path per service call while
-  preventing authority propagation into reused contracts or completed results.
+- Atomically consumes each validated authority reference once; sequential and
+  concurrent reuse fail closed before factory or target behavior.
+- Removed the original execution request and all authority data from the
+  completion result, which now exposes only non-authoritative identity metadata
+  and existing Creation/Invocation results.
 - Preserved Runtime lifecycle, root exports, and every existing public
   signature; added no Worker, Provider, Product, CLI, Desktop, network, or
   background execution implementation.
-- Added focused capability, compatibility, Registry validation, and AST
-  Architecture Boundary tests.
+- Added focused authority non-exposure, same-request/new-request/concurrent
+  reuse, capability, compatibility, Registry, and AST boundary tests.
 
 ## AFDE-6.5 Production Adapter Runtime Startup Integration Foundation (Unreleased)
 

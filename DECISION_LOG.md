@@ -8,12 +8,16 @@
   Path, Capability, and Tool Adapter binding identities before any behavior.
 - Reused the AFDE-6.5 startup composition and existing Creation and Invocation
   services unchanged, in that order, for one synchronous operation.
-- Kept authority local to the boundary: existing request/result contracts and
-  the completed execution result retain `runtime_allowed=False` and
-  `execution_allowed=False`.
+- Chose a package-private lock-protected consumption ledger keyed by the unique
+  authority reference after full request identity validation. Consumption occurs
+  before factory behavior, so sequential
+  and concurrent reuse fail closed without Runtime lifecycle mutation.
+- Removed the original execution request, authority, and authority reference
+  from the completed result. Only non-authoritative identity metadata and the
+  existing Creation/Invocation results remain.
 - Preserved Runtime lifecycle/session ownership, transitions, root exports,
   and all existing public signatures unchanged.
-- Excluded authority issuance/revocation/replay storage, Worker, Provider,
+- Excluded authority issuance/revocation/durable cross-process storage, Worker, Provider,
   Product, CLI, Desktop, transport, retry, timeout, streaming, cancellation,
   background services, M4, and production-readiness claims.
 

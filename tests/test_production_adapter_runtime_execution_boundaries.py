@@ -1,7 +1,6 @@
 import ast
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 EXECUTION = ROOT / "afde" / "production_adapter_runtime_execution"
 FORBIDDEN_IMPORT_ROOTS = {
@@ -84,7 +83,13 @@ def test_existing_runtime_and_application_layers_do_not_import_execution_package
             }
 
 
-def test_runtime_execution_package_has_no_mutable_authority_registry():
+def test_authority_consumption_ledger_is_private_and_runtime_isolated():
+    service_source = (EXECUTION / "service.py").read_text(encoding="utf-8")
+    package_source = (EXECUTION / "__init__.py").read_text(encoding="utf-8")
+
+    assert "from threading import Lock" in service_source
+    assert "_AUTHORITY_CONSUMPTION_LEDGER" in service_source
+    assert "_AUTHORITY_CONSUMPTION_LEDGER" not in package_source
     for path in EXECUTION.glob("*.py"):
         tree = ast.parse(path.read_text(encoding="utf-8"))
         for node in tree.body:

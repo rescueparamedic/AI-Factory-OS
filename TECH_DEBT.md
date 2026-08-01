@@ -2,12 +2,16 @@
 
 ## AFDE-6.6 Production Adapter Runtime Execution Foundation
 
-- The immutable authority contract is supplied explicitly. Authority issuance,
-  revocation, persistence, expiry, replay protection, and lifecycle transition
-  ownership remain outside this additive boundary.
+- The immutable authority contract is supplied explicitly. In-process reuse is
+  atomically blocked, but authority issuance, revocation, expiry, durable
+  cross-process consumption persistence, and lifecycle transition ownership
+  remain outside this additive boundary.
+- The process-local consumed-identity ledger intentionally retains identities
+  for the process lifetime; bounded retention and durable multi-process
+  coordination remain deferred.
 - Execution is synchronous and single-call. Cancellation, retry, timeout,
-  streaming, concurrency policy, idempotency, and background execution are not
-  implemented.
+  streaming, broader execution concurrency policy, idempotency beyond authority
+  single use, and background execution are not implemented.
 - The boundary delegates to an explicit caller-supplied invocation target; it
   adds no Worker, Provider, transport, credential-secret access, Product, CLI,
   or Desktop integration.
