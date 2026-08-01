@@ -541,6 +541,33 @@ complete immutable identity chain. The existing instance stays inert. Neither
 request, target result, nor service result can grant Runtime or execution
 authority.
 
+### CAP-PRODUCTIONADAPTERRUNTIMESTARTUPINTEGRATION-0001
+
+| Field | Value |
+| --- | --- |
+| Name | Production Adapter Runtime Startup Integration Foundation |
+| Description | Assemble discovered production adapter metadata and the existing production composition, availability, credential-readiness, creation, and invocation capabilities at an explicit application-startup boundary without creating a Runtime session, creating an Adapter instance, or invoking a target. |
+| Owner | AI Factory OS Architecture |
+| Scope | `architecture.production_adapter_runtime_startup_integration` |
+| Status | `implemented` |
+| Maturity | `M3` |
+| Implementation status | `implemented` |
+| Required knowledge | none |
+| Required capabilities | `CAP-PRODUCTIONCOMPOSITION-0001`, `CAP-PRODUCTIONADAPTERDISCOVERY-0001`, `CAP-PRODUCTIONADAPTERAVAILABILITY-0001`, `CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001`, `CAP-PRODUCTIONADAPTERCREATION-0001`, `CAP-PRODUCTIONADAPTERINVOCATION-0001` |
+| Tool dependencies | none |
+| Adapter dependencies | caller-supplied `ProductionAdapterDiscoverySource`, `ProductionAdapterFactory`, `CredentialReadinessEvidence`, allowlisted `ProductionAdapterConfigurationMetadata`, and `InvocationTarget`; existing Registry, Catalog, Descriptor, Availability, Credential Readiness, Creation, Invocation, and immutable composition contracts |
+| Runtime dependencies | existing non-executable production composition and immutable Runtime policy compatibility only; no Runtime startup, lifecycle mutation, session creation, invocation, or execution |
+| Implementation references | `afde/production_adapter_runtime_startup_integration/__init__.py`, `afde/production_adapter_runtime_startup_integration/errors.py`, `afde/production_adapter_runtime_startup_integration/models.py`, `afde/production_adapter_runtime_startup_integration/factory.py` |
+| Validation evidence | `tests/test_production_adapter_runtime_startup_integration.py`, `tests/test_production_adapter_runtime_startup_integration_compatibility.py`, `tests/test_production_adapter_runtime_startup_integration_boundaries.py` |
+| Known gaps | Startup produces only a validated dependency graph; Adapter instance creation and target invocation require separate explicit downstream calls.<br>Runtime session/lifecycle integration, Worker/Provider/Product/CLI/Desktop wiring, credential secrets, network, retry, timeout, streaming, and background services remain excluded.<br>Operational Evidence, production readiness, and M4 validation remain incomplete. |
+| Source documents | `DOC-CREG-0001` |
+| Supersedes | none |
+
+This entry governs composition at application startup only. Exact Registry,
+Descriptor, factory, evidence, Creation Context, and target identities and
+availability/readiness prerequisites fail closed. `runtime_allowed` and
+`execution_allowed` remain false throughout the assembled graph.
+
 ## Registry Validation
 
 A capability registry change is valid only when:
@@ -569,6 +596,8 @@ A capability registry change is valid only when:
   binding, and lifecycle ownership.
 - Adapter invocation remains caller-target scoped, metadata-only, and
   separated from Provider, Worker, Network, and Runtime integration.
+- Production Adapter startup integration remains composition-only and does
+  not create a Runtime session, Adapter instance, or invocation request.
 - Runtime execution and lifecycle integration remain deferred.
 - Multiple-candidate discovery and ranking remain deferred.
 - M4 validation and operational integration are not complete.

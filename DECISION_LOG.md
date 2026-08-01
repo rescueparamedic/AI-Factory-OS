@@ -1,5 +1,27 @@
 # Decision Log
 
+## 2026-08-01 - AFDE-6.5 Composition-only Adapter Startup Boundary
+
+- Implemented `CAP-PRODUCTIONADAPTERRUNTIMESTARTUPINTEGRATION-0001` at M3 as
+  a package-scoped application-startup composition entry point.
+- Reused `build_discovered_production_adapter_registry()`,
+  `build_production_composition()`, Availability, Credential Readiness,
+  Creation, and Invocation services and their immutable contracts unchanged.
+- Required one exact adapter identity across the discovered Descriptor,
+  factory, readiness evidence, Creation Context, and invocation target.
+- Chose a frozen result that retains the Registry, shared Catalog production
+  composition, prerequisite results, explicit dependencies, and denied
+  authority for later caller-controlled operations.
+- Startup validates declared availability and caller-supplied credential
+  readiness, but deliberately does not call factory `create()` or target
+  `invoke()` and does not build an invocation request.
+- Preserved all existing builder signatures, Root exports, Runtime lifecycle
+  state/transitions, and session ownership unchanged.
+- Excluded Runtime sessions, background services, lifecycle mutation,
+  Worker/Provider/Product/CLI/Desktop wiring, Provider SDK/network, credential
+  secrets, retry, timeout, streaming, external DI/plugin frameworks, M4, and
+  production-readiness claims.
+
 ## 2026-07-28 - AFDE-6.4 Explicit Caller-supplied Invocation Target
 
 - Implemented `CAP-PRODUCTIONADAPTERINVOCATION-0001` at M3 as a
