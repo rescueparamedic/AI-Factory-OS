@@ -1,5 +1,17 @@
 # Technical Debt
 
+## AFDE-6.7 Production Adapter Worker Execution Foundation
+
+- The boundary is caller-invoked and is not connected to Worker Manager
+  dispatch, Worker Registry selection, RealWorkerRuntime, RuntimeOrchestrator,
+  sessions, scheduling, or Worker/Runtime lifecycle transitions.
+- `ExecutionInput` Provider/model fields are preserved as caller metadata only;
+  Provider binding, ProviderBridge use, SDK clients, network transport, and
+  credential handling remain excluded.
+- Execution remains synchronous and single-call. Retry, cancellation,
+  background work, broader concurrency policy, operational validation,
+  production readiness, and M4 remain incomplete.
+
 ## AFDE-6.6 Production Adapter Runtime Execution Foundation
 
 - The immutable authority contract is supplied explicitly. In-process reuse is
