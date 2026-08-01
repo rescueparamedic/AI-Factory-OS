@@ -126,7 +126,8 @@
         "CAP-PRODUCTIONADAPTERAVAILABILITY-0001",
         "CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001",
         "CAP-PRODUCTIONADAPTERCREATION-0001",
-        "CAP-PRODUCTIONADAPTERINVOCATION-0001"
+        "CAP-PRODUCTIONADAPTERINVOCATION-0001",
+        "CAP-PRODUCTIONADAPTERRUNTIMESTARTUPINTEGRATION-0001"
       ]
     },
     {
@@ -1484,6 +1485,76 @@
         {
           "gap_type": "evidence_gap",
           "subject_id": "CAP-PRODUCTIONADAPTERINVOCATION-0001",
+          "message": "Operational validation, production readiness, and M4 validation are not complete.",
+          "related_ids": []
+        }
+      ],
+      "source_documents": [
+        "DOC-CREG-0001"
+      ],
+      "supersedes": []
+    },
+    {
+      "capability_id": "CAP-PRODUCTIONADAPTERRUNTIMESTARTUPINTEGRATION-0001",
+      "name": "Production Adapter Runtime Startup Integration Foundation",
+      "description": "Assemble discovered production adapter metadata and the existing production composition, availability, credential-readiness, creation, and invocation capabilities at an explicit application-startup boundary without creating a Runtime session, creating an Adapter instance, or invoking a target.",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.production_adapter_runtime_startup_integration",
+      "status": "implemented",
+      "maturity": "M3",
+      "implementation_status": "implemented",
+      "required_knowledge": [],
+      "required_capabilities": [
+        "CAP-PRODUCTIONCOMPOSITION-0001",
+        "CAP-PRODUCTIONADAPTERDISCOVERY-0001",
+        "CAP-PRODUCTIONADAPTERAVAILABILITY-0001",
+        "CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001",
+        "CAP-PRODUCTIONADAPTERCREATION-0001",
+        "CAP-PRODUCTIONADAPTERINVOCATION-0001"
+      ],
+      "tool_dependencies": [],
+      "adapter_dependencies": [
+        "caller-supplied ProductionAdapterDiscoverySource",
+        "caller-supplied ProductionAdapterFactory",
+        "caller-supplied CredentialReadinessEvidence",
+        "caller-supplied ProductionAdapterConfigurationMetadata",
+        "caller-supplied InvocationTarget",
+        "existing OperationalAdapterRegistry",
+        "existing ToolAdapterCatalog",
+        "existing ToolAdapterDescriptor",
+        "existing immutable prerequisite and composition contracts"
+      ],
+      "runtime_dependencies": [
+        "existing non-executable production composition compatibility",
+        "existing immutable Runtime policy compatibility"
+      ],
+      "implementation_references": [
+        "afde/production_adapter_runtime_startup_integration/__init__.py",
+        "afde/production_adapter_runtime_startup_integration/errors.py",
+        "afde/production_adapter_runtime_startup_integration/models.py",
+        "afde/production_adapter_runtime_startup_integration/factory.py"
+      ],
+      "validation_evidence": [
+        "tests/test_production_adapter_runtime_startup_integration.py",
+        "tests/test_production_adapter_runtime_startup_integration_compatibility.py",
+        "tests/test_production_adapter_runtime_startup_integration_boundaries.py"
+      ],
+      "known_gaps": [
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERRUNTIMESTARTUPINTEGRATION-0001",
+          "message": "Startup produces only a validated dependency graph and does not create an Adapter instance, build an invocation request, or call the target.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERRUNTIMESTARTUPINTEGRATION-0001",
+          "message": "Runtime session and lifecycle integration, Worker, Provider, Product, CLI, Desktop, credential secrets, network, and background services remain excluded.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "evidence_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERRUNTIMESTARTUPINTEGRATION-0001",
           "message": "Operational validation, production readiness, and M4 validation are not complete.",
           "related_ids": []
         }

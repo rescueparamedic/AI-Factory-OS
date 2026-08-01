@@ -1,5 +1,26 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-6.5 Production Adapter Runtime Startup Integration Foundation (Unreleased)
+
+- Registered `CAP-PRODUCTIONADAPTERRUNTIMESTARTUPINTEGRATION-0001` as
+  implemented at M3 without Runtime, execution, M4, or production-ready
+  authority.
+- Added a package-scoped startup composition builder, frozen result, and typed
+  fail-closed request, identity, prerequisite, and result errors.
+- Reused discovered Registry construction, the existing production
+  composition, Availability, Credential Readiness, Creation, and Invocation
+  services with no signature or behavior changes.
+- Accepted only explicit caller-supplied Discovery Source, factory, safe
+  readiness evidence, allowlisted configuration metadata, and invocation
+  target dependencies.
+- Added exact identity-chain and availability/readiness prerequisite
+  validation while keeping `runtime_allowed` and `execution_allowed` false.
+- Added fake-dependency focused, compatibility, governance, and AST
+  Architecture Boundary tests proving startup does not create or invoke.
+- Added no Runtime session/lifecycle mutation, background service, automatic
+  invocation, credential secret access, Worker/Provider/Product/CLI/Desktop
+  integration, SDK/network, retry, timeout, streaming, DI, or plugin framework.
+
 ## AFDE-6.4 Production Adapter Invocation Contract Foundation (Unreleased)
 
 - Registered `CAP-PRODUCTIONADAPTERINVOCATION-0001` as implemented at M3

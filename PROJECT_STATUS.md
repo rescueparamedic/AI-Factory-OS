@@ -1,5 +1,29 @@
 # AI Factory OS Project Status
 
+## AFDE-6.5 Production Adapter Runtime Startup Integration Foundation
+
+- `CAP-PRODUCTIONADAPTERRUNTIMESTARTUPINTEGRATION-0001` is `implemented`,
+  maturity `M3`, with `implementation_status: implemented`.
+- The package-scoped startup entry point accepts explicit Knowledge Provider,
+  Runtime policy, adapter identity, Discovery Source, factory, credential
+  readiness evidence, allowlisted configuration metadata, and invocation
+  target dependencies.
+- It reuses discovered Registry construction and the existing production
+  composition, Availability, Credential Readiness, Creation, and Invocation
+  services without changing their signatures or behavior.
+- The frozen result preserves one Registry/Catalog/Descriptor identity chain,
+  a validated Creation Context, and exact factory/evidence/target identities.
+- Unavailable metadata, insufficient credential readiness, malformed
+  dependencies, identity conflicts, and authority assertions fail closed with
+  typed errors.
+- Startup performs composition only: factory `create()` and target `invoke()`
+  are not called, no Runtime session or background service is created, and
+  Runtime lifecycle state is not mutated. Runtime and execution authority are
+  false.
+- Root exports, Worker, Provider, Product, CLI, Desktop, Provider SDK,
+  network, credential secrets, retry, timeout, streaming, M4, and production
+  readiness remain excluded.
+
 ## AFDE-6.4 Production Adapter Invocation Contract Foundation
 
 - `CAP-PRODUCTIONADAPTERINVOCATION-0001` is `implemented`, maturity `M3`,

@@ -1,5 +1,20 @@
 # Technical Debt
 
+## AFDE-6.5 Production Adapter Runtime Startup Integration Foundation
+
+- The package-scoped startup boundary assembles and validates dependencies but
+  intentionally does not create an Adapter instance or invocation request and
+  does not call an invocation target.
+- Discovery remains a one-shot metadata operation and caller-owned factories,
+  readiness evidence, configuration metadata, and targets are not globally
+  registered, automatically discovered, ranked, or refreshed.
+- Availability and credential readiness remain declared metadata and caller
+  evidence; they are not health, reachability, authorization, or operational
+  validation.
+- Runtime session/lifecycle integration, background services, Worker,
+  Provider, Product, CLI, Desktop, credential secrets, SDK/network, retry,
+  timeout, streaming, production readiness, and M4 remain incomplete.
+
 ## AFDE-6.4 Production Adapter Invocation Contract Foundation
 
 - Invocation exchanges only safe opaque metadata references. It does not
