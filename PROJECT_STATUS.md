@@ -1,5 +1,23 @@
 # AI Factory OS Project Status
 
+## AFDE-6.7 Production Adapter Worker Execution Foundation
+
+- `CAP-PRODUCTIONADAPTERWORKEREXECUTION-0001` is `implemented`, maturity
+  `M3`, with `implementation_status: implemented`.
+- The package accepts the existing immutable `ExecutionInput`, startup,
+  Tool Adapter request/binding, and Runtime authority contracts, then assembles
+  the existing `ProductionAdapterRuntimeExecutionRequest` without duplicating
+  Runtime contracts.
+- It delegates exactly once to `ProductionAdapterRuntimeExecutionService` and
+  returns its unchanged result alongside an existing immutable
+  `WorkerExecutionResult`.
+- Invalid Worker identities fail closed without Worker Registry lookup.
+  Existing Runtime execution errors propagate unchanged.
+- Provider metadata is copied only; Provider/ProviderBridge selection or calls,
+  Worker Manager dispatch, RealWorkerRuntime integration, Worker/Runtime
+  lifecycle transitions, sessions, retry, scheduling, and background execution
+  remain excluded.
+
 ## AFDE-6.6 Production Adapter Runtime Execution Foundation
 
 - `CAP-PRODUCTIONADAPTERRUNTIMEEXECUTION-0001` is `implemented`, maturity

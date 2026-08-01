@@ -128,7 +128,8 @@
         "CAP-PRODUCTIONADAPTERCREATION-0001",
         "CAP-PRODUCTIONADAPTERINVOCATION-0001",
         "CAP-PRODUCTIONADAPTERRUNTIMESTARTUPINTEGRATION-0001",
-        "CAP-PRODUCTIONADAPTERRUNTIMEEXECUTION-0001"
+        "CAP-PRODUCTIONADAPTERRUNTIMEEXECUTION-0001",
+        "CAP-PRODUCTIONADAPTERWORKEREXECUTION-0001"
       ]
     },
     {
@@ -1628,6 +1629,67 @@
         {
           "gap_type": "evidence_gap",
           "subject_id": "CAP-PRODUCTIONADAPTERRUNTIMEEXECUTION-0001",
+          "message": "Operational validation, production readiness, and M4 validation are not complete.",
+          "related_ids": []
+        }
+      ],
+      "source_documents": [
+        "DOC-CREG-0001"
+      ],
+      "supersedes": []
+    },
+    {
+      "capability_id": "CAP-PRODUCTIONADAPTERWORKEREXECUTION-0001",
+      "name": "Production Adapter Worker Execution Foundation",
+      "description": "Preserve one explicit existing Worker input and Worker result around exactly one existing Production Adapter Runtime execution call without Worker or Runtime lifecycle ownership, Provider binding, registry lookup, or dispatch.",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.production_adapter_worker_execution",
+      "status": "implemented",
+      "maturity": "M3",
+      "implementation_status": "implemented",
+      "required_knowledge": [],
+      "required_capabilities": [
+        "CAP-PRODUCTIONADAPTERRUNTIMEEXECUTION-0001"
+      ],
+      "tool_dependencies": [],
+      "adapter_dependencies": [
+        "existing real_worker_runtime.models.ExecutionInput",
+        "existing real_worker_runtime.models.WorkerExecutionResult",
+        "existing ProductionAdapterRuntimeExecutionRequest",
+        "existing ProductionAdapterRuntimeExecutionResult",
+        "existing ProductionAdapterRuntimeExecutionService"
+      ],
+      "runtime_dependencies": [
+        "existing single-use Production Adapter Runtime execution boundary",
+        "existing Worker and Runtime lifecycle ownership unchanged"
+      ],
+      "implementation_references": [
+        "afde/production_adapter_worker_execution/__init__.py",
+        "afde/production_adapter_worker_execution/errors.py",
+        "afde/production_adapter_worker_execution/models.py",
+        "afde/production_adapter_worker_execution/service.py"
+      ],
+      "validation_evidence": [
+        "tests/test_production_adapter_worker_execution.py",
+        "tests/test_production_adapter_worker_execution_compatibility.py",
+        "tests/test_production_adapter_worker_execution_boundaries.py"
+      ],
+      "known_gaps": [
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERWORKEREXECUTION-0001",
+          "message": "The boundary is caller-invoked and is not connected to Worker Manager dispatch, Worker Registry selection, RealWorkerRuntime, RuntimeOrchestrator, sessions, scheduling, or lifecycle transitions.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERWORKEREXECUTION-0001",
+          "message": "Provider binding, Provider SDK clients, network transport, retry, cancellation, and background execution remain excluded.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "evidence_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERWORKEREXECUTION-0001",
           "message": "Operational validation, production readiness, and M4 validation are not complete.",
           "related_ids": []
         }

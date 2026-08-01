@@ -69,6 +69,7 @@ def test_valid_registry_loads_all_three_projections():
         "CAP-PRODUCTIONADAPTERINVOCATION-0001",
         "CAP-PRODUCTIONADAPTERRUNTIMESTARTUPINTEGRATION-0001",
         "CAP-PRODUCTIONADAPTERRUNTIMEEXECUTION-0001",
+        "CAP-PRODUCTIONADAPTERWORKEREXECUTION-0001",
     ]
 
 
@@ -629,6 +630,39 @@ def test_production_adapter_runtime_execution_has_reciprocal_m3_binding():
         "afde/production_adapter_runtime_execution/errors.py",
         "afde/production_adapter_runtime_execution/models.py",
         "afde/production_adapter_runtime_execution/service.py",
+    )
+    assert capability.source_documents == ("DOC-CREG-0001",)
+    assert (
+        capability.capability_id
+        in documents["DOC-CREG-0001"].capability_ids
+    )
+
+
+def test_production_adapter_worker_execution_has_reciprocal_m3_binding():
+    snapshot = KnowledgeRegistryLoader(ROOT).load()
+    capability = next(
+        item for item in snapshot.capabilities
+        if item.capability_id
+        == "CAP-PRODUCTIONADAPTERWORKEREXECUTION-0001"
+    )
+    documents = {item.document_id: item for item in snapshot.documents}
+
+    assert capability.status == "implemented"
+    assert capability.maturity == "M3"
+    assert capability.implementation_status == "implemented"
+    assert capability.required_capabilities == (
+        "CAP-PRODUCTIONADAPTERRUNTIMEEXECUTION-0001",
+    )
+    assert capability.tool_dependencies == ()
+    assert capability.runtime_dependencies == (
+        "existing single-use Production Adapter Runtime execution boundary",
+        "existing Worker and Runtime lifecycle ownership unchanged",
+    )
+    assert capability.implementation_references == (
+        "afde/production_adapter_worker_execution/__init__.py",
+        "afde/production_adapter_worker_execution/errors.py",
+        "afde/production_adapter_worker_execution/models.py",
+        "afde/production_adapter_worker_execution/service.py",
     )
     assert capability.source_documents == ("DOC-CREG-0001",)
     assert (

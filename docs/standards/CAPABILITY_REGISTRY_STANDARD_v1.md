@@ -599,6 +599,37 @@ original execution request, authority object, or authority reference; it
 contains only non-authoritative identity metadata and the existing Creation and
 Invocation results. No Runtime lifecycle state is read or mutated.
 
+### CAP-PRODUCTIONADAPTERWORKEREXECUTION-0001
+
+| Field | Value |
+| --- | --- |
+| Name | Production Adapter Worker Execution Foundation |
+| Description | Preserve one explicit existing Worker input and Worker result around exactly one existing Production Adapter Runtime execution call without Worker or Runtime lifecycle ownership, Provider binding, registry lookup, or dispatch. |
+| Owner | AI Factory OS Architecture |
+| Scope | `architecture.production_adapter_worker_execution` |
+| Status | `implemented` |
+| Maturity | `M3` |
+| Implementation status | `implemented` |
+| Required knowledge | none |
+| Required capabilities | `CAP-PRODUCTIONADAPTERRUNTIMEEXECUTION-0001` |
+| Tool dependencies | none |
+| Adapter dependencies | existing `ExecutionInput`, `WorkerExecutionResult`, `ProductionAdapterRuntimeExecutionRequest`, `ProductionAdapterRuntimeExecutionResult`, and `ProductionAdapterRuntimeExecutionService` |
+| Runtime dependencies | existing single-use Production Adapter Runtime execution boundary; existing Worker and Runtime lifecycle ownership remains unchanged |
+| Implementation references | `afde/production_adapter_worker_execution/__init__.py`, `afde/production_adapter_worker_execution/errors.py`, `afde/production_adapter_worker_execution/models.py`, `afde/production_adapter_worker_execution/service.py` |
+| Validation evidence | `tests/test_production_adapter_worker_execution.py`, `tests/test_production_adapter_worker_execution_compatibility.py`, `tests/test_production_adapter_worker_execution_boundaries.py` |
+| Known gaps | Caller-invoked only; Worker Manager dispatch, Registry selection, RealWorkerRuntime, RuntimeOrchestrator, sessions, scheduling, and lifecycle transitions remain excluded.<br>Provider binding/SDK, network, retry, cancellation, and background execution remain excluded.<br>Operational Evidence, production readiness, and M4 validation remain incomplete. |
+| Source documents | `DOC-CREG-0001` |
+| Supersedes | none |
+
+This entry accepts one immutable existing Worker input plus existing startup,
+Tool Adapter request/binding, authority, and invocation metadata contracts. It
+validates Worker identity without consulting the Worker Registry, assembles the
+existing Runtime execution request, calls the existing Runtime execution service
+exactly once, and returns the unchanged Runtime result alongside an existing
+immutable Worker result. Runtime errors propagate unchanged. Provider metadata
+is copied from the input only; no Provider is selected or called. No Worker or
+Runtime lifecycle state is read or mutated.
+
 ## Registry Validation
 
 A capability registry change is valid only when:
@@ -629,7 +660,8 @@ A capability registry change is valid only when:
   separated from Provider, Worker, Network, and Runtime integration.
 - Production Adapter startup integration remains composition-only and does
   not create a Runtime session, Adapter instance, or invocation request.
-- Runtime execution and lifecycle integration remain deferred.
+- Production Adapter Worker execution is caller-invoked only; operational
+  dispatch and lifecycle integration remain deferred.
 - Multiple-candidate discovery and ranking remain deferred.
 - M4 validation and operational integration are not complete.
 - RAG, vector databases, embeddings, and multimodal adapters are outside

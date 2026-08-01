@@ -1,5 +1,26 @@
 # Decision Log
 
+## 2026-08-02 - AFDE-6.7 Worker Facade over Runtime Execution
+
+- Implemented `CAP-PRODUCTIONADAPTERWORKEREXECUTION-0001` at M3 as an
+  additive package-scoped single-execution boundary.
+- Reused the existing immutable `ExecutionInput`, `WorkerExecutionResult`,
+  Runtime execution request/result, and
+  `ProductionAdapterRuntimeExecutionService` contracts unchanged.
+- Required explicit Worker identity and validated it locally without Worker
+  Registry lookup, selection, or dispatch.
+- Assembled the existing Runtime execution request from existing startup, Tool
+  Adapter request/binding, authority, and invocation metadata contracts inside
+  the new Service boundary.
+- Chose an existing Worker result as non-lifecycle execution evidence and
+  retained the exact Runtime execution result without transformation.
+- Existing Runtime execution errors propagate unchanged; no parallel Worker
+  error translation was added.
+- Preserved Worker Manager, RealWorkerRuntime, RuntimeOrchestrator, Registry,
+  ProviderBridge, Provider clients, and Worker/Runtime lifecycle ownership.
+- Excluded operational wiring, sessions, scheduling, retry, cancellation,
+  background execution, M4, and production-readiness claims.
+
 ## 2026-08-02 - AFDE-6.6 Explicit Runtime Execution Authority Boundary
 
 - Implemented `CAP-PRODUCTIONADAPTERRUNTIMEEXECUTION-0001` at M3 as an
