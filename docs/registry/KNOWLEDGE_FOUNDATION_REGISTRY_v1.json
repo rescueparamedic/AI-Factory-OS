@@ -127,7 +127,8 @@
         "CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001",
         "CAP-PRODUCTIONADAPTERCREATION-0001",
         "CAP-PRODUCTIONADAPTERINVOCATION-0001",
-        "CAP-PRODUCTIONADAPTERRUNTIMESTARTUPINTEGRATION-0001"
+        "CAP-PRODUCTIONADAPTERRUNTIMESTARTUPINTEGRATION-0001",
+        "CAP-PRODUCTIONADAPTERRUNTIMEEXECUTION-0001"
       ]
     },
     {
@@ -1555,6 +1556,73 @@
         {
           "gap_type": "evidence_gap",
           "subject_id": "CAP-PRODUCTIONADAPTERRUNTIMESTARTUPINTEGRATION-0001",
+          "message": "Operational validation, production readiness, and M4 validation are not complete.",
+          "related_ids": []
+        }
+      ],
+      "source_documents": [
+        "DOC-CREG-0001"
+      ],
+      "supersedes": []
+    },
+    {
+      "capability_id": "CAP-PRODUCTIONADAPTERRUNTIMEEXECUTION-0001",
+      "name": "Production Adapter Runtime Execution Foundation",
+      "description": "Execute one explicitly Runtime-authorized production adapter creation and invocation operation through the existing startup composition while preserving existing Runtime lifecycle and public contracts.",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.production_adapter_runtime_execution",
+      "status": "implemented",
+      "maturity": "M3",
+      "implementation_status": "implemented",
+      "required_knowledge": [],
+      "required_capabilities": [
+        "CAP-PRODUCTIONADAPTERREGISTRATION-0001",
+        "CAP-PRODUCTIONADAPTERDISCOVERY-0001",
+        "CAP-PRODUCTIONADAPTERAVAILABILITY-0001",
+        "CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001",
+        "CAP-PRODUCTIONADAPTERCREATION-0001",
+        "CAP-PRODUCTIONADAPTERINVOCATION-0001",
+        "CAP-PRODUCTIONADAPTERRUNTIMESTARTUPINTEGRATION-0001"
+      ],
+      "tool_dependencies": [],
+      "adapter_dependencies": [
+        "existing ProductionAdapterRuntimeStartupComposition",
+        "existing ToolAdapterRequest and ToolAdapterBinding",
+        "existing ProductionAdapterCreationService",
+        "existing InvocationService and caller-supplied InvocationTarget"
+      ],
+      "runtime_dependencies": [
+        "explicit immutable Runtime execution authority identity",
+        "existing Runtime projection identity compatibility",
+        "existing Runtime lifecycle ownership unchanged"
+      ],
+      "implementation_references": [
+        "afde/production_adapter_runtime_execution/__init__.py",
+        "afde/production_adapter_runtime_execution/errors.py",
+        "afde/production_adapter_runtime_execution/models.py",
+        "afde/production_adapter_runtime_execution/service.py"
+      ],
+      "validation_evidence": [
+        "tests/test_production_adapter_runtime_execution.py",
+        "tests/test_production_adapter_runtime_execution_compatibility.py",
+        "tests/test_production_adapter_runtime_execution_boundaries.py"
+      ],
+      "known_gaps": [
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERRUNTIMEEXECUTION-0001",
+          "message": "Authority issuance, revocation, persistence, replay protection, and Runtime lifecycle transitions remain owned outside this additive execution boundary.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERRUNTIMEEXECUTION-0001",
+          "message": "Worker, Provider, Product, CLI, Desktop, network transport, retries, timeouts, streaming, cancellation, and background execution remain excluded.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "evidence_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERRUNTIMEEXECUTION-0001",
           "message": "Operational validation, production readiness, and M4 validation are not complete.",
           "related_ids": []
         }

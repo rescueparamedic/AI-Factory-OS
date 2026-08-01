@@ -1,5 +1,22 @@
 # Sprint AFDE-2 Changelog
 
+## AFDE-6.6 Production Adapter Runtime Execution Foundation (Unreleased)
+
+- Registered `CAP-PRODUCTIONADAPTERRUNTIMEEXECUTION-0001` as implemented at
+  M3 with an additive package-scoped execution boundary.
+- Added immutable Runtime execution authority, request, result, typed errors,
+  and a service that reuses the existing startup, creation, and invocation
+  capability contracts unchanged.
+- Bound authority to exact adapter, projection, path, Capability, and binding
+  identities and fail closed before behavior on malformed or mismatched input.
+- Executed exactly one Creation-to-Invocation path per service call while
+  preventing authority propagation into reused contracts or completed results.
+- Preserved Runtime lifecycle, root exports, and every existing public
+  signature; added no Worker, Provider, Product, CLI, Desktop, network, or
+  background execution implementation.
+- Added focused capability, compatibility, Registry validation, and AST
+  Architecture Boundary tests.
+
 ## AFDE-6.5 Production Adapter Runtime Startup Integration Foundation (Unreleased)
 
 - Registered `CAP-PRODUCTIONADAPTERRUNTIMESTARTUPINTEGRATION-0001` as

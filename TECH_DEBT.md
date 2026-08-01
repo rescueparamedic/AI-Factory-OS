@@ -1,5 +1,18 @@
 # Technical Debt
 
+## AFDE-6.6 Production Adapter Runtime Execution Foundation
+
+- The immutable authority contract is supplied explicitly. Authority issuance,
+  revocation, persistence, expiry, replay protection, and lifecycle transition
+  ownership remain outside this additive boundary.
+- Execution is synchronous and single-call. Cancellation, retry, timeout,
+  streaming, concurrency policy, idempotency, and background execution are not
+  implemented.
+- The boundary delegates to an explicit caller-supplied invocation target; it
+  adds no Worker, Provider, transport, credential-secret access, Product, CLI,
+  or Desktop integration.
+- Operational validation, production readiness, and M4 remain incomplete.
+
 ## AFDE-6.5 Production Adapter Runtime Startup Integration Foundation
 
 - The package-scoped startup boundary assembles and validates dependencies but

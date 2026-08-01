@@ -1,5 +1,21 @@
 # AI Factory OS Project Status
 
+## AFDE-6.6 Production Adapter Runtime Execution Foundation
+
+- `CAP-PRODUCTIONADAPTERRUNTIMEEXECUTION-0001` is `implemented`, maturity
+  `M3`, with `implementation_status: implemented`.
+- Runtime authority is immutable and bound to the existing adapter,
+  projection, path, Capability, and Tool Adapter binding identity chain.
+- The package consumes the existing startup composition and delegates exactly
+  to its existing Creation and Invocation services without changing them.
+- Missing, malformed, denied, or mismatched authority fails before factory or
+  target behavior. Creation and invocation failures remain stage-specific.
+- Authority exists only at the new execution boundary; request, reused
+  contracts, and completed result do not propagate it.
+- Existing Runtime lifecycle/session ownership, root exports, Worker,
+  Provider, Product, CLI, Desktop, network, background services, operational
+  validation, production readiness, and M4 remain unchanged or excluded.
+
 ## AFDE-6.5 Production Adapter Runtime Startup Integration Foundation
 
 - `CAP-PRODUCTIONADAPTERRUNTIMESTARTUPINTEGRATION-0001` is `implemented`,

@@ -1,5 +1,22 @@
 # Decision Log
 
+## 2026-08-02 - AFDE-6.6 Explicit Runtime Execution Authority Boundary
+
+- Implemented `CAP-PRODUCTIONADAPTERRUNTIMEEXECUTION-0001` at M3 as an
+  additive package-scoped Runtime execution boundary.
+- Required immutable authority bound to adapter, Runtime projection, Execution
+  Path, Capability, and Tool Adapter binding identities before any behavior.
+- Reused the AFDE-6.5 startup composition and existing Creation and Invocation
+  services unchanged, in that order, for one synchronous operation.
+- Kept authority local to the boundary: existing request/result contracts and
+  the completed execution result retain `runtime_allowed=False` and
+  `execution_allowed=False`.
+- Preserved Runtime lifecycle/session ownership, transitions, root exports,
+  and all existing public signatures unchanged.
+- Excluded authority issuance/revocation/replay storage, Worker, Provider,
+  Product, CLI, Desktop, transport, retry, timeout, streaming, cancellation,
+  background services, M4, and production-readiness claims.
+
 ## 2026-08-01 - AFDE-6.5 Composition-only Adapter Startup Boundary
 
 - Implemented `CAP-PRODUCTIONADAPTERRUNTIMESTARTUPINTEGRATION-0001` at M3 as

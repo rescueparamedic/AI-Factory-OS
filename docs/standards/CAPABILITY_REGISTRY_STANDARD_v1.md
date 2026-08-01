@@ -568,6 +568,35 @@ Descriptor, factory, evidence, Creation Context, and target identities and
 availability/readiness prerequisites fail closed. `runtime_allowed` and
 `execution_allowed` remain false throughout the assembled graph.
 
+### CAP-PRODUCTIONADAPTERRUNTIMEEXECUTION-0001
+
+| Field | Value |
+| --- | --- |
+| Name | Production Adapter Runtime Execution Foundation |
+| Description | Execute one explicitly Runtime-authorized production adapter creation and invocation operation through the existing startup composition while preserving existing Runtime lifecycle and public contracts. |
+| Owner | AI Factory OS Architecture |
+| Scope | `architecture.production_adapter_runtime_execution` |
+| Status | `implemented` |
+| Maturity | `M3` |
+| Implementation status | `implemented` |
+| Required knowledge | none |
+| Required capabilities | `CAP-PRODUCTIONADAPTERREGISTRATION-0001`, `CAP-PRODUCTIONADAPTERDISCOVERY-0001`, `CAP-PRODUCTIONADAPTERAVAILABILITY-0001`, `CAP-PRODUCTIONADAPTERCREDENTIALREADINESS-0001`, `CAP-PRODUCTIONADAPTERCREATION-0001`, `CAP-PRODUCTIONADAPTERINVOCATION-0001`, `CAP-PRODUCTIONADAPTERRUNTIMESTARTUPINTEGRATION-0001` |
+| Tool dependencies | none |
+| Adapter dependencies | existing startup composition, `ToolAdapterRequest`, `ToolAdapterBinding`, Creation Service, Invocation Service, and explicit caller-supplied target |
+| Runtime dependencies | explicit immutable Runtime execution authority bound to adapter, projection, path, Capability, and binding identities; existing lifecycle ownership remains unchanged |
+| Implementation references | `afde/production_adapter_runtime_execution/__init__.py`, `afde/production_adapter_runtime_execution/errors.py`, `afde/production_adapter_runtime_execution/models.py`, `afde/production_adapter_runtime_execution/service.py` |
+| Validation evidence | `tests/test_production_adapter_runtime_execution.py`, `tests/test_production_adapter_runtime_execution_compatibility.py`, `tests/test_production_adapter_runtime_execution_boundaries.py` |
+| Known gaps | Runtime authority issuance, revocation, persistence, replay protection, and lifecycle transitions remain external to this boundary.<br>Worker/Provider/Product/CLI/Desktop wiring, network transport, retry, timeout, streaming, cancellation, and background execution remain excluded.<br>Operational Evidence, production readiness, and M4 validation remain incomplete. |
+| Source documents | `DOC-CREG-0001` |
+| Supersedes | none |
+
+This entry grants authority only through an explicit immutable execution-scoped
+contract. The authority must match the existing startup, Runtime projection,
+Tool Adapter request, and binding identity chain before creation occurs. The
+completed result and all reused contracts retain false authority, so authority
+cannot escape the execution call. No Runtime lifecycle state is read or
+mutated.
+
 ## Registry Validation
 
 A capability registry change is valid only when:
