@@ -1,5 +1,24 @@
 # AI Factory OS Project Status
 
+## AFDE-6.4 Production Adapter Invocation Contract Foundation
+
+- `CAP-PRODUCTIONADAPTERINVOCATION-0001` is `implemented`, maturity `M3`,
+  with `implementation_status: implemented`.
+- `InvocationService` accepts one immutable request and one explicit
+  caller-supplied `InvocationTarget`; it performs no discovery or registration.
+- The request preserves the exact Creation Result, inert Instance, Descriptor,
+  Availability, Credential Readiness, existing Tool Adapter request, and
+  existing Binding object identity chain.
+- Invocation fails closed for malformed creation/instance/request/target
+  types, any identity mismatch, unavailable metadata, insufficient required
+  readiness, invalid target return, authority assertion, and target exception.
+- The test-only Fake Target returns safe opaque result references. No Provider
+  SDK, network, credential secret, retry, timeout, streaming, Worker, or
+  Runtime behavior is implemented.
+- `ProductionAdapterInstance`, Registry, Catalog, Creation, Tool Adapter
+  Contract, Runtime contracts, builders, Root exports, startup, lifecycle, and
+  session remain unchanged. Runtime and execution authority remain false.
+
 ## AFDE-6.3 Production Adapter Creation Foundation
 
 - `CAP-PRODUCTIONADAPTERCREATION-0001` is `implemented`, maturity `M3`, with
