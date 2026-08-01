@@ -1,5 +1,19 @@
 # Technical Debt
 
+## AFDE-6.8 PowerShell Merge Automation Standard Foundation
+
+- Approval switches are explicit caller assertions; cryptographic approval
+  provenance, identity attestation, and durable approval records remain
+  outside this operations Capability.
+- Windows PowerShell 5.1 is validated locally. PowerShell 7 remains
+  `NOT_VERIFIED` because that host is unavailable in the current environment.
+- Cross-project reuse, non-GitHub hosting, enterprise proxy/authentication
+  variants, alternate base-branch policy, and repository-specific branch
+  protection combinations are not validated.
+- Validation uses mocked native boundaries and parser/unit checks and never
+  merges a live pull request. Operational concurrency locking and recovery
+  across simultaneous operators remain future work.
+
 ## AFDE-6.7 Production Adapter Worker Execution Foundation
 
 - The boundary is caller-invoked and is not connected to Worker Manager

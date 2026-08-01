@@ -129,7 +129,25 @@
         "CAP-PRODUCTIONADAPTERINVOCATION-0001",
         "CAP-PRODUCTIONADAPTERRUNTIMESTARTUPINTEGRATION-0001",
         "CAP-PRODUCTIONADAPTERRUNTIMEEXECUTION-0001",
-        "CAP-PRODUCTIONADAPTERWORKEREXECUTION-0001"
+        "CAP-PRODUCTIONADAPTERWORKEREXECUTION-0001",
+        "CAP-POWERSHELLMERGEAUTOMATIONSTANDARD-0001"
+      ]
+    },
+    {
+      "document_id": "DOC-PSMERGE-0001",
+      "title": "PowerShell Merge Automation Standard v1",
+      "path": "docs/standards/POWERSHELL_MERGE_AUTOMATION_STANDARD_v1.md",
+      "document_type": "standard",
+      "owner": "AI Factory OS Architecture",
+      "scope": "governance.merge_automation",
+      "status": "Active",
+      "authority_level": "normative",
+      "version": "v1",
+      "effective_date": "2026-08-02",
+      "supersedes": [],
+      "knowledge_ids": [],
+      "capability_ids": [
+        "CAP-POWERSHELLMERGEAUTOMATIONSTANDARD-0001"
       ]
     },
     {
@@ -1696,6 +1714,58 @@
       ],
       "source_documents": [
         "DOC-CREG-0001"
+      ],
+      "supersedes": []
+    },
+    {
+      "capability_id": "CAP-POWERSHELLMERGEAUTOMATIONSTANDARD-0001",
+      "name": "PowerShell Merge Automation Standard Foundation",
+      "description": "Validate an explicitly user-approved GitHub pull request, normalize heterogeneous CI check JSON, perform Merge Commit only, synchronize the base branch, and safely converge feature-branch cleanup across partial or repeated execution.",
+      "owner": "AI Factory OS Architecture",
+      "scope": "governance.merge_automation",
+      "status": "implemented",
+      "maturity": "M3",
+      "implementation_status": "implemented",
+      "required_knowledge": [],
+      "required_capabilities": [],
+      "tool_dependencies": [
+        "Git CLI",
+        "GitHub CLI",
+        "Windows PowerShell 5.1 or PowerShell 7"
+      ],
+      "adapter_dependencies": [],
+      "runtime_dependencies": [],
+      "implementation_references": [
+        "scripts/Invoke-AfdeMergeAutomation.ps1",
+        "docs/standards/POWERSHELL_MERGE_AUTOMATION_STANDARD_v1.md"
+      ],
+      "validation_evidence": [
+        "tests/test_powershell_merge_automation.py",
+        "tests/test_knowledge_registry.py::test_powershell_merge_automation_has_reciprocal_m3_binding"
+      ],
+      "known_gaps": [
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-POWERSHELLMERGEAUTOMATIONSTANDARD-0001",
+          "message": "Merge authority remains external and execution is permitted only after Work PASS, Chat Merge PASS, and explicit user approval; the reference script does not verify the provenance of caller assertions.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-POWERSHELLMERGEAUTOMATIONSTANDARD-0001",
+          "message": "Cross-project reusability, non-GitHub hosts, alternate base-branch policies, background execution, scheduling, and automatic approval are not verified or implemented.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "evidence_gap",
+          "subject_id": "CAP-POWERSHELLMERGEAUTOMATIONSTANDARD-0001",
+          "message": "Windows PowerShell 5.1 is validated in the current repository; PowerShell 7 compatibility is not verified when that host is unavailable, and no live pull request is merged by tests.",
+          "related_ids": []
+        }
+      ],
+      "source_documents": [
+        "DOC-CREG-0001",
+        "DOC-PSMERGE-0001"
       ],
       "supersedes": []
     }

@@ -630,6 +630,36 @@ immutable Worker result. Runtime errors propagate unchanged. Provider metadata
 is copied from the input only; no Provider is selected or called. No Worker or
 Runtime lifecycle state is read or mutated.
 
+### CAP-POWERSHELLMERGEAUTOMATIONSTANDARD-0001
+
+| Field | Value |
+| --- | --- |
+| Name | PowerShell Merge Automation Standard Foundation |
+| Description | Validate an explicitly user-approved GitHub pull request, normalize heterogeneous CI check JSON, perform Merge Commit only, synchronize the base branch, and safely converge feature-branch cleanup across partial or repeated execution. |
+| Owner | AI Factory OS Architecture |
+| Scope | `governance.merge_automation` |
+| Status | `implemented` |
+| Maturity | `M3` |
+| Implementation status | `implemented` |
+| Required knowledge | none |
+| Required capabilities | none |
+| Tool dependencies | Git CLI, GitHub CLI, Windows PowerShell 5.1 or PowerShell 7 |
+| Adapter dependencies | none |
+| Runtime dependencies | none |
+| Implementation references | `scripts/Invoke-AfdeMergeAutomation.ps1`, `docs/standards/POWERSHELL_MERGE_AUTOMATION_STANDARD_v1.md` |
+| Validation evidence | `tests/test_powershell_merge_automation.py`, `tests/test_knowledge_registry.py::test_powershell_merge_automation_has_reciprocal_m3_binding` |
+| Known gaps | Merge authority remains external; caller approval assertions do not prove their provenance.<br>Cross-project, non-GitHub host, alternate base policy, scheduling, background, and automatic approval behavior are unverified or excluded.<br>Windows PowerShell 5.1 is validated in this repository; PowerShell 7 is `NOT_VERIFIED` when unavailable, and tests never merge a live PR. |
+| Source documents | `DOC-CREG-0001`, `DOC-PSMERGE-0001` |
+| Supersedes | none |
+
+This entry grants no execution or merge authority. The reference script runs
+only after Work PASS, Chat Merge PASS, and explicit user approval assertions.
+It validates exact repository, PR, base/head branch, and SHA identities;
+normalizes CI objects without assuming optional properties; judges native
+commands by exit code; uses `gh pr merge --merge`; and converges already-Ready,
+already-Merged, synchronized, or already-cleaned states. Runtime, Application,
+Provider, Worker, CI workflow, and Release Policy ownership remain unchanged.
+
 ## Registry Validation
 
 A capability registry change is valid only when:
@@ -662,6 +692,8 @@ A capability registry change is valid only when:
   not create a Runtime session, Adapter instance, or invocation request.
 - Production Adapter Worker execution is caller-invoked only; operational
   dispatch and lifecycle integration remain deferred.
+- PowerShell Merge Automation cross-project and PowerShell 7 validation remain
+  incomplete; merge authority and approval provenance remain external.
 - Multiple-candidate discovery and ranking remain deferred.
 - M4 validation and operational integration are not complete.
 - RAG, vector databases, embeddings, and multimodal adapters are outside
