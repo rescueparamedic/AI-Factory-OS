@@ -165,6 +165,37 @@ def test_already_merged_snapshot_skips_mergeability_and_retains_merge_commit():
     assert result == {"State": "MERGED", "Sha": "d" * 40}
 
 
+def test_merge_commit_method_accepts_exact_base_and_head_parents():
+    completed = _run_powershell(
+        "$executor={param($command,$arguments) [pscustomobject]@{"
+        "ExitCode=0;StdOut=(('d'*40)+' '+('a'*40)+' '+('b'*40));StdErr=''}};"
+        "Assert-MergeCommitMethod ('d'*40) ('a'*40) ('b'*40) $executor; 'OK'"
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert "OK" in completed.stdout
+
+
+@pytest.mark.parametrize(
+    "parents",
+    [
+        "('d'*40)+' '+('a'*40)",
+        "('b'*40)+' '+('c'*40)",
+        "('d'*40)+' '+('a'*40)+' '+('c'*40)",
+        "('d'*40)+' '+('a'*40)+' '+('b'*40)+' '+('c'*40)",
+    ],
+)
+def test_merge_commit_method_rejects_squash_rebase_and_wrong_parents(parents):
+    completed = _run_powershell(
+        "$executor={param($command,$arguments) [pscustomobject]@{"
+        f"ExitCode=0;StdOut=({parents});StdErr=''"
+        "}};"
+        "try {Assert-MergeCommitMethod ('d'*40) ('a'*40) ('b'*40) $executor; exit 9} "
+        "catch {[Console]::Out.Write($_.Exception.Message)}"
+    )
+    assert completed.returncode == 0
+    assert "required Merge Commit method" in completed.stdout
+
+
 def _snapshot(**overrides):
     snapshot = {
         "state": "OPEN",
@@ -230,9 +261,78 @@ def test_missing_user_approval_stops_before_any_native_command():
     assert completed.stdout.endswith("|False")
 
 
+def test_already_merged_rerun_rejects_non_merge_commit_before_cleanup():
+    completed = _run_powershell(
+        "$script:calls=@();$executor={param($command,$arguments)"
+        "$script:calls += ($command+' '+($arguments -join ' '));"
+        "if($command -eq 'gh' -and $arguments[0] -eq 'repo'){"
+        "return [pscustomobject]@{ExitCode=0;StdOut='owner/repo';StdErr=''}};"
+        "if($command -eq 'gh' -and $arguments[0] -eq 'pr'){"
+        "$pr=[pscustomobject]@{state='MERGED';isDraft=$false;baseRefName='develop';"
+        "baseRefOid=('a'*40);headRefName='agent/feature';headRefOid=('b'*40);"
+        "mergeable='UNKNOWN';mergeCommit=[pscustomobject]@{oid=('d'*40)};"
+        "statusCheckRollup=@([pscustomobject]@{state='SUCCESS';context='test'})};"
+        "return [pscustomobject]@{ExitCode=0;StdOut=($pr|ConvertTo-Json -Depth 5);StdErr=''}};"
+        "if($command -eq 'git' -and $arguments[0] -eq 'status'){"
+        "return [pscustomobject]@{ExitCode=0;StdOut='';StdErr=''}};"
+        "if($command -eq 'git' -and $arguments[0] -eq 'rev-list'){"
+        "$singleParent=('d'*40)+' '+('a'*40);"
+        "return [pscustomobject]@{ExitCode=0;StdOut=$singleParent;StdErr=''}};"
+        "return [pscustomobject]@{ExitCode=0;StdOut='';StdErr=''}};"
+        "try {Invoke-AfdeMergeAutomation 'owner/repo' 8 'develop' ('a'*40) "
+        "'agent/feature' ('b'*40) $true $true $true $executor;exit 9} "
+        "catch {[Console]::Out.Write($_.Exception.Message+'|'+($script:calls -join ';'))}"
+    )
+    assert completed.returncode == 0
+    assert "required Merge Commit method" in completed.stdout
+    assert "git rev-list --parents -n 1" in completed.stdout
+    assert "git push origin --delete" not in completed.stdout
+    assert "git branch -d" not in completed.stdout
+
+
+@pytest.mark.parametrize(
+    ("branch_kind", "message"),
+    [
+        ("remote", "Remote feature branch still exists after deletion"),
+        ("local", "Local feature branch still exists after deletion"),
+    ],
+)
+def test_cleanup_fails_when_deleted_branch_still_exists(branch_kind, message):
+    completed = _run_powershell(
+        f"$script:kind='{branch_kind}';$executor={{param($command,$arguments)"
+        "if($command -eq 'gh' -and $arguments[0] -eq 'repo'){"
+        "return [pscustomobject]@{ExitCode=0;StdOut='owner/repo';StdErr=''}};"
+        "if($command -eq 'gh' -and $arguments[0] -eq 'pr'){"
+        "$pr=[pscustomobject]@{state='MERGED';isDraft=$false;baseRefName='develop';"
+        "baseRefOid=('a'*40);headRefName='agent/feature';headRefOid=('b'*40);"
+        "mergeable='UNKNOWN';mergeCommit=[pscustomobject]@{oid=('d'*40)};"
+        "statusCheckRollup=@([pscustomobject]@{state='SUCCESS';context='test'})};"
+        "return [pscustomobject]@{ExitCode=0;StdOut=($pr|ConvertTo-Json -Depth 5);StdErr=''}};"
+        "if($command -eq 'git' -and $arguments[0] -eq 'status'){"
+        "return [pscustomobject]@{ExitCode=0;StdOut='';StdErr=''}};"
+        "if($command -eq 'git' -and $arguments[0] -eq 'rev-list'){"
+        "$parents=('d'*40)+' '+('a'*40)+' '+('b'*40);"
+        "return [pscustomobject]@{ExitCode=0;StdOut=$parents;StdErr=''}};"
+        "if($command -eq 'git' -and $arguments[0] -eq 'rev-parse'){"
+        "return [pscustomobject]@{ExitCode=0;StdOut=('d'*40);StdErr=''}};"
+        "if($command -eq 'git' -and $arguments[0] -eq 'ls-remote'){"
+        "$output=if($script:kind -eq 'remote'){('b'*40)+' refs/heads/agent/feature'}else{''};"
+        "return [pscustomobject]@{ExitCode=0;StdOut=$output;StdErr=''}};"
+        "if($command -eq 'git' -and $arguments[0] -eq 'branch' -and $arguments[1] -eq '--list'){"
+        "return [pscustomobject]@{ExitCode=0;StdOut='agent/feature';StdErr=''}};"
+        "return [pscustomobject]@{ExitCode=0;StdOut='';StdErr=''}};"
+        "try {Invoke-AfdeMergeAutomation 'owner/repo' 8 'develop' ('a'*40) "
+        "'agent/feature' ('b'*40) $true $true $true $executor;exit 9} "
+        "catch {[Console]::Out.Write($_.Exception.Message)}"
+    )
+    assert completed.returncode == 0
+    assert message in completed.stdout
+
+
 def test_reference_flow_revalidates_draft_merges_once_and_cleans_branches():
     result = _successful_json(
-        "$script:state='OPEN';$script:draft=$true;$script:calls=@();"
+        "$script:state='OPEN';$script:draft=$true;$script:remote=$true;"
+        "$script:local=$true;$script:calls=@();"
         "$executor={param($command,$arguments) "
         "$key=$command+' '+($arguments -join ' ');$script:calls += $key;"
         "if($command -eq 'gh' -and $arguments[0] -eq 'repo'){"
@@ -253,10 +353,19 @@ def test_reference_flow_revalidates_draft_merges_once_and_cleans_branches():
         "if($command -eq 'git' -and $arguments[0] -eq 'rev-parse'){"
         "$sha=if($script:state -eq 'MERGED'){'d'*40}else{'a'*40};"
         "return [pscustomobject]@{ExitCode=0;StdOut=$sha;StdErr=''}};"
+        "if($command -eq 'git' -and $arguments[0] -eq 'rev-list'){"
+        "$parents=('d'*40)+' '+('a'*40)+' '+('b'*40);"
+        "return [pscustomobject]@{ExitCode=0;StdOut=$parents;StdErr=''}};"
         "if($command -eq 'git' -and $arguments[0] -eq 'ls-remote'){"
-        "return [pscustomobject]@{ExitCode=0;StdOut=(('b'*40)+' refs/heads/agent/feature');StdErr=''}};"
+        "$output=if($script:remote){('b'*40)+' refs/heads/agent/feature'}else{''};"
+        "return [pscustomobject]@{ExitCode=0;StdOut=$output;StdErr=''}};"
+        "if($command -eq 'git' -and $arguments[0] -eq 'push'){"
+        "$script:remote=$false;return [pscustomobject]@{ExitCode=0;StdOut='';StdErr=''}};"
         "if($command -eq 'git' -and $arguments[0] -eq 'branch' -and $arguments[1] -eq '--list'){"
-        "return [pscustomobject]@{ExitCode=0;StdOut='agent/feature';StdErr=''}};"
+        "$output=if($script:local){'agent/feature'}else{''};"
+        "return [pscustomobject]@{ExitCode=0;StdOut=$output;StdErr=''}};"
+        "if($command -eq 'git' -and $arguments[0] -eq 'branch' -and $arguments[1] -eq '-d'){"
+        "$script:local=$false;return [pscustomobject]@{ExitCode=0;StdOut='';StdErr=''}};"
         "return [pscustomobject]@{ExitCode=0;StdOut='';StdErr=''}};"
         "$mergeResult=Invoke-AfdeMergeAutomation 'owner/repo' 8 'develop' ('a'*40) "
         "'agent/feature' ('b'*40) $true $true $true $executor | ConvertFrom-Json;"
@@ -272,6 +381,8 @@ def test_reference_flow_revalidates_draft_merges_once_and_cleans_branches():
     assert sum("gh pr merge 8 --repo owner/repo --merge" in call for call in calls) == 1
     assert any("git pull --ff-only origin develop" in call for call in calls)
     assert any("git push origin --delete agent/feature" in call for call in calls)
+    assert sum("git ls-remote --heads origin refs/heads/agent/feature" in call for call in calls) == 2
+    assert sum("git branch --list --format=%(refname:short) -- agent/feature" in call for call in calls) == 2
 
 
 def test_script_contract_uses_merge_commit_and_has_no_runtime_dependency():

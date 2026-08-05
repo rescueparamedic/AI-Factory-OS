@@ -321,6 +321,28 @@ function Get-MergeCommitSha {
     return $mergeCommitSha
 }
 
+function Assert-MergeCommitMethod {
+    param(
+        [Parameter(Mandatory = $true)][string]$MergeCommitSha,
+        [Parameter(Mandatory = $true)][string]$ExpectedBaseSha,
+        [Parameter(Mandatory = $true)][string]$ExpectedHeadSha,
+        [scriptblock]$Executor
+    )
+
+    $commitLine = Invoke-NativeText 'git' @(
+        'rev-list', '--parents', '-n', '1', $MergeCommitSha
+    ) $Executor
+    $commitAndParents = @($commitLine -split '\s+' | Where-Object {
+            -not [string]::IsNullOrWhiteSpace($_)
+        })
+    if ($commitAndParents.Count -ne 3 -or
+        $commitAndParents[0] -ne $MergeCommitSha -or
+        $commitAndParents[1] -ne $ExpectedBaseSha -or
+        $commitAndParents[2] -ne $ExpectedHeadSha) {
+        throw 'Pull request was not merged with the required Merge Commit method.'
+    }
+}
+
 function Invoke-AfdeMergeAutomation {
     param(
         [string]$RepositoryValue,
@@ -381,6 +403,7 @@ function Invoke-AfdeMergeAutomation {
 
     $mergeCommitSha = Get-MergeCommitSha $snapshot
     [void](Invoke-NativeCommand 'git' @('fetch', 'origin', $BaseBranchValue) $Executor)
+    Assert-MergeCommitMethod $mergeCommitSha $BaseShaValue $HeadShaValue $Executor
     [void](Invoke-NativeCommand 'git' @('checkout', $BaseBranchValue) $Executor)
     [void](Invoke-NativeCommand 'git' @('pull', '--ff-only', 'origin', $BaseBranchValue) $Executor)
 
@@ -399,6 +422,10 @@ function Invoke-AfdeMergeAutomation {
         $localBranchExists $remoteBranchExists $true
     if ($cleanupPlan.ShouldDeleteRemoteBranch) {
         [void](Invoke-NativeCommand 'git' @('push', 'origin', '--delete', $HeadBranchValue) $Executor)
+        $remoteBranch = Invoke-NativeText 'git' @('ls-remote', '--heads', 'origin', "refs/heads/$HeadBranchValue") $Executor
+        if (-not [string]::IsNullOrWhiteSpace($remoteBranch)) {
+            throw 'Remote feature branch still exists after deletion.'
+        }
         $remoteBranchStatus = 'DELETED'
     }
     else {
@@ -407,6 +434,10 @@ function Invoke-AfdeMergeAutomation {
 
     if ($cleanupPlan.ShouldDeleteLocalBranch) {
         [void](Invoke-NativeCommand 'git' @('branch', '-d', $HeadBranchValue) $Executor)
+        $localBranch = Invoke-NativeText 'git' @('branch', '--list', '--format=%(refname:short)', '--', $HeadBranchValue) $Executor
+        if (-not [string]::IsNullOrWhiteSpace($localBranch)) {
+            throw 'Local feature branch still exists after deletion.'
+        }
         $localBranchStatus = 'DELETED'
     }
     else {
