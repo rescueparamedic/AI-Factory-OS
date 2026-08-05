@@ -121,7 +121,7 @@ def test_public_models_are_frozen_slotted_and_have_no_instance_dict():
         assert "__slots__" in model_type.__dict__
         assert not hasattr(instance, "__dict__")
         with pytest.raises((AttributeError, TypeError)):
-            setattr(instance, "unexpected", "forbidden")
+            instance.unexpected = "forbidden"
 
 
 def test_public_models_reject_positional_construction():
