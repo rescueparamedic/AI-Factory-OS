@@ -729,7 +729,7 @@ def test_production_adapter_runtime_event_collection_has_reciprocal_m3_binding()
     assert capability.runtime_dependencies == (
         "caller-supplied immutable Runtime events and collection timestamp",
         "existing Runtime Observation, Runtime Execution, and Worker Execution "
-        "behavior unchanged",
+        + "behavior unchanged",
     )
     assert capability.implementation_references == (
         "afde/production_adapter_runtime_event_collection/__init__.py",

@@ -1,4 +1,4 @@
-from dataclasses import FrozenInstanceError, replace
+from dataclasses import FrozenInstanceError, is_dataclass, replace
 from datetime import datetime
 from types import MappingProxyType
 
@@ -104,6 +104,69 @@ def test_models_are_immutable_and_payload_is_defensively_frozen():
     ):
         with pytest.raises(FrozenInstanceError):
             setattr(instance, field_name, value)
+
+
+def test_public_models_are_frozen_slotted_and_have_no_instance_dict():
+    event = _event()
+    request = _request(event)
+    result = ProductionAdapterRuntimeEventCollectionService().collect(request)
+
+    for model_type, instance in (
+        (ProductionAdapterRuntimeEvent, event),
+        (ProductionAdapterRuntimeEventCollectionRequest, request),
+        (ProductionAdapterRuntimeEventCollectionResult, result),
+    ):
+        assert is_dataclass(model_type)
+        assert model_type.__dataclass_params__.frozen is True
+        assert "__slots__" in model_type.__dict__
+        assert not hasattr(instance, "__dict__")
+        with pytest.raises((AttributeError, TypeError)):
+            setattr(instance, "unexpected", "forbidden")
+
+
+def test_public_models_reject_positional_construction():
+    event = _event()
+    with pytest.raises(TypeError):
+        ProductionAdapterRuntimeEvent(
+            event.event_id,
+            event.adapter_id,
+            event.event_type,
+            event.occurred_at,
+            event.payload,
+        )
+    with pytest.raises(TypeError):
+        ProductionAdapterRuntimeEventCollectionRequest(
+            (event,),
+            COLLECTED_AT,
+        )
+    with pytest.raises(TypeError):
+        ProductionAdapterRuntimeEventCollectionResult(
+            (event,),
+            1,
+            COLLECTED_AT,
+        )
+
+
+def test_public_models_accept_explicit_keyword_construction():
+    event = ProductionAdapterRuntimeEvent(
+        event_id="RUNTIME-EVENT-AFDE-6.10-KEYWORD",
+        adapter_id="adapter.runtime_event_collection_fixture",
+        event_type="adapter.event.keyword",
+        occurred_at="2026-08-05T18:20:00+09:00",
+        payload={"construction": "keyword-only"},
+    )
+    request = ProductionAdapterRuntimeEventCollectionRequest(
+        events=(event,),
+        collected_at=COLLECTED_AT,
+    )
+    result = ProductionAdapterRuntimeEventCollectionResult(
+        events=request.events,
+        event_count=1,
+        collected_at=request.collected_at,
+    )
+
+    assert result.events == (event,)
+    assert result.event_count == 1
 
 
 def test_service_is_stateless_and_same_request_is_deterministic():

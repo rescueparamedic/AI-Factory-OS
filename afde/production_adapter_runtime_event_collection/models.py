@@ -15,7 +15,7 @@ from .errors import (
 )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True, kw_only=True)
 class ProductionAdapterRuntimeEvent:
     """One caller-supplied Runtime event with deeply immutable payload data."""
 
@@ -31,16 +31,11 @@ class ProductionAdapterRuntimeEvent:
         _identity(self.adapter_id, error, "adapter_id")
         _identity(self.event_type, error, "event_type")
         _timestamp(self.occurred_at, error, "occurred_at")
-        try:
-            payload = _freeze_mapping(self.payload, set())
-        except InvalidProductionAdapterRuntimeEventError:
-            raise
-        except Exception:
-            raise error("payload must contain supported immutable data") from None
+        payload = _freeze_mapping(self.payload, set())
         object.__setattr__(self, "payload", payload)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True, kw_only=True)
 class ProductionAdapterRuntimeEventCollectionRequest:
     """Explicit ordered Runtime events and caller-issued collection timestamp."""
 
@@ -53,7 +48,7 @@ class ProductionAdapterRuntimeEventCollectionRequest:
         _timestamp(self.collected_at, error, "collected_at")
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True, kw_only=True)
 class ProductionAdapterRuntimeEventCollectionResult:
     """Point-in-time collection result with no stream or history semantics."""
 
