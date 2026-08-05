@@ -1,5 +1,23 @@
 # Decision Log
 
+## 2026-08-05 - AFDE-6.9 Stateless Runtime Observation Boundary
+
+- Implemented `CAP-PRODUCTIONADAPTERRUNTIMEOBSERVATION-0001` at M3 as an
+  additive package-scoped public contract.
+- Chose an explicit immutable observation identity bound to the existing
+  Worker, Adapter, Runtime projection, Execution Path, Capability, and Tool
+  Adapter binding identity chain.
+- Reused the exact completed `ProductionAdapterWorkerExecutionResult` as the
+  sole observation source instead of duplicating or changing Runtime and Worker
+  execution contracts.
+- Kept the service synchronous and stateless: it validates and projects one
+  caller-supplied result without executing, collecting, polling, or persisting.
+- Denied Runtime and execution authority in every observation result and
+  preserved package-scoped exports for backward compatibility.
+- Excluded Runtime events/history/monitoring/health, background polling,
+  persistent storage, metrics, telemetry, aggregation, lifecycle integration,
+  operational wiring, M4, and production-readiness claims.
+
 ## 2026-08-02 - AFDE-6.8 Fail-closed PowerShell Merge Convergence
 
 - Implemented `CAP-POWERSHELLMERGEAUTOMATIONSTANDARD-0001` at M3 as an

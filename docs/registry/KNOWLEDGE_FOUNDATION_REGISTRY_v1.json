@@ -130,6 +130,7 @@
         "CAP-PRODUCTIONADAPTERRUNTIMESTARTUPINTEGRATION-0001",
         "CAP-PRODUCTIONADAPTERRUNTIMEEXECUTION-0001",
         "CAP-PRODUCTIONADAPTERWORKEREXECUTION-0001",
+        "CAP-PRODUCTIONADAPTERRUNTIMEOBSERVATION-0001",
         "CAP-POWERSHELLMERGEAUTOMATIONSTANDARD-0001"
       ]
     },
@@ -1708,6 +1709,65 @@
         {
           "gap_type": "evidence_gap",
           "subject_id": "CAP-PRODUCTIONADAPTERWORKEREXECUTION-0001",
+          "message": "Operational validation, production readiness, and M4 validation are not complete.",
+          "related_ids": []
+        }
+      ],
+      "source_documents": [
+        "DOC-CREG-0001"
+      ],
+      "supersedes": []
+    },
+    {
+      "capability_id": "CAP-PRODUCTIONADAPTERRUNTIMEOBSERVATION-0001",
+      "name": "Production Adapter Runtime Observation Foundation",
+      "description": "Validate and project one caller-supplied completed Production Adapter Worker execution result as an immutable point-in-time Runtime observation without collection, history, monitoring, health projection, background behavior, storage, metrics, or telemetry.",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.production_adapter_runtime_observation",
+      "status": "implemented",
+      "maturity": "M3",
+      "implementation_status": "implemented",
+      "required_knowledge": [],
+      "required_capabilities": [
+        "CAP-PRODUCTIONADAPTERRUNTIMEEXECUTION-0001",
+        "CAP-PRODUCTIONADAPTERWORKEREXECUTION-0001"
+      ],
+      "tool_dependencies": [],
+      "adapter_dependencies": [
+        "existing ProductionAdapterWorkerExecutionResult",
+        "existing ProductionAdapterRuntimeExecutionResult"
+      ],
+      "runtime_dependencies": [
+        "caller-supplied completed execution evidence",
+        "existing Worker and Runtime execution behavior unchanged"
+      ],
+      "implementation_references": [
+        "afde/production_adapter_runtime_observation/__init__.py",
+        "afde/production_adapter_runtime_observation/errors.py",
+        "afde/production_adapter_runtime_observation/models.py",
+        "afde/production_adapter_runtime_observation/service.py"
+      ],
+      "validation_evidence": [
+        "tests/test_production_adapter_runtime_observation.py",
+        "tests/test_production_adapter_runtime_observation_compatibility.py",
+        "tests/test_production_adapter_runtime_observation_boundaries.py"
+      ],
+      "known_gaps": [
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERRUNTIMEOBSERVATION-0001",
+          "message": "The boundary observes only one explicitly supplied completed result and does not collect Runtime events, retain history, monitor execution, project health, or poll in the background.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERRUNTIMEOBSERVATION-0001",
+          "message": "Persistent storage, metrics, telemetry, aggregation, lifecycle integration, and operational wiring remain excluded.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "evidence_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERRUNTIMEOBSERVATION-0001",
           "message": "Operational validation, production readiness, and M4 validation are not complete.",
           "related_ids": []
         }
