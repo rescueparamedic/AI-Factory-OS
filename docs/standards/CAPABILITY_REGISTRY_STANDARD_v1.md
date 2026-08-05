@@ -691,6 +691,35 @@ tuples produce valid zero-count point-in-time results. No event is detected,
 published, persisted, queried, replayed, aggregated, streamed, or added to
 history, and no existing Runtime or Worker capability is called or mutated.
 
+### CAP-PRODUCTIONADAPTERRUNTIMEEVENTSTREAM-0001
+
+| Field | Value |
+| --- | --- |
+| Name | Production Adapter Runtime Event Stream Foundation |
+| Description | Synchronously validate an explicit ordered tuple of caller-supplied immutable Production Adapter Runtime events and return a deterministic bounded in-memory stream result without history, monitoring, storage, background polling, metrics, telemetry, replay, aggregation, query, async subscription, or queue behavior. |
+| Owner | AI Factory OS Architecture |
+| Scope | `architecture.production_adapter_runtime_event_stream` |
+| Status | `implemented` |
+| Maturity | `M3` |
+| Implementation status | `implemented` |
+| Required knowledge | none |
+| Required capabilities | `CAP-PRODUCTIONADAPTERRUNTIMEEVENTCOLLECTION-0001` |
+| Tool dependencies | none |
+| Adapter dependencies | none |
+| Runtime dependencies | caller-supplied immutable Runtime events and stream timestamp; existing Runtime Event Collection, Runtime Observation, Runtime Execution, and Worker Execution behavior remains unchanged |
+| Implementation references | `afde/production_adapter_runtime_event_stream/__init__.py`, `afde/production_adapter_runtime_event_stream/errors.py`, `afde/production_adapter_runtime_event_stream/models.py`, `afde/production_adapter_runtime_event_stream/service.py` |
+| Validation evidence | `tests/test_production_adapter_runtime_event_stream.py`, `tests/test_production_adapter_runtime_event_stream_compatibility.py`, `tests/test_production_adapter_runtime_event_stream_boundaries.py` |
+| Known gaps | Runtime History, Runtime Monitoring, Runtime Health Projection, background polling, persistent storage, metrics, and telemetry remain excluded.<br>Publishing, consumer loops, generators, replay, aggregation, query, async subscription, and queues remain excluded.<br>Operational validation, production readiness, and M4 validation remain incomplete. |
+| Source documents | `DOC-CREG-0001` |
+| Supersedes | none |
+
+This entry accepts one explicit tuple of zero or more existing immutable Runtime
+events and a caller-supplied timezone-aware stream timestamp. The service
+returns the same tuple in exact caller order as a bounded, deterministic,
+in-memory result. It does not discover, publish, persist, monitor, query,
+aggregate, replay, enqueue, or asynchronously deliver events, and it does not
+call or mutate existing Runtime, Collection, Observation, or Execution behavior.
+
 ### CAP-POWERSHELLMERGEAUTOMATIONSTANDARD-0001
 
 | Field | Value |
