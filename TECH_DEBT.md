@@ -1,5 +1,18 @@
 # Technical Debt
 
+## AFDE-6.10 Production Adapter Runtime Event Collection Foundation
+
+- Collection is one explicit synchronous call over caller-supplied events. It
+  does not detect events, subscribe, publish, consume continuously, or integrate
+  with Runtime/Worker lifecycle state.
+- Collection timestamps and event identity uniqueness are caller-owned. No
+  clock authority, identity registry, deduplication, ordering across calls,
+  replay, aggregation, query, or cross-call state is provided.
+- Runtime Event Stream, Runtime History, repositories, persistence, file or
+  database storage, background collection, polling, metrics, telemetry,
+  alerting, health projection, operational validation, production readiness,
+  and M4 remain incomplete or excluded.
+
 ## AFDE-6.9 Production Adapter Runtime Observation Foundation
 
 - Observation is an explicit synchronous call over one already completed

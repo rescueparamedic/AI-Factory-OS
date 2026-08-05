@@ -131,6 +131,7 @@
         "CAP-PRODUCTIONADAPTERRUNTIMEEXECUTION-0001",
         "CAP-PRODUCTIONADAPTERWORKEREXECUTION-0001",
         "CAP-PRODUCTIONADAPTERRUNTIMEOBSERVATION-0001",
+        "CAP-PRODUCTIONADAPTERRUNTIMEEVENTCOLLECTION-0001",
         "CAP-POWERSHELLMERGEAUTOMATIONSTANDARD-0001"
       ]
     },
@@ -1768,6 +1769,59 @@
         {
           "gap_type": "evidence_gap",
           "subject_id": "CAP-PRODUCTIONADAPTERRUNTIMEOBSERVATION-0001",
+          "message": "Operational validation, production readiness, and M4 validation are not complete.",
+          "related_ids": []
+        }
+      ],
+      "source_documents": [
+        "DOC-CREG-0001"
+      ],
+      "supersedes": []
+    },
+    {
+      "capability_id": "CAP-PRODUCTIONADAPTERRUNTIMEEVENTCOLLECTION-0001",
+      "name": "Production Adapter Runtime Event Collection Foundation",
+      "description": "Synchronously validate an explicit ordered tuple of caller-supplied immutable Production Adapter Runtime events and return a deterministic in-memory point-in-time collection result without stream, history, storage, background, metrics, telemetry, or observation behavior.",
+      "owner": "AI Factory OS Architecture",
+      "scope": "architecture.production_adapter_runtime_event_collection",
+      "status": "implemented",
+      "maturity": "M3",
+      "implementation_status": "implemented",
+      "required_knowledge": [],
+      "required_capabilities": [],
+      "tool_dependencies": [],
+      "adapter_dependencies": [],
+      "runtime_dependencies": [
+        "caller-supplied immutable Runtime events and collection timestamp",
+        "existing Runtime Observation, Runtime Execution, and Worker Execution behavior unchanged"
+      ],
+      "implementation_references": [
+        "afde/production_adapter_runtime_event_collection/__init__.py",
+        "afde/production_adapter_runtime_event_collection/errors.py",
+        "afde/production_adapter_runtime_event_collection/models.py",
+        "afde/production_adapter_runtime_event_collection/service.py"
+      ],
+      "validation_evidence": [
+        "tests/test_production_adapter_runtime_event_collection.py",
+        "tests/test_production_adapter_runtime_event_collection_compatibility.py",
+        "tests/test_production_adapter_runtime_event_collection_boundaries.py"
+      ],
+      "known_gaps": [
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERRUNTIMEEVENTCOLLECTION-0001",
+          "message": "Runtime Event Stream, subscription, publishing, consumer loops, generators, async iteration, queues, replay, aggregation, and query remain excluded.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "capability_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERRUNTIMEEVENTCOLLECTION-0001",
+          "message": "Runtime History, event repositories, persistence, file or database storage, background collection, polling, metrics, telemetry, and Runtime health projection remain excluded.",
+          "related_ids": []
+        },
+        {
+          "gap_type": "evidence_gap",
+          "subject_id": "CAP-PRODUCTIONADAPTERRUNTIMEEVENTCOLLECTION-0001",
           "message": "Operational validation, production readiness, and M4 validation are not complete.",
           "related_ids": []
         }

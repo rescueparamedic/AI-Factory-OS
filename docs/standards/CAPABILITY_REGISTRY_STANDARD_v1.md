@@ -660,6 +660,37 @@ call Runtime or Worker execution, collect events, infer health, store results,
 or mutate lifecycle state. Observation results grant no Runtime or execution
 authority.
 
+### CAP-PRODUCTIONADAPTERRUNTIMEEVENTCOLLECTION-0001
+
+| Field | Value |
+| --- | --- |
+| Name | Production Adapter Runtime Event Collection Foundation |
+| Description | Synchronously validate an explicit ordered tuple of caller-supplied immutable Production Adapter Runtime events and return a deterministic in-memory point-in-time collection result without stream, history, storage, background, metrics, telemetry, or observation behavior. |
+| Owner | AI Factory OS Architecture |
+| Scope | `architecture.production_adapter_runtime_event_collection` |
+| Status | `implemented` |
+| Maturity | `M3` |
+| Implementation status | `implemented` |
+| Required knowledge | none |
+| Required capabilities | none |
+| Tool dependencies | none |
+| Adapter dependencies | none |
+| Runtime dependencies | caller-supplied immutable Runtime events and collection timestamp; existing Runtime Observation, Runtime Execution, and Worker Execution behavior remains unchanged |
+| Implementation references | `afde/production_adapter_runtime_event_collection/__init__.py`, `afde/production_adapter_runtime_event_collection/errors.py`, `afde/production_adapter_runtime_event_collection/models.py`, `afde/production_adapter_runtime_event_collection/service.py` |
+| Validation evidence | `tests/test_production_adapter_runtime_event_collection.py`, `tests/test_production_adapter_runtime_event_collection_compatibility.py`, `tests/test_production_adapter_runtime_event_collection_boundaries.py` |
+| Known gaps | Runtime Event Stream, subscription, publishing, consumer loops, generators, async iteration, queues, replay, aggregation, and query remain excluded.<br>Runtime History, event repositories, persistence, file or database storage, background collection, polling, metrics, telemetry, and Runtime health projection remain excluded.<br>Operational Evidence, production readiness, and M4 validation remain incomplete. |
+| Source documents | `DOC-CREG-0001` |
+| Supersedes | none |
+
+This entry accepts one explicit tuple of zero or more caller-supplied immutable
+events. Each event preserves its exact event, Adapter, type, and timestamp
+identities while deeply freezing supported payload data. The caller supplies
+the timezone-aware collection timestamp, so repeated synchronous calls with the
+same request return equal results without a clock or internal state. Empty
+tuples produce valid zero-count point-in-time results. No event is detected,
+published, persisted, queried, replayed, aggregated, streamed, or added to
+history, and no existing Runtime or Worker capability is called or mutated.
+
 ### CAP-POWERSHELLMERGEAUTOMATIONSTANDARD-0001
 
 | Field | Value |

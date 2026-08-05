@@ -1,5 +1,22 @@
 # AI Factory OS Project Status
 
+## AFDE-6.10 Production Adapter Runtime Event Collection Foundation
+
+- `CAP-PRODUCTIONADAPTERRUNTIMEEVENTCOLLECTION-0001` is `implemented`,
+  maturity `M3`, with `implementation_status: implemented`.
+- The additive package exposes immutable Runtime Event, explicit Collection
+  Request, immutable Collection Result, typed errors, and one synchronous
+  stateless `collect()` operation.
+- Events retain exact caller identities and timezone-aware ISO timestamps.
+  Supported nested payload data is defensively copied and deeply frozen.
+- Ordered event tuples, including an empty tuple, produce deterministic
+  point-in-time results using the caller-supplied collection timestamp.
+- Runtime Event Stream, subscription, publishing, consumer loops, Runtime
+  History, persistence, background collection, polling, metrics, telemetry,
+  aggregation, query, replay, and health projection are not implemented.
+- Runtime Observation, Runtime Execution, Worker Execution, Startup,
+  Invocation, and Creation contracts and behavior remain unchanged.
+
 ## AFDE-6.9 Production Adapter Runtime Observation Foundation
 
 - `CAP-PRODUCTIONADAPTERRUNTIMEOBSERVATION-0001` is `implemented`, maturity
