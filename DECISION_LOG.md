@@ -1,5 +1,25 @@
 # Decision Log
 
+## 2026-08-05 - AFDE-6.10 Explicit Runtime Event Collection Boundary
+
+- Implemented `CAP-PRODUCTIONADAPTERRUNTIMEEVENTCOLLECTION-0001` at M3 as an
+  additive package-scoped public contract under the approved synchronous,
+  deterministic, in-memory, and stateless boundary.
+- Added immutable Runtime Event, Collection Request, and Collection Result
+  models with dedicated boundary errors and one `collect()` service operation.
+- Preserved caller event ordering and exact timezone-aware ISO timestamp text;
+  supported payload mappings and sequences are defensively copied and deeply
+  frozen without mutating caller data.
+- Followed existing empty snapshot contracts: an explicit empty event tuple is
+  valid and returns a zero-count result. A caller-supplied collection timestamp
+  makes repeated calls with the same request deterministic.
+- Kept Runtime Event Collection independent from Runtime Observation and made
+  no changes to Observation, Runtime Execution, Worker Execution, Startup,
+  Invocation, or Creation behavior and contracts.
+- Excluded stream/subscription/publishing, history, persistence, background
+  collection, polling, replay, aggregation, query, metrics, telemetry, and
+  health projection.
+
 ## 2026-08-05 - AFDE-6.9 Stateless Runtime Observation Boundary
 
 - Implemented `CAP-PRODUCTIONADAPTERRUNTIMEOBSERVATION-0001` at M3 as an

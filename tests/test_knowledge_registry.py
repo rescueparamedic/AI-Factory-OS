@@ -71,6 +71,7 @@ def test_valid_registry_loads_all_three_projections():
         "CAP-PRODUCTIONADAPTERRUNTIMEEXECUTION-0001",
         "CAP-PRODUCTIONADAPTERWORKEREXECUTION-0001",
         "CAP-PRODUCTIONADAPTERRUNTIMEOBSERVATION-0001",
+        "CAP-PRODUCTIONADAPTERRUNTIMEEVENTCOLLECTION-0001",
         "CAP-POWERSHELLMERGEAUTOMATIONSTANDARD-0001",
     ]
 
@@ -700,6 +701,52 @@ def test_production_adapter_runtime_observation_has_reciprocal_m3_binding():
         "afde/production_adapter_runtime_observation/models.py",
         "afde/production_adapter_runtime_observation/service.py",
     )
+    assert capability.source_documents == ("DOC-CREG-0001",)
+    assert (
+        capability.capability_id
+        in documents["DOC-CREG-0001"].capability_ids
+    )
+
+
+def test_production_adapter_runtime_event_collection_has_reciprocal_m3_binding():
+    snapshot = KnowledgeRegistryLoader(ROOT).load()
+    capability = next(
+        item for item in snapshot.capabilities
+        if item.capability_id
+        == "CAP-PRODUCTIONADAPTERRUNTIMEEVENTCOLLECTION-0001"
+    )
+    documents = {item.document_id: item for item in snapshot.documents}
+
+    assert capability.name == (
+        "Production Adapter Runtime Event Collection Foundation"
+    )
+    assert capability.status == "implemented"
+    assert capability.maturity == "M3"
+    assert capability.implementation_status == "implemented"
+    assert capability.required_capabilities == ()
+    assert capability.tool_dependencies == ()
+    assert capability.adapter_dependencies == ()
+    assert capability.runtime_dependencies == (
+        "caller-supplied immutable Runtime events and collection timestamp",
+        "existing Runtime Observation, Runtime Execution, and Worker Execution "
+        "behavior unchanged",
+    )
+    assert capability.implementation_references == (
+        "afde/production_adapter_runtime_event_collection/__init__.py",
+        "afde/production_adapter_runtime_event_collection/errors.py",
+        "afde/production_adapter_runtime_event_collection/models.py",
+        "afde/production_adapter_runtime_event_collection/service.py",
+    )
+    gaps = " ".join(item.message for item in capability.known_gaps)
+    for excluded in (
+        "Runtime Event Stream",
+        "Runtime History",
+        "persistence",
+        "background collection",
+        "metrics",
+        "telemetry",
+    ):
+        assert excluded.lower() in gaps.lower()
     assert capability.source_documents == ("DOC-CREG-0001",)
     assert (
         capability.capability_id
