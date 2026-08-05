@@ -1,5 +1,26 @@
 # AI Factory OS Project Status
 
+## AFDE-6.8 PowerShell Merge Automation Standard Foundation
+
+- `CAP-POWERSHELLMERGEAUTOMATIONSTANDARD-0001` is `implemented`, maturity
+  `M3`, with `implementation_status: implemented`.
+- The normative standard and executable PowerShell reference require Work
+  PASS, Chat Merge PASS, explicit user approval, and exact repository, PR,
+  base/head branch, and full SHA inputs before any merge behavior.
+- CI CheckRun and StatusContext shapes are normalized through StrictMode-safe
+  property discovery. Missing, pending, failed, unknown, or empty checks fail
+  closed; success, skipped, and neutral terminal results are accepted.
+- Native Git/GitHub CLI output captures stdout and stderr independently and
+  uses only exit code for success. Non-zero errors retain command, code, and
+  both captured streams.
+- Merge Commit is mandatory. Already-Ready, already-Merged, synchronized, and
+  already-deleted branch states converge through repeated current-state
+  validation without force deletion.
+- Windows PowerShell 5.1 is validated in this repository. PowerShell 7 and
+  cross-project reusability are `NOT_VERIFIED`; tests perform no live merge.
+- Runtime, Application, Production Adapter, Worker, Provider, CI workflow,
+  approval, and Release Policy behavior remain unchanged.
+
 ## AFDE-6.7 Production Adapter Worker Execution Foundation
 
 - `CAP-PRODUCTIONADAPTERWORKEREXECUTION-0001` is `implemented`, maturity

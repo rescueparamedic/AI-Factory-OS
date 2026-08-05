@@ -1,5 +1,25 @@
 # Decision Log
 
+## 2026-08-02 - AFDE-6.8 Fail-closed PowerShell Merge Convergence
+
+- Implemented `CAP-POWERSHELLMERGEAUTOMATIONSTANDARD-0001` at M3 as an
+  additive repository operations standard and executable reference script.
+- Preserved external merge authority: Work PASS, Chat Merge PASS, and explicit
+  user approval are required caller assertions, not decisions made by the
+  Capability.
+- Bound every run to exact repository, PR, base/head branch, and approved full
+  SHA identities before Merge Commit behavior.
+- Chose property-discovery normalization for heterogeneous GitHub CheckRun and
+  StatusContext JSON so StrictMode never assumes optional properties.
+- Chose a process-based native command boundary that captures stdout/stderr
+  separately and treats exit code, not stderr presence, as authoritative.
+- Required `gh pr merge --merge`, `--ff-only` base synchronization, non-forcing
+  local deletion, and current-state revalidation for partial or repeated runs.
+- Kept Runtime, Application, Adapter, Worker, Provider, CI workflow, approval,
+  and Release Policy ownership unchanged. No live PR is merged by validation.
+- Windows PowerShell 5.1 validation is complete for this repository;
+  PowerShell 7 and cross-project reusability remain explicitly unverified.
+
 ## 2026-08-02 - AFDE-6.7 Worker Facade over Runtime Execution
 
 - Implemented `CAP-PRODUCTIONADAPTERWORKEREXECUTION-0001` at M3 as an

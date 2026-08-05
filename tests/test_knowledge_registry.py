@@ -43,7 +43,7 @@ def test_valid_registry_loads_all_three_projections():
     snapshot = KnowledgeRegistryLoader(ROOT).load()
 
     assert snapshot.schema_version == "1.0"
-    assert len(snapshot.documents) == 19
+    assert len(snapshot.documents) == 20
     assert [item.knowledge_id for item in snapshot.knowledge] == [
         "KNW-KNOW-0001",
         "KNW-KNOW-0002",
@@ -70,6 +70,7 @@ def test_valid_registry_loads_all_three_projections():
         "CAP-PRODUCTIONADAPTERRUNTIMESTARTUPINTEGRATION-0001",
         "CAP-PRODUCTIONADAPTERRUNTIMEEXECUTION-0001",
         "CAP-PRODUCTIONADAPTERWORKEREXECUTION-0001",
+        "CAP-POWERSHELLMERGEAUTOMATIONSTANDARD-0001",
     ]
 
 
@@ -669,6 +670,38 @@ def test_production_adapter_worker_execution_has_reciprocal_m3_binding():
         capability.capability_id
         in documents["DOC-CREG-0001"].capability_ids
     )
+
+
+def test_powershell_merge_automation_has_reciprocal_m3_binding():
+    snapshot = KnowledgeRegistryLoader(ROOT).load()
+    capability = next(
+        item for item in snapshot.capabilities
+        if item.capability_id
+        == "CAP-POWERSHELLMERGEAUTOMATIONSTANDARD-0001"
+    )
+    documents = {item.document_id: item for item in snapshot.documents}
+
+    assert capability.status == "implemented"
+    assert capability.maturity == "M3"
+    assert capability.implementation_status == "implemented"
+    assert capability.required_capabilities == ()
+    assert capability.tool_dependencies == (
+        "Git CLI",
+        "GitHub CLI",
+        "Windows PowerShell 5.1 or PowerShell 7",
+    )
+    assert capability.adapter_dependencies == ()
+    assert capability.runtime_dependencies == ()
+    assert capability.implementation_references == (
+        "scripts/Invoke-AfdeMergeAutomation.ps1",
+        "docs/standards/POWERSHELL_MERGE_AUTOMATION_STANDARD_v1.md",
+    )
+    assert capability.source_documents == (
+        "DOC-CREG-0001",
+        "DOC-PSMERGE-0001",
+    )
+    for document_id in capability.source_documents:
+        assert capability.capability_id in documents[document_id].capability_ids
 
 
 def test_missing_and_malformed_registry_fail_closed(tmp_path):
