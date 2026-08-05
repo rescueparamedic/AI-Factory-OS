@@ -630,6 +630,36 @@ immutable Worker result. Runtime errors propagate unchanged. Provider metadata
 is copied from the input only; no Provider is selected or called. No Worker or
 Runtime lifecycle state is read or mutated.
 
+### CAP-PRODUCTIONADAPTERRUNTIMEOBSERVATION-0001
+
+| Field | Value |
+| --- | --- |
+| Name | Production Adapter Runtime Observation Foundation |
+| Description | Validate and project one caller-supplied completed Production Adapter Worker execution result as an immutable point-in-time Runtime observation without collection, history, monitoring, health projection, background behavior, storage, metrics, or telemetry. |
+| Owner | AI Factory OS Architecture |
+| Scope | `architecture.production_adapter_runtime_observation` |
+| Status | `implemented` |
+| Maturity | `M3` |
+| Implementation status | `implemented` |
+| Required knowledge | none |
+| Required capabilities | `CAP-PRODUCTIONADAPTERRUNTIMEEXECUTION-0001`, `CAP-PRODUCTIONADAPTERWORKEREXECUTION-0001` |
+| Tool dependencies | none |
+| Adapter dependencies | existing `ProductionAdapterWorkerExecutionResult` and nested `ProductionAdapterRuntimeExecutionResult` |
+| Runtime dependencies | caller-supplied completed execution evidence; existing Worker and Runtime execution behavior remains unchanged |
+| Implementation references | `afde/production_adapter_runtime_observation/__init__.py`, `afde/production_adapter_runtime_observation/errors.py`, `afde/production_adapter_runtime_observation/models.py`, `afde/production_adapter_runtime_observation/service.py` |
+| Validation evidence | `tests/test_production_adapter_runtime_observation.py`, `tests/test_production_adapter_runtime_observation_compatibility.py`, `tests/test_production_adapter_runtime_observation_boundaries.py` |
+| Known gaps | The boundary observes one explicitly supplied completed result only; Runtime event collection, history, monitoring, health projection, and background polling remain excluded.<br>Persistent storage, metrics, telemetry, aggregation, lifecycle integration, and operational wiring remain excluded.<br>Operational Evidence, production readiness, and M4 validation remain incomplete. |
+| Source documents | `DOC-CREG-0001` |
+| Supersedes | none |
+
+This entry introduces a package-scoped immutable observation identity bound to
+the existing Worker, Adapter, Runtime projection, Execution Path, Capability,
+and Tool Adapter binding identities. The service performs a synchronous,
+stateless validation and projection of an already completed result. It does not
+call Runtime or Worker execution, collect events, infer health, store results,
+or mutate lifecycle state. Observation results grant no Runtime or execution
+authority.
+
 ### CAP-POWERSHELLMERGEAUTOMATIONSTANDARD-0001
 
 | Field | Value |

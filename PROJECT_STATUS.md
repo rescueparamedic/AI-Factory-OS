@@ -1,5 +1,23 @@
 # AI Factory OS Project Status
 
+## AFDE-6.9 Production Adapter Runtime Observation Foundation
+
+- `CAP-PRODUCTIONADAPTERRUNTIMEOBSERVATION-0001` is `implemented`, maturity
+  `M3`, with `implementation_status: implemented`.
+- The package-scoped public contract adds an immutable observation identity,
+  result model, and synchronous stateless service over one existing completed
+  `ProductionAdapterWorkerExecutionResult`.
+- Observation identity is explicitly bound to Worker, Adapter, Runtime
+  projection, Execution Path, Capability, and Tool Adapter binding identities;
+  malformed or conflicting identities fail closed.
+- The result retains the exact existing execution evidence, reports only its
+  completed status, and grants no Runtime or execution authority.
+- Runtime Event Collection, Runtime History, Runtime Monitoring, Runtime Health
+  Projection, Background Polling, Persistent Storage, Metrics, and Telemetry
+  are not implemented.
+- Existing Runtime Execution and Worker Execution behavior, signatures,
+  lifecycle ownership, and root exports remain unchanged.
+
 ## AFDE-6.8 PowerShell Merge Automation Standard Foundation
 
 - `CAP-POWERSHELLMERGEAUTOMATIONSTANDARD-0001` is `implemented`, maturity

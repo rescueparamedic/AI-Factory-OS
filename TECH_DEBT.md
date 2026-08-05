@@ -1,5 +1,16 @@
 # Technical Debt
 
+## AFDE-6.9 Production Adapter Runtime Observation Foundation
+
+- Observation is an explicit synchronous call over one already completed
+  `ProductionAdapterWorkerExecutionResult`; it is not wired into Runtime or
+  Worker execution, lifecycle transitions, sessions, or application startup.
+- Observation identity uniqueness is caller-owned. No identity registry,
+  deduplication ledger, event collection, history, aggregation, monitoring,
+  health projection, or background polling is implemented.
+- Persistent storage, metrics, telemetry, alerting, dashboards, operational
+  validation, production readiness, and M4 remain incomplete or excluded.
+
 ## AFDE-6.8 PowerShell Merge Automation Standard Foundation
 
 - Approval switches are explicit caller assertions; cryptographic approval
