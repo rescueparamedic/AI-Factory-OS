@@ -764,7 +764,19 @@ def test_production_adapter_runtime_event_stream_has_reciprocal_m3_binding():
     )
     documents = {item.document_id: item for item in snapshot.documents}
 
+    assert len(snapshot.capabilities) == 24
     assert capability.name == "Production Adapter Runtime Event Stream Foundation"
+    for lifecycle_meaning in (
+        "finite synchronous",
+        "CREATED",
+        "OPEN",
+        "CLOSED",
+        "sequential append",
+        "immutable close snapshot",
+        "event order and identity",
+        "independently from point-in-time Event Collection",
+    ):
+        assert lifecycle_meaning.lower() in capability.description.lower()
     assert capability.status == "implemented"
     assert capability.maturity == "M3"
     assert capability.implementation_status == "implemented"
@@ -774,7 +786,7 @@ def test_production_adapter_runtime_event_stream_has_reciprocal_m3_binding():
     assert capability.tool_dependencies == ()
     assert capability.adapter_dependencies == ()
     assert capability.runtime_dependencies == (
-        "caller-supplied immutable Runtime events and stream timestamp",
+        "caller-supplied immutable Runtime events and explicit lifecycle timestamps",
         "existing Runtime Event Collection, Runtime Observation, Runtime Execution, "
         + "and Worker Execution behavior unchanged",
     )
@@ -786,18 +798,24 @@ def test_production_adapter_runtime_event_stream_has_reciprocal_m3_binding():
     )
     gaps = " ".join(item.message for item in capability.known_gaps)
     for excluded in (
+        "Async streams",
+        "AsyncIterator",
+        "subscription",
+        "publishing",
+        "brokers",
+        "queues",
+        "polling",
+        "background execution",
+        "Persistence",
         "Runtime History",
         "Runtime Monitoring",
         "Runtime Health Projection",
-        "background polling",
-        "persistent storage",
         "metrics",
         "telemetry",
         "replay",
         "aggregation",
         "query",
-        "async subscription",
-        "queues",
+        "concurrency orchestration",
     ):
         assert excluded.lower() in gaps.lower()
     assert capability.source_documents == ("DOC-CREG-0001",)

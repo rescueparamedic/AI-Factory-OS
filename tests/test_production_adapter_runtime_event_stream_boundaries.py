@@ -9,6 +9,7 @@ FORBIDDEN_IMPORT_ROOTS = {
     "afde.production_adapter_runtime_execution",
     "afde.production_adapter_worker_execution",
     "io",
+    "multiprocessing",
     "pathlib",
     "queue",
     "real_worker_runtime",
@@ -33,7 +34,7 @@ def test_event_stream_has_no_storage_monitoring_or_runtime_dependencies():
     }
 
 
-def test_service_has_one_synchronous_non_generator_public_operation():
+def test_service_has_synchronous_non_generator_lifecycle_operations():
     tree = ast.parse((STREAM / "service.py").read_text(encoding="utf-8"))
     service = next(
         node
@@ -48,23 +49,29 @@ def test_service_has_one_synchronous_non_generator_public_operation():
         and not node.name.startswith("_")
     ]
 
-    assert [method.name for method in public_methods] == ["stream"]
-    assert type(public_methods[0]) is ast.FunctionDef
-    assert not any(
-        isinstance(node, (ast.Yield, ast.YieldFrom, ast.AsyncFor, ast.Await))
-        for node in ast.walk(public_methods[0])
-    )
+    assert [method.name for method in public_methods] == [
+        "state",
+        "snapshot",
+        "open",
+        "append",
+        "close",
+        "stream",
+    ]
+    for method in public_methods:
+        assert type(method) is ast.FunctionDef
+        assert not any(
+            isinstance(node, (ast.Yield, ast.YieldFrom, ast.AsyncFor, ast.Await))
+            for node in ast.walk(method)
+        )
 
 
 def test_boundary_has_no_background_persistence_delivery_or_query_calls():
     forbidden_calls = {
         "aggregate",
-        "append",
         "connect",
         "execute",
         "invoke",
         "monitor",
-        "open",
         "poll",
         "publish",
         "put",
@@ -86,6 +93,22 @@ def test_boundary_has_no_background_persistence_delivery_or_query_calls():
         )
 
     assert not called_attributes.intersection(forbidden_calls)
+
+
+def test_stream_never_calls_or_wraps_event_collection_service():
+    for path in STREAM.glob("*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        assert not any(
+            isinstance(node, ast.Name)
+            and node.id == "ProductionAdapterRuntimeEventCollectionService"
+            for node in ast.walk(tree)
+        )
+        assert not any(
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "collect"
+            for node in ast.walk(tree)
+        )
 
 
 def test_existing_collection_observation_and_execution_do_not_depend_on_stream():

@@ -9,14 +9,21 @@ from afde.production_adapter_runtime_event_collection import (
     ProductionAdapterRuntimeEvent,
 )
 from afde.production_adapter_runtime_event_stream import (
+    InvalidProductionAdapterRuntimeEventStreamEventError,
     InvalidProductionAdapterRuntimeEventStreamRequestError,
     InvalidProductionAdapterRuntimeEventStreamResultError,
+    InvalidProductionAdapterRuntimeEventStreamTimestampError,
+    InvalidProductionAdapterRuntimeEventStreamTransitionError,
     ProductionAdapterRuntimeEventStreamRequest,
     ProductionAdapterRuntimeEventStreamResult,
     ProductionAdapterRuntimeEventStreamService,
+    ProductionAdapterRuntimeEventStreamSnapshot,
+    ProductionAdapterRuntimeEventStreamState,
 )
 
+OPENED_AT = "2026-08-05T19:00:00+09:00"
 STREAMED_AT = "2026-08-05T20:00:00+09:00"
+CLOSED_AT = "2026-08-05T21:00:00+09:00"
 
 
 def _event(index=1):
@@ -104,7 +111,123 @@ def test_service_is_stateless_and_same_request_is_deterministic():
 
     assert first == second
     assert first is not second
-    assert service.__dict__ == {}
+    assert not hasattr(service, "__dict__")
+
+
+def test_lifecycle_sequentially_appends_and_closes_with_identity_preserved():
+    first = _event(1)
+    second = _event(2)
+    service = ProductionAdapterRuntimeEventStreamService()
+
+    assert service.state is ProductionAdapterRuntimeEventStreamState.CREATED
+    assert service.snapshot is None
+    service.open(opened_at=OPENED_AT)
+    assert service.state is ProductionAdapterRuntimeEventStreamState.OPEN
+    service.append(first)
+    service.append(second)
+    snapshot = service.close(closed_at=CLOSED_AT)
+
+    assert service.state is ProductionAdapterRuntimeEventStreamState.CLOSED
+    assert service.snapshot is snapshot
+    assert snapshot.events == (first, second)
+    assert snapshot.events[0] is first
+    assert snapshot.events[1] is second
+    assert snapshot.count == 2
+    assert snapshot.opened_at == OPENED_AT
+    assert snapshot.closed_at == CLOSED_AT
+    assert snapshot.state is ProductionAdapterRuntimeEventStreamState.CLOSED
+
+
+def test_empty_open_stream_closes_to_an_immutable_snapshot():
+    service = ProductionAdapterRuntimeEventStreamService()
+    service.open(opened_at=OPENED_AT)
+
+    snapshot = service.close(closed_at=OPENED_AT)
+
+    assert snapshot.events == ()
+    assert snapshot.count == 0
+    assert not hasattr(snapshot, "__dict__")
+    with pytest.raises(FrozenInstanceError):
+        snapshot.count = 1
+    with pytest.raises((AttributeError, TypeError)):
+        snapshot.unexpected = "forbidden"
+
+
+def test_equal_lifecycle_sequences_are_deterministic_and_have_no_mutable_alias():
+    events = (_event(1), _event(2))
+
+    def run():
+        service = ProductionAdapterRuntimeEventStreamService()
+        service.open(opened_at=OPENED_AT)
+        for event in events:
+            service.append(event)
+        return service.close(closed_at=CLOSED_AT)
+
+    first = run()
+    second = run()
+
+    assert first == second
+    assert first is not second
+    assert first.events is not second.events
+    assert all(left is right for left, right in zip(first.events, events))
+
+
+def test_invalid_lifecycle_transitions_are_rejected():
+    service = ProductionAdapterRuntimeEventStreamService()
+    with pytest.raises(InvalidProductionAdapterRuntimeEventStreamTransitionError):
+        service.append(_event())
+    with pytest.raises(InvalidProductionAdapterRuntimeEventStreamTransitionError):
+        service.close(closed_at=CLOSED_AT)
+
+    service.open(opened_at=OPENED_AT)
+    with pytest.raises(InvalidProductionAdapterRuntimeEventStreamTransitionError):
+        service.open(opened_at=OPENED_AT)
+    service.close(closed_at=CLOSED_AT)
+    with pytest.raises(InvalidProductionAdapterRuntimeEventStreamTransitionError):
+        service.open(opened_at=OPENED_AT)
+    with pytest.raises(InvalidProductionAdapterRuntimeEventStreamTransitionError):
+        service.append(_event())
+    with pytest.raises(InvalidProductionAdapterRuntimeEventStreamTransitionError):
+        service.close(closed_at=CLOSED_AT)
+
+
+@pytest.mark.parametrize("invalid", [None, object(), "event", (_event(),)])
+def test_invalid_append_event_is_rejected(invalid):
+    service = ProductionAdapterRuntimeEventStreamService()
+    service.open(opened_at=OPENED_AT)
+    with pytest.raises(InvalidProductionAdapterRuntimeEventStreamEventError):
+        service.append(invalid)
+
+
+def test_lifecycle_rejects_invalid_or_reversed_timestamps():
+    with pytest.raises(InvalidProductionAdapterRuntimeEventStreamTimestampError):
+        ProductionAdapterRuntimeEventStreamService().open(opened_at="not-a-time")
+
+    service = ProductionAdapterRuntimeEventStreamService()
+    service.open(opened_at=CLOSED_AT)
+    with pytest.raises(InvalidProductionAdapterRuntimeEventStreamTimestampError):
+        service.close(closed_at=OPENED_AT)
+    assert service.state is ProductionAdapterRuntimeEventStreamState.OPEN
+
+
+def test_snapshot_rejects_invariant_conflicts():
+    service = ProductionAdapterRuntimeEventStreamService()
+    service.open(opened_at=OPENED_AT)
+    service.append(_event())
+    snapshot = service.close(closed_at=CLOSED_AT)
+
+    for changes in (
+        {"count": 0},
+        {"events": [_event()]},
+        {"opened_at": "invalid"},
+        {"closed_at": "2026-08-05T18:00:00+09:00"},
+        {"state": ProductionAdapterRuntimeEventStreamState.OPEN},
+    ):
+        with pytest.raises(InvalidProductionAdapterRuntimeEventStreamResultError):
+            replace(snapshot, **changes)
+
+    assert is_dataclass(ProductionAdapterRuntimeEventStreamSnapshot)
+    assert ProductionAdapterRuntimeEventStreamSnapshot.__dataclass_params__.frozen
 
 
 @pytest.mark.parametrize("invalid", [None, object(), (), [_event()]])
@@ -168,12 +291,17 @@ def test_result_rejects_count_stream_and_timestamp_conflicts():
 
 def test_public_contract_is_additive_and_package_scoped():
     assert stream_package.__all__ == [
+        "InvalidProductionAdapterRuntimeEventStreamEventError",
         "InvalidProductionAdapterRuntimeEventStreamRequestError",
         "InvalidProductionAdapterRuntimeEventStreamResultError",
+        "InvalidProductionAdapterRuntimeEventStreamTimestampError",
+        "InvalidProductionAdapterRuntimeEventStreamTransitionError",
         "ProductionAdapterRuntimeEventStreamError",
         "ProductionAdapterRuntimeEventStreamRequest",
         "ProductionAdapterRuntimeEventStreamResult",
         "ProductionAdapterRuntimeEventStreamService",
+        "ProductionAdapterRuntimeEventStreamSnapshot",
+        "ProductionAdapterRuntimeEventStreamState",
     ]
     assert not hasattr(afde, "ProductionAdapterRuntimeEventStreamRequest")
     assert not hasattr(afde, "ProductionAdapterRuntimeEventStreamService")

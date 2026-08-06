@@ -17,3 +17,23 @@ class InvalidProductionAdapterRuntimeEventStreamResultError(
     ValueError,
 ):
     """Raised when a Runtime event stream result is inconsistent."""
+
+
+class InvalidProductionAdapterRuntimeEventStreamTransitionError(
+    ProductionAdapterRuntimeEventStreamError,
+):
+    """Raised when a stream lifecycle operation is invalid for its state."""
+
+
+class InvalidProductionAdapterRuntimeEventStreamEventError(
+    ProductionAdapterRuntimeEventStreamError,
+    TypeError,
+):
+    """Raised when an appended value is not one exact Runtime event."""
+
+
+class InvalidProductionAdapterRuntimeEventStreamTimestampError(
+    ProductionAdapterRuntimeEventStreamError,
+    ValueError,
+):
+    """Raised when a lifecycle timestamp or ordering invariant is invalid."""

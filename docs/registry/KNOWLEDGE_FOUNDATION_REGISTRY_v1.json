@@ -1835,7 +1835,7 @@
     {
       "capability_id": "CAP-PRODUCTIONADAPTERRUNTIMEEVENTSTREAM-0001",
       "name": "Production Adapter Runtime Event Stream Foundation",
-      "description": "Synchronously validate an explicit ordered tuple of caller-supplied immutable Production Adapter Runtime events and return a deterministic bounded in-memory stream result without history, monitoring, storage, background polling, metrics, telemetry, replay, aggregation, query, async subscription, or queue behavior.",
+      "description": "Own a finite synchronous in-memory Production Adapter Runtime event stream lifecycle from CREATED to OPEN to CLOSED, accept caller-supplied immutable events through sequential append operations, and return an immutable close snapshot that preserves event order and identity, independently from point-in-time Event Collection.",
       "owner": "AI Factory OS Architecture",
       "scope": "architecture.production_adapter_runtime_event_stream",
       "status": "implemented",
@@ -1848,7 +1848,7 @@
       "tool_dependencies": [],
       "adapter_dependencies": [],
       "runtime_dependencies": [
-        "caller-supplied immutable Runtime events and stream timestamp",
+        "caller-supplied immutable Runtime events and explicit lifecycle timestamps",
         "existing Runtime Event Collection, Runtime Observation, Runtime Execution, and Worker Execution behavior unchanged"
       ],
       "implementation_references": [
@@ -1866,13 +1866,13 @@
         {
           "gap_type": "capability_gap",
           "subject_id": "CAP-PRODUCTIONADAPTERRUNTIMEEVENTSTREAM-0001",
-          "message": "Runtime History, Runtime Monitoring, Runtime Health Projection, background polling, persistent storage, metrics, and telemetry remain excluded.",
+          "message": "Persistence, Runtime History, Runtime Monitoring, metrics, telemetry, Runtime Health Projection, replay, aggregation, and query remain excluded.",
           "related_ids": []
         },
         {
           "gap_type": "capability_gap",
           "subject_id": "CAP-PRODUCTIONADAPTERRUNTIMEEVENTSTREAM-0001",
-          "message": "Publishing, consumer loops, generators, replay, aggregation, query, async subscription, and queues remain excluded.",
+          "message": "Async streams, AsyncIterator, subscription, publishing, brokers, queues, polling, background execution, and concurrency orchestration remain excluded.",
           "related_ids": []
         },
         {
