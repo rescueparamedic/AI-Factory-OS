@@ -72,6 +72,7 @@ def test_valid_registry_loads_all_three_projections():
         "CAP-PRODUCTIONADAPTERWORKEREXECUTION-0001",
         "CAP-PRODUCTIONADAPTERRUNTIMEOBSERVATION-0001",
         "CAP-PRODUCTIONADAPTERRUNTIMEEVENTCOLLECTION-0001",
+        "CAP-PRODUCTIONADAPTERRUNTIMEEVENTSTREAM-0001",
         "CAP-POWERSHELLMERGEAUTOMATIONSTANDARD-0001",
     ]
 
@@ -745,6 +746,76 @@ def test_production_adapter_runtime_event_collection_has_reciprocal_m3_binding()
         "background collection",
         "metrics",
         "telemetry",
+    ):
+        assert excluded.lower() in gaps.lower()
+    assert capability.source_documents == ("DOC-CREG-0001",)
+    assert (
+        capability.capability_id
+        in documents["DOC-CREG-0001"].capability_ids
+    )
+
+
+def test_production_adapter_runtime_event_stream_has_reciprocal_m3_binding():
+    snapshot = KnowledgeRegistryLoader(ROOT).load()
+    capability = next(
+        item
+        for item in snapshot.capabilities
+        if item.capability_id == "CAP-PRODUCTIONADAPTERRUNTIMEEVENTSTREAM-0001"
+    )
+    documents = {item.document_id: item for item in snapshot.documents}
+
+    assert len(snapshot.capabilities) == 24
+    assert capability.name == "Production Adapter Runtime Event Stream Foundation"
+    for lifecycle_meaning in (
+        "finite synchronous",
+        "CREATED",
+        "OPEN",
+        "CLOSED",
+        "sequential append",
+        "immutable close snapshot",
+        "event order and identity",
+        "independently from point-in-time Event Collection",
+    ):
+        assert lifecycle_meaning.lower() in capability.description.lower()
+    assert capability.status == "implemented"
+    assert capability.maturity == "M3"
+    assert capability.implementation_status == "implemented"
+    assert capability.required_capabilities == (
+        "CAP-PRODUCTIONADAPTERRUNTIMEEVENTCOLLECTION-0001",
+    )
+    assert capability.tool_dependencies == ()
+    assert capability.adapter_dependencies == ()
+    assert capability.runtime_dependencies == (
+        "caller-supplied immutable Runtime events and explicit lifecycle timestamps",
+        "existing Runtime Event Collection, Runtime Observation, Runtime Execution, "
+        + "and Worker Execution behavior unchanged",
+    )
+    assert capability.implementation_references == (
+        "afde/production_adapter_runtime_event_stream/__init__.py",
+        "afde/production_adapter_runtime_event_stream/errors.py",
+        "afde/production_adapter_runtime_event_stream/models.py",
+        "afde/production_adapter_runtime_event_stream/service.py",
+    )
+    gaps = " ".join(item.message for item in capability.known_gaps)
+    for excluded in (
+        "Async streams",
+        "AsyncIterator",
+        "subscription",
+        "publishing",
+        "brokers",
+        "queues",
+        "polling",
+        "background execution",
+        "Persistence",
+        "Runtime History",
+        "Runtime Monitoring",
+        "Runtime Health Projection",
+        "metrics",
+        "telemetry",
+        "replay",
+        "aggregation",
+        "query",
+        "concurrency orchestration",
     ):
         assert excluded.lower() in gaps.lower()
     assert capability.source_documents == ("DOC-CREG-0001",)

@@ -691,6 +691,37 @@ tuples produce valid zero-count point-in-time results. No event is detected,
 published, persisted, queried, replayed, aggregated, streamed, or added to
 history, and no existing Runtime or Worker capability is called or mutated.
 
+### CAP-PRODUCTIONADAPTERRUNTIMEEVENTSTREAM-0001
+
+| Field | Value |
+| --- | --- |
+| Name | Production Adapter Runtime Event Stream Foundation |
+| Description | Own a finite synchronous in-memory Production Adapter Runtime event stream lifecycle from `CREATED` to `OPEN` to `CLOSED`, accept caller-supplied immutable events through sequential append operations, and return an immutable close snapshot that preserves event order and identity, independently from point-in-time Event Collection. |
+| Owner | AI Factory OS Architecture |
+| Scope | `architecture.production_adapter_runtime_event_stream` |
+| Status | `implemented` |
+| Maturity | `M3` |
+| Implementation status | `implemented` |
+| Required knowledge | none |
+| Required capabilities | `CAP-PRODUCTIONADAPTERRUNTIMEEVENTCOLLECTION-0001` |
+| Tool dependencies | none |
+| Adapter dependencies | none |
+| Runtime dependencies | caller-supplied immutable Runtime events and explicit lifecycle timestamps; existing Runtime Event Collection, Runtime Observation, Runtime Execution, and Worker Execution behavior remains unchanged |
+| Implementation references | `afde/production_adapter_runtime_event_stream/__init__.py`, `afde/production_adapter_runtime_event_stream/errors.py`, `afde/production_adapter_runtime_event_stream/models.py`, `afde/production_adapter_runtime_event_stream/service.py` |
+| Validation evidence | `tests/test_production_adapter_runtime_event_stream.py`, `tests/test_production_adapter_runtime_event_stream_compatibility.py`, `tests/test_production_adapter_runtime_event_stream_boundaries.py` |
+| Known gaps | Persistence, Runtime History, Runtime Monitoring, metrics, telemetry, Runtime Health Projection, replay, aggregation, and query remain excluded.<br>Async streams, `AsyncIterator`, subscription, publishing, brokers, queues, polling, background execution, and concurrency orchestration remain excluded.<br>Operational validation, production readiness, and M4 validation remain incomplete. |
+| Source documents | `DOC-CREG-0001` |
+| Supersedes | none |
+
+Each service instance starts in `CREATED`, opens with a caller-supplied
+timezone-aware timestamp, accepts zero or more existing immutable Runtime events
+through sequential `append` operations while `OPEN`, and closes with another
+caller-supplied timestamp into an immutable `CLOSED` snapshot. The snapshot
+preserves exact event order and object identity. This finite instance-local
+lifecycle is independent from Event Collection's point-in-time tuple operation;
+it neither calls Collection nor mutates existing Runtime, Collection,
+Observation, or Execution behavior.
+
 ### CAP-POWERSHELLMERGEAUTOMATIONSTANDARD-0001
 
 | Field | Value |
