@@ -1,5 +1,29 @@
 # Decision Log
 
+## 2026-08-06 - AFDE-6.11 Runtime Event Stream Merge Decision
+
+- Approved `CAP-PRODUCTIONADAPTERRUNTIMEEVENTSTREAM-0001` at M3 with
+  `implementation_status: implemented` and merged PR #63 into `develop`
+  at `299e3074329a61d9ef43faa77271610b3228faf8`.
+- Retained the approved finite synchronous instance-local lifecycle:
+  `CREATED` to `OPEN` to `CLOSED`, with lifecycle timestamps supplied explicitly
+  by the caller.
+- Approved sequential `append()` while `OPEN` and a frozen close snapshot that
+  preserves exact Runtime Event order, object identity, count, timestamps, and
+  final `CLOSED` state. Closing an empty open Stream remains valid.
+- Kept Runtime Event Stream separate from the unchanged point-in-time Runtime
+  Event Collection contract; the Stream neither wraps the Collection Service
+  nor calls `collect()`.
+- Preserved the existing `stream(request)` Request/Result public contract as an
+  additive compatibility helper.
+- Excluded async streams, `AsyncIterator`, subscription, publishing, brokers,
+  queues, polling, background execution, persistence, history, monitoring,
+  metrics, telemetry, health projection, replay, aggregation, query, and
+  concurrency orchestration.
+- This merge records the previously approved Architecture Decision; it does not
+  change Architecture, Runtime behavior outside the Stream boundary, public
+  contracts, package boundaries, or repository structure.
+
 ## 2026-08-05 - AFDE-6.10 Explicit Runtime Event Collection Boundary
 
 - Implemented `CAP-PRODUCTIONADAPTERRUNTIMEEVENTCOLLECTION-0001` at M3 as an

@@ -1,5 +1,27 @@
 # AI Factory OS Project Status
 
+## AFDE-6.11 Production Adapter Runtime Event Stream Foundation
+
+- `CAP-PRODUCTIONADAPTERRUNTIMEEVENTSTREAM-0001` is `implemented`, maturity
+  `M3`, with `implementation_status: implemented`.
+- Each finite synchronous in-memory Stream instance owns the explicit
+  `CREATED` to `OPEN` to `CLOSED` lifecycle using caller-supplied open and close
+  timestamps.
+- Open Streams accept existing immutable Runtime Events through sequential
+  `append()` operations. The final frozen snapshot preserves exact event order,
+  object identity, count, lifecycle timestamps, and `CLOSED` state; closing an
+  empty open Stream is valid.
+- Runtime Event Stream is independent from Runtime Event Collection's unchanged
+  point-in-time tuple validation responsibility and does not call `collect()`.
+- The existing `stream(request)` Request/Result contract remains available as
+  an additive compatibility helper.
+- Async streams, `AsyncIterator`, subscription, publishing, brokers, queues,
+  polling, background execution, persistence, history, monitoring, metrics,
+  telemetry, health projection, replay, aggregation, query, and concurrency
+  orchestration remain excluded.
+- PR #63 was approved and merged into `develop` at baseline
+  `299e3074329a61d9ef43faa77271610b3228faf8`.
+
 ## AFDE-6.10 Production Adapter Runtime Event Collection Foundation
 
 - `CAP-PRODUCTIONADAPTERRUNTIMEEVENTCOLLECTION-0001` is `implemented`,
@@ -11,9 +33,10 @@
   Supported nested payload data is defensively copied and deeply frozen.
 - Ordered event tuples, including an empty tuple, produce deterministic
   point-in-time results using the caller-supplied collection timestamp.
-- Runtime Event Stream, subscription, publishing, consumer loops, Runtime
-  History, persistence, background collection, polling, metrics, telemetry,
-  aggregation, query, replay, and health projection are not implemented.
+- At the AFDE-6.10 boundary, Runtime Event Stream, subscription, publishing,
+  consumer loops, Runtime History, persistence, background collection, polling,
+  metrics, telemetry, aggregation, query, replay, and health projection were
+  not implemented.
 - Runtime Observation, Runtime Execution, Worker Execution, Startup,
   Invocation, and Creation contracts and behavior remain unchanged.
 
@@ -700,23 +723,17 @@
 | 항목 | 내용 |
 |---|---|
 | Version | v1.0.0 |
-| 상태 | Baseline Frozen |
-| 목적 | AI 개발회사 워크플로우 구현 전 안정 기준점 |
-| 기준 | OS Core / Agent / Team / Worker / Update / Repository 기반 완료 |
+| Latest completed Sprint | AFDE-6.11 Production Adapter Runtime Event Stream Foundation |
+| Current Sprint | AFDE-6.12 Documentation Synchronization after Runtime Event Stream |
+| Latest completed Capability | `CAP-PRODUCTIONADAPTERRUNTIMEEVENTSTREAM-0001` (`implemented`, `M3`) |
+| Registered Capabilities | 24 |
+| Current Baseline | `299e3074329a61d9ef43faa77271610b3228faf8` |
+| Current Scope | Documentation synchronization only; no Capability or Runtime change |
 
-## 완료
+## 현재 진행
 
-- OS Core MVP
-- Task Engine
-- Workflow Engine
-- Agent / Team Architecture
-- Worker Standard
-- Update Manager
-- Project Doctor
-- CLI Modularization
-- Product Development Pipeline MVP
-- Repository Mode
-
-## 다음 목표
-
-AI Factory v1.1 Planning Agent 실작동 구현
+- Synchronize `PROJECT_STATUS.md`, `DECISION_LOG.md`, and the existing
+  Documentation Registry after the AFDE-6.11 merge.
+- Preserve the approved Architecture Decision, repository structure, Runtime
+  code, tests, public contracts, package boundaries, Capability Registry
+  structure, and ROADMAP unchanged.
