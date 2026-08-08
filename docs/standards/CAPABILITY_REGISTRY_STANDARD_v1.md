@@ -171,6 +171,32 @@ This entry records exact-ID eligibility resolution over an injected read-only
 Knowledge Provider. It does not select an adapter or implementation, execute a
 tool or Runtime, alter Planner output, or claim operational validation.
 
+### CAP-PLANRES-0001
+
+| Field | Value |
+| --- | --- |
+| Name | Planner-Resolver Integration |
+| Description | Combine immutable structured Planner context with an explicit Capability Requirement and project an injected Resolver result without selecting tools or invoking Runtime. |
+| Owner | AI Factory OS Architecture |
+| Scope | `architecture.planner_resolution` |
+| Status | `implemented` |
+| Maturity | `M3` |
+| Implementation status | `implemented` |
+| Required knowledge | none |
+| Required capabilities | `CAP-RESOLVER-0001` |
+| Tool dependencies | none |
+| Adapter dependencies | none |
+| Runtime dependencies | none |
+| Implementation references | `afde/planner_resolution/errors.py`, `afde/planner_resolution/models.py`, `afde/planner_resolution/service.py` |
+| Validation evidence | `tests/test_planner_resolver_integration_models.py`, `tests/test_planner_resolver_integration.py`, `tests/test_planner_resolver_integration_boundaries.py` |
+| Known gaps | Natural-language Capability Requirement extraction remains deferred. Multiple-candidate discovery and ranking remain deferred. Runtime integration remains deferred. Execution Evidence and Product Assembly integration remain deferred. Operational Evidence and M4 validation are not complete. |
+| Source documents | `DOC-ARCH-0001`, `DOC-ARCH-0002`, `DOC-CREG-0001` |
+| Supersedes | none |
+
+This entry records the immutable Planner-to-Resolver application-service
+boundary over an injected existing Capability Resolver. It does not select a
+Tool Adapter, invoke Runtime, grant execution authority, or claim M4.
+
 ### CAP-TOOLSELECT-0001
 
 | Field | Value |
