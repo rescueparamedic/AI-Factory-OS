@@ -492,7 +492,7 @@
     {
       "capability_id": "CAP-KNOW-0001",
       "name": "Knowledge Foundation",
-      "description": "Index official documents, validate knowledge and capability metadata, resolve reference authority, and expose knowledge or capability gaps.",
+      "description": "Index official documents, validate knowledge and capability metadata, resolve reference authority, and expose knowledge or capability gaps",
       "owner": "AI Factory OS Architecture",
       "scope": "architecture.knowledge_foundation",
       "status": "implemented",
@@ -1835,7 +1835,7 @@
     {
       "capability_id": "CAP-PRODUCTIONADAPTERRUNTIMEEVENTSTREAM-0001",
       "name": "Production Adapter Runtime Event Stream Foundation",
-      "description": "Own a finite synchronous in-memory Production Adapter Runtime event stream lifecycle from CREATED to OPEN to CLOSED, accept caller-supplied immutable events through sequential append operations, and return an immutable close snapshot that preserves event order and identity, independently from point-in-time Event Collection.",
+      "description": "Own a finite synchronous in-memory Production Adapter Runtime event stream lifecycle from `CREATED` to `OPEN` to `CLOSED`, accept caller-supplied immutable events through sequential append operations, and return an immutable close snapshot that preserves event order and identity, independently from point-in-time Event Collection.",
       "owner": "AI Factory OS Architecture",
       "scope": "architecture.production_adapter_runtime_event_stream",
       "status": "implemented",

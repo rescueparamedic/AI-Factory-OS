@@ -150,7 +150,7 @@ does not claim Tool Adapter or Runtime integration, operational use, or M4.
 | Field | Value |
 | --- | --- |
 | Name | Capability Resolver |
-| Description | Evaluate a structured capability requirement against Knowledge Provider metadata and return deterministic eligibility, gaps, and rationale |
+| Description | Evaluate structured capability requirements against Knowledge Provider metadata and return deterministic eligibility, gaps, and rationale without selecting or executing tools. |
 | Owner | AI Factory OS Architecture |
 | Scope | `architecture.knowledge_foundation.resolver` |
 | Status | `implemented` |
@@ -202,7 +202,7 @@ Tool Adapter, invoke Runtime, grant execution authority, or claim M4.
 | Field | Value |
 | --- | --- |
 | Name | Tool Adapter Selection |
-| Description | Select one Tool Adapter identity by exact Capability ID from an injected authoritative candidate snapshot |
+| Description | Select one Tool Adapter identity by exact Capability ID from an injected authoritative candidate snapshot without executing the adapter or invoking Runtime. |
 | Owner | AI Factory OS Architecture |
 | Scope | `architecture.tool_adapter_selection` |
 | Status | `implemented` |
@@ -228,7 +228,7 @@ fallback, production composition, operational Evidence, and M4 remain deferred.
 | Field | Value |
 | --- | --- |
 | Name | Tool Adapter Catalog |
-| Description | Provide immutable Tool Adapter discovery metadata and exact Capability mappings through the existing candidate-source boundary |
+| Description | Provide immutable governed Tool Adapter discovery metadata and exact Capability mappings through the existing AdapterCandidateSource boundary without executing adapters or invoking Runtime. |
 | Owner | AI Factory OS Architecture |
 | Scope | `architecture.tool_adapter_catalog` |
 | Status | `implemented` |
@@ -254,7 +254,7 @@ and document lifecycle only. Catalog metadata grants no execution authority.
 | Field | Value |
 | --- | --- |
 | Name | Execution Path Foundation |
-| Description | Construct a deterministic, immutable, non-executable path from one Selection result and exact injected Catalog metadata |
+| Description | Transform one successful Tool Adapter Selection and exact Catalog descriptor into an immutable non-executable Runtime handoff projection. |
 | Owner | AI Factory OS Architecture |
 | Scope | `architecture.execution_path` |
 | Status | `implemented` |
@@ -281,7 +281,7 @@ remain deferred to separately governed executable capabilities.
 | Field | Value |
 | --- | --- |
 | Name | Runtime Integration Foundation |
-| Description | Project one structurally ready Execution Path into deterministic immutable Runtime-ready metadata without execution authority |
+| Description | Transform one structurally ready Execution Path into deterministic immutable Runtime-ready metadata without execution authority. |
 | Owner | AI Factory OS Architecture |
 | Scope | `architecture.runtime_integration` |
 | Status | `implemented` |
@@ -387,7 +387,7 @@ credential-ready, or operationally available.
 | Field | Value |
 | --- | --- |
 | Name | Production Composition Foundation |
-| Description | Compose the existing non-executable AFDE services with the authoritative Catalog supplied by the Operational Adapter Registry without binding or executing adapters. |
+| Description | Compose the existing non-executable AFDE services with the authoritative Tool Adapter Catalog supplied by the Operational Adapter Registry without binding or executing adapters. |
 | Owner | AI Factory OS Architecture |
 | Scope | `architecture.production_composition` |
 | Status | `implemented` |
