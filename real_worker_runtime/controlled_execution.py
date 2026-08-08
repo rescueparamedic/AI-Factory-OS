@@ -6,7 +6,7 @@ from datetime import datetime
 from enum import Enum
 from hashlib import sha256
 import json
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 import re
 import subprocess
 import sys
@@ -128,7 +128,7 @@ class ControlledExecutionPolicy:
         raw = request.relative_path or ""
         candidate = Path(raw)
         safe_repr = f"afde-controlled-file-write {raw}"
-        if not raw or candidate.is_absolute():
+        if not raw or candidate.is_absolute() or PureWindowsPath(raw).is_absolute():
             return PolicyResult("DENY", "INVALID_PATH", "File path must be relative.", safe_repr)
         target = (self.root / candidate).resolve()
         if not _inside(target, self.root):
