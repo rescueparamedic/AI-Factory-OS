@@ -783,7 +783,7 @@
     },
     {
       "capability_id": "CAP-EXECPATH-0001",
-      "name": "Execution Path",
+      "name": "Execution Path Foundation",
       "description": "Transform one successful Tool Adapter Selection and exact Catalog descriptor into an immutable non-executable Runtime handoff projection.",
       "owner": "AI Factory OS Architecture",
       "scope": "architecture.execution_path",
