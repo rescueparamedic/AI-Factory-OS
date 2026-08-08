@@ -1,5 +1,15 @@
 # AI Factory OS Project Status
 
+## AFDE-6.12 Documentation Synchronization after Runtime Event Stream
+
+- Status: `COMPLETE / MERGED`.
+- Project status, the Decision Log, and existing Documentation Registry
+  metadata were synchronized after the AFDE-6.11 merge.
+- No Capability, Runtime, public contract, package boundary, Architecture, or
+  ROADMAP change was introduced.
+- PR #64 was merged into `develop` with merge commit
+  `67b07979330784ef61b0940fbfbe2a4df14bfcd3`.
+
 ## AFDE-6.11 Production Adapter Runtime Event Stream Foundation
 
 - `CAP-PRODUCTIONADAPTERRUNTIMEEVENTSTREAM-0001` is `implemented`, maturity
@@ -723,17 +733,17 @@
 | 항목 | 내용 |
 |---|---|
 | Version | v1.0.0 |
-| Latest completed Sprint | AFDE-6.11 Production Adapter Runtime Event Stream Foundation |
-| Current Sprint | AFDE-6.12 Documentation Synchronization after Runtime Event Stream |
+| Latest completed Sprint | AFDE-6.12 Documentation Synchronization after Runtime Event Stream |
+| Current Sprint | AFDE-6.13 Project Status Synchronization after AFDE-6.12 Merge |
 | Latest completed Capability | `CAP-PRODUCTIONADAPTERRUNTIMEEVENTSTREAM-0001` (`implemented`, `M3`) |
 | Registered Capabilities | 24 |
-| Current Baseline | `299e3074329a61d9ef43faa77271610b3228faf8` |
+| Current Baseline | `67b07979330784ef61b0940fbfbe2a4df14bfcd3` |
 | Current Scope | Documentation synchronization only; no Capability or Runtime change |
 
 ## 현재 진행
 
-- Synchronize `PROJECT_STATUS.md`, `DECISION_LOG.md`, and the existing
-  Documentation Registry after the AFDE-6.11 merge.
+- Synchronize `PROJECT_STATUS.md` and its existing Documentation Registry
+  metadata after the AFDE-6.12 merge.
 - Preserve the approved Architecture Decision, repository structure, Runtime
   code, tests, public contracts, package boundaries, Capability Registry
   structure, and ROADMAP unchanged.
