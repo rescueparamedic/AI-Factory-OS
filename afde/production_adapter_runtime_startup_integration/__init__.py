@@ -8,6 +8,9 @@ from .errors import (
     ProductionAdapterRuntimeStartupPrerequisiteError,
 )
 from .factory import build_production_adapter_runtime_startup_composition
+from .credential_projection import (
+    adapt_credential_readiness_to_runtime_prerequisite_satisfaction,
+)
 from .models import ProductionAdapterRuntimeStartupComposition
 
 __all__ = [
@@ -17,5 +20,6 @@ __all__ = [
     "ProductionAdapterRuntimeStartupIdentityMismatchError",
     "ProductionAdapterRuntimeStartupIntegrationError",
     "ProductionAdapterRuntimeStartupPrerequisiteError",
+    "adapt_credential_readiness_to_runtime_prerequisite_satisfaction",
     "build_production_adapter_runtime_startup_composition",
 ]

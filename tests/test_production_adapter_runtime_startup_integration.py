@@ -242,5 +242,6 @@ def test_public_contract_is_additive_and_package_scoped():
         "ProductionAdapterRuntimeStartupIdentityMismatchError",
         "ProductionAdapterRuntimeStartupIntegrationError",
         "ProductionAdapterRuntimeStartupPrerequisiteError",
+        "adapt_credential_readiness_to_runtime_prerequisite_satisfaction",
         "build_production_adapter_runtime_startup_composition",
     ]
