@@ -841,7 +841,7 @@
     {
       "capability_id": "CAP-RUNTIME-0001",
       "name": "Runtime Integration Foundation",
-      "description": "Transform one structurally ready Execution Path into deterministic immutable Runtime-ready metadata without execution authority.",
+      "description": "Transform one structurally ready Execution Path, or one credential-required path plus exact governed prerequisite-satisfaction evidence, into deterministic immutable Runtime-ready metadata without execution authority.",
       "owner": "AI Factory OS Architecture",
       "scope": "architecture.runtime_integration",
       "status": "implemented",
@@ -854,6 +854,7 @@
       "tool_dependencies": [],
       "adapter_dependencies": [
         "ExecutionPathResult",
+        "RuntimePrerequisiteSatisfaction",
         "constructor-injected RuntimeIntegrationPolicy"
       ],
       "runtime_dependencies": [],
@@ -864,7 +865,8 @@
       ],
       "validation_evidence": [
         "tests/test_runtime_integration.py",
-        "tests/test_runtime_integration_boundaries.py"
+        "tests/test_runtime_integration_boundaries.py",
+        "tests/test_afde_6_18_codex_production_binding.py"
       ],
       "known_gaps": [
         {

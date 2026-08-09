@@ -281,7 +281,7 @@ remain deferred to separately governed executable capabilities.
 | Field | Value |
 | --- | --- |
 | Name | Runtime Integration Foundation |
-| Description | Transform one structurally ready Execution Path into deterministic immutable Runtime-ready metadata without execution authority. |
+| Description | Transform one structurally ready Execution Path, or one credential-required path plus exact governed prerequisite-satisfaction evidence, into deterministic immutable Runtime-ready metadata without execution authority. |
 | Owner | AI Factory OS Architecture |
 | Scope | `architecture.runtime_integration` |
 | Status | `implemented` |
@@ -290,15 +290,17 @@ remain deferred to separately governed executable capabilities.
 | Required knowledge | none |
 | Required capabilities | `CAP-EXECPATH-0001` |
 | Tool dependencies | none |
-| Adapter dependencies | immutable `ExecutionPathResult` and constructor-injected `RuntimeIntegrationPolicy` |
+| Adapter dependencies | immutable `ExecutionPathResult`, additive immutable `RuntimePrerequisiteSatisfaction`, and constructor-injected `RuntimeIntegrationPolicy` |
 | Runtime dependencies | none |
 | Implementation references | `afde/runtime_integration/` |
-| Validation evidence | AFDE-5.4 focused tests and full repository regression |
+| Validation evidence | AFDE-5.4 focused tests; AFDE-6.18 additive credential-satisfaction, legacy-compatibility, identity, authority-separation, and concrete binding tests; full repository regression |
 | Known gaps | Runtime session creation, execution, lifecycle mutation, Worker/adapter/Provider/Evidence/Product integration, orchestration, and M4 |
 | Source documents | `DOC-ARCH-0001`, `DOC-ARCH-0002`, `DOC-CREG-0001`, `DOC-RUNTIME-0001` |
 | Supersedes | none |
 
-This entry records readiness projection only. `runtime_ready` is structural;
+This entry records readiness projection only. The additive prerequisite path
+does not mutate or reinterpret credential-required Execution Paths and does not
+change legacy `project()` behavior. `runtime_ready` is structural;
 `runtime_allowed` and `execution_allowed` remain false. Existing executable
 Runtime contracts remain unchanged and isolated.
 

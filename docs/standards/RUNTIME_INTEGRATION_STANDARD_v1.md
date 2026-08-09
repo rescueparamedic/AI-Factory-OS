@@ -37,6 +37,29 @@ A Runtime projection is ready only when:
 All other inputs fail closed with a structured blocked result. The service
 does not repair upstream state or perform live checks.
 
+### Additive prerequisite-satisfaction projection
+
+The legacy `project(RuntimeIntegrationRequest)` operation and all Execution
+Path credential semantics remain unchanged. A credential-required path stays
+`prerequisites_required`, its handoff stays not ready, and the legacy Runtime
+Integration operation remains blocked.
+
+The additive `project_with_prerequisite_satisfaction(...)` operation accepts
+an existing `ExecutionPathResult` plus one immutable
+`RuntimePrerequisiteSatisfaction`. The satisfaction contract carries only the
+allowlisted prerequisite type, satisfied state, exact path, adapter, and
+Capability identities, and a safe opaque evidence reference. It carries no
+credential material and grants no authority.
+
+For credential readiness, the startup-integration boundary adapts the existing
+`ProductionAdapterCredentialReadinessResult` only when its descriptor requires
+credentials and its status is `ready` with ready governed evidence. Descriptor,
+readiness, path, adapter, Capability, and version identities must agree. Runtime
+Integration then confirms that credentials are the path's only outstanding
+prerequisite and validates the existing Runtime policy before producing the
+existing `RuntimeProjection`. The original Execution Path is neither mutated
+nor reinterpreted.
+
 ## Result and Authority
 
 The immutable result contains an optional immutable `RuntimeProjection`,
@@ -53,8 +76,10 @@ state, invoke a Worker, execute an adapter, or call a Provider.
 ## Determinism and Isolation
 
 Projection identity derives from stable ordered path, policy, adapter, and
-Catalog metadata. Runtime Integration uses no time, randomness, filesystem
-discovery, network discovery, dynamic plugin loading, or environment state.
+Catalog metadata. Additive credential-ready projection identity also includes
+the prerequisite type, satisfied state, and opaque evidence reference. Runtime
+Integration uses no time, randomness, filesystem discovery, network discovery,
+dynamic plugin loading, or environment state.
 
 It performs no Runtime or Worker execution, lifecycle mutation, Provider call,
 Product Assembly, Evidence generation, orchestration, retry, recovery, resume,

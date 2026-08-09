@@ -25,6 +25,9 @@ from .errors import (
 
 PROJECTION_ID_PATTERN = re.compile(r"^RUNTIMEPROJ-[A-F0-9]{16}$")
 PATH_ID_PATTERN = re.compile(r"^EXECPATH-[A-F0-9]{16}$")
+PREREQUISITE_EVIDENCE_REFERENCE_PATTERN = re.compile(
+    r"^CRED-EVIDENCE-[A-Z0-9][A-Z0-9._-]{0,63}$"
+)
 CAPABILITY_ID_PATTERN = re.compile(
     r"^CAP-[A-Z0-9]+(?:-[A-Z0-9]+)*-[0-9]{4}$"
 )
@@ -36,6 +39,64 @@ class RuntimeIntegrationStatus(str, Enum):
 
     READY = "ready"
     BLOCKED = "blocked"
+
+
+class RuntimePrerequisiteType(str, Enum):
+    """Allowlisted prerequisite classes understood by Runtime Integration."""
+
+    CREDENTIAL_READINESS = "credential_readiness"
+
+
+@dataclass(frozen=True)
+class RuntimePrerequisiteSatisfaction:
+    """Opaque evidence that one exact path prerequisite was assessed."""
+
+    prerequisite_type: RuntimePrerequisiteType
+    satisfied: bool
+    path_id: str
+    adapter_id: str
+    capability_id: str
+    evidence_reference: str
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.prerequisite_type, RuntimePrerequisiteType):
+            raise InvalidRuntimeIntegrationRequestError(
+                "prerequisite_type is invalid"
+            )
+        if not isinstance(self.satisfied, bool):
+            raise InvalidRuntimeIntegrationRequestError(
+                "prerequisite satisfied state must be a boolean"
+            )
+        if not isinstance(self.path_id, str) or not PATH_ID_PATTERN.fullmatch(
+            self.path_id
+        ):
+            raise InvalidRuntimeIntegrationRequestError(
+                "prerequisite path_id is invalid"
+            )
+        if (
+            not isinstance(self.adapter_id, str)
+            or not self.adapter_id
+            or self.adapter_id != self.adapter_id.strip()
+        ):
+            raise InvalidRuntimeIntegrationRequestError(
+                "prerequisite adapter_id is invalid"
+            )
+        if (
+            not isinstance(self.capability_id, str)
+            or not CAPABILITY_ID_PATTERN.fullmatch(self.capability_id)
+        ):
+            raise InvalidRuntimeIntegrationRequestError(
+                "prerequisite capability_id is invalid"
+            )
+        if (
+            not isinstance(self.evidence_reference, str)
+            or not PREREQUISITE_EVIDENCE_REFERENCE_PATTERN.fullmatch(
+                self.evidence_reference
+            )
+        ):
+            raise InvalidRuntimeIntegrationRequestError(
+                "prerequisite evidence_reference must be a safe opaque reference"
+            )
 
 
 @dataclass(frozen=True)
@@ -82,6 +143,28 @@ class RuntimeIntegrationRequest:
 
 
 @dataclass(frozen=True)
+class RuntimeIntegrationPrerequisiteRequest:
+    """Additive projection input for an independently satisfied prerequisite."""
+
+    execution_path: ExecutionPathResult
+    prerequisite_satisfaction: RuntimePrerequisiteSatisfaction | None
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.execution_path, ExecutionPathResult):
+            raise InvalidRuntimeIntegrationRequestError(
+                "execution_path must be an ExecutionPathResult"
+            )
+        if (
+            self.prerequisite_satisfaction is not None
+            and type(self.prerequisite_satisfaction)
+            is not RuntimePrerequisiteSatisfaction
+        ):
+            raise InvalidRuntimeIntegrationRequestError(
+                "prerequisite_satisfaction must use the immutable contract or None"
+            )
+
+
+@dataclass(frozen=True)
 class RuntimeProjection:
     """Read-only Runtime-ready metadata with no execution authority."""
 
@@ -102,6 +185,7 @@ class RuntimeProjection:
     runtime_ready: bool
     runtime_allowed: bool = False
     execution_allowed: bool = False
+    prerequisite_satisfaction: RuntimePrerequisiteSatisfaction | None = None
 
     def __post_init__(self) -> None:
         if (
@@ -125,6 +209,23 @@ class RuntimeProjection:
             raise InvalidRuntimeProjectionError(
                 "Runtime projection sequence must be one"
             )
+        satisfaction = self.prerequisite_satisfaction
+        if satisfaction is not None and (
+            type(satisfaction) is not RuntimePrerequisiteSatisfaction
+            or not satisfaction.satisfied
+            or satisfaction.prerequisite_type
+            is not RuntimePrerequisiteType.CREDENTIAL_READINESS
+            or satisfaction.path_id != self.path_id
+            or satisfaction.adapter_id != self.adapter_id
+            or satisfaction.capability_id != self.capability_id
+        ):
+            raise InvalidRuntimeProjectionError(
+                "Runtime prerequisite satisfaction identity is inconsistent"
+            )
+        if self.credentials_required != (satisfaction is not None):
+            raise InvalidRuntimeProjectionError(
+                "Runtime projection metadata requires exact prerequisite satisfaction"
+            )
         try:
             source = RuntimeHandoffProjection(
                 sequence=self.sequence,
@@ -138,7 +239,9 @@ class RuntimeProjection:
                 cost_classification=self.cost_classification,
                 credentials_required=self.credentials_required,
                 metadata_references=tuple(self.metadata_references),
-                handoff_ready=self.runtime_ready,
+                handoff_ready=(
+                    False if self.credentials_required else self.runtime_ready
+                ),
                 runtime_allowed=False,
                 execution_allowed=False,
             )

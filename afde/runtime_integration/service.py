@@ -8,9 +8,11 @@ from afde.execution_path import ExecutionPathStatus
 from .errors import InvalidRuntimeIntegrationRequestError
 from .models import (
     RuntimeIntegrationPolicy,
+    RuntimeIntegrationPrerequisiteRequest,
     RuntimeIntegrationRequest,
     RuntimeIntegrationResult,
     RuntimeIntegrationStatus,
+    RuntimePrerequisiteType,
     RuntimeProjection,
 )
 
@@ -92,6 +94,86 @@ class RuntimeIntegrationService:
             execution_allowed=False,
         )
 
+    def project_with_prerequisite_satisfaction(
+        self, request: RuntimeIntegrationPrerequisiteRequest,
+    ) -> RuntimeIntegrationResult:
+        """Project a credential-required path using separate governed evidence."""
+
+        if type(request) is not RuntimeIntegrationPrerequisiteRequest:
+            raise InvalidRuntimeIntegrationRequestError(
+                "request must be a RuntimeIntegrationPrerequisiteRequest"
+            )
+        path = request.execution_path
+        if path.runtime_allowed or path.execution_allowed:
+            raise InvalidRuntimeIntegrationRequestError(
+                "Execution Path cannot grant execution authority"
+            )
+        reasons = self._prerequisite_blocked_reasons(
+            path, request.prerequisite_satisfaction
+        )
+        if reasons:
+            return RuntimeIntegrationResult(
+                status=RuntimeIntegrationStatus.BLOCKED,
+                runtime_ready=False,
+                projection=None,
+                path_id=None,
+                capability_id=path.capability_id,
+                adapter_id=None,
+                blocked_reasons=reasons,
+                path_trace=path.trace,
+                trace=(
+                    "01.execution_path.prerequisite.rejected",
+                    "02.runtime_projection.blocked",
+                ),
+                runtime_allowed=False,
+                execution_allowed=False,
+            )
+
+        step = path.steps[0]
+        satisfaction = request.prerequisite_satisfaction
+        assert satisfaction is not None
+        projection_id = self._projection_id(
+            path.path_id, step, satisfaction
+        )
+        projection = RuntimeProjection(
+            projection_id=projection_id,
+            projection_version=self._policy.projection_version,
+            path_id=path.path_id,
+            sequence=step.sequence,
+            adapter_id=step.adapter_id,
+            capability_id=step.capability_id,
+            adapter_version=step.adapter_version,
+            availability=step.availability,
+            runtime_compatibility=step.runtime_compatibility,
+            execution_contract=step.execution_contract,
+            privacy_classification=step.privacy_classification,
+            cost_classification=step.cost_classification,
+            credentials_required=step.credentials_required,
+            metadata_references=step.metadata_references,
+            runtime_ready=True,
+            runtime_allowed=False,
+            execution_allowed=False,
+            prerequisite_satisfaction=satisfaction,
+        )
+        return RuntimeIntegrationResult(
+            status=RuntimeIntegrationStatus.READY,
+            runtime_ready=True,
+            projection=projection,
+            path_id=path.path_id,
+            capability_id=path.capability_id,
+            adapter_id=path.adapter_id,
+            blocked_reasons=(),
+            path_trace=path.trace,
+            trace=(
+                "01.execution_path.prerequisite.accepted",
+                "02.credential_readiness.satisfied:"
+                f"{satisfaction.evidence_reference}",
+                f"03.runtime_projection.ready:{projection_id}",
+            ),
+            runtime_allowed=False,
+            execution_allowed=False,
+        )
+
     def _blocked_reasons(self, path) -> tuple[str, ...]:
         reasons: list[str] = []
         if path.status is not ExecutionPathStatus.CONSTRUCTED:
@@ -128,7 +210,76 @@ class RuntimeIntegrationService:
                 )
         return tuple(reasons)
 
-    def _projection_id(self, path_id, step) -> str:
+    def _prerequisite_blocked_reasons(
+        self, path, satisfaction,
+    ) -> tuple[str, ...]:
+        reasons: list[str] = []
+        expected_reason = (
+            "credentials are required; retrieval and authorization "
+            "remain outside Execution Path"
+        )
+        if path.status is not ExecutionPathStatus.PREREQUISITES_REQUIRED:
+            reasons.append(
+                "Execution Path status is not prerequisites_required: "
+                f"{path.status.value}"
+            )
+        if (
+            not path.path_constructed
+            or path.runtime_handoff_ready
+            or path.path_id is None
+            or path.adapter_id is None
+            or len(path.steps) != 1
+        ):
+            reasons.append(
+                "Execution Path credential prerequisite structure is invalid"
+            )
+        if path.blocked_reasons != (expected_reason,):
+            reasons.append(
+                "Execution Path has prerequisites other than governed credentials"
+            )
+        if path.steps:
+            step = path.steps[0]
+            if not step.credentials_required or step.handoff_ready:
+                reasons.append(
+                    "Execution Path does not expose one pending credential prerequisite"
+                )
+            if (
+                step.runtime_compatibility
+                is not self._policy.required_runtime_compatibility
+            ):
+                reasons.append(
+                    "Runtime compatibility is unsupported by integration policy"
+                )
+            if (
+                step.execution_contract
+                is not self._policy.required_execution_contract
+            ):
+                reasons.append(
+                    "Execution contract is unsupported by integration policy"
+                )
+            if step.runtime_allowed or step.execution_allowed:
+                raise InvalidRuntimeIntegrationRequestError(
+                    "handoff projection cannot grant execution authority"
+                )
+        if satisfaction is None:
+            reasons.append("credential readiness satisfaction is missing")
+        elif (
+            not satisfaction.satisfied
+            or satisfaction.prerequisite_type
+            is not RuntimePrerequisiteType.CREDENTIAL_READINESS
+        ):
+            reasons.append("credential readiness prerequisite is not satisfied")
+        elif (
+            satisfaction.path_id != path.path_id
+            or satisfaction.adapter_id != path.adapter_id
+            or satisfaction.capability_id != path.capability_id
+        ):
+            reasons.append(
+                "credential readiness satisfaction identity does not match the path"
+            )
+        return tuple(reasons)
+
+    def _projection_id(self, path_id, step, satisfaction=None) -> str:
         parts = (
             self._policy.projection_version,
             path_id,
@@ -142,5 +293,11 @@ class RuntimeIntegrationService:
             str(step.credentials_required).lower(),
             *step.metadata_references,
         )
+        if satisfaction is not None:
+            parts += (
+                satisfaction.prerequisite_type.value,
+                str(satisfaction.satisfied).lower(),
+                satisfaction.evidence_reference,
+            )
         digest = sha256("\x1f".join(parts).encode("utf-8")).hexdigest()
         return f"RUNTIMEPROJ-{digest[:16].upper()}"
