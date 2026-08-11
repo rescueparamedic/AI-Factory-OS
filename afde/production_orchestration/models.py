@@ -84,6 +84,7 @@ class ProductionOrchestrationResult:
     trace: tuple[str, ...]
     runtime_allowed: bool = False
     execution_allowed: bool = False
+    plan_id: str | None = None
 
     def __post_init__(self) -> None:
         error = InvalidProductionOrchestrationResultError
@@ -91,7 +92,7 @@ class ProductionOrchestrationResult:
             raise error("status is invalid")
         for name in (
             "capability_id", "adapter_id", "path_id", "projection_id",
-            "binding_id", "blocked_reason",
+            "binding_id", "blocked_reason", "plan_id",
         ):
             value = getattr(self, name)
             if value is not None and (
