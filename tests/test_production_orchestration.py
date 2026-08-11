@@ -84,12 +84,8 @@ def _request(**changes):
     return replace(request, **changes)
 
 
-def _startup(tmp_path, *, action=None, evidence=True, runner=None):
-    executor = ControlledExecutor(tmp_path, runner=runner)
-    factory = CodexAutomationBridgeProductionFactory(
-        tmp_path, executor=executor,
-    )
-    action = action or ToolAction(
+def _action(tmp_path, **changes):
+    action = ToolAction(
         action_id="AFDE-6.19-" + uuid4().hex,
         action_type=ToolActionType.COMMAND_RUN,
         source_worker="afde-6.19-test",
@@ -107,6 +103,19 @@ def _startup(tmp_path, *, action=None, evidence=True, runner=None):
         expected_result={},
         metadata={},
     )
+    return replace(action, **changes)
+
+
+def _startup(tmp_path, *, action=None, evidence=True, runner=None):
+    executor = (
+        ControlledExecutor(tmp_path)
+        if runner is None
+        else ControlledExecutor(tmp_path, runner=runner)
+    )
+    factory = CodexAutomationBridgeProductionFactory(
+        tmp_path, executor=executor,
+    )
+    action = action or _action(tmp_path)
     context = RuntimeApprovalContext(
         cwd=str(tmp_path),
         repository=str(tmp_path),
@@ -250,23 +259,12 @@ def test_authority_reuse_is_rejected_without_second_invocation(tmp_path):
 def test_controlled_execution_denies_workspace_escape_through_orchestrator(
     tmp_path, target_path,
 ):
-    action = ToolAction(
-        action_id="AFDE-6.19-" + uuid4().hex,
+    action = _action(
+        tmp_path,
         action_type=ToolActionType.FILE_WRITE,
-        source_worker="afde-6.19-test",
         purpose="Prove controlled path denial",
         target=target_path,
         arguments={"content": "print('blocked')"},
-        cwd=str(tmp_path),
-        repository=str(tmp_path),
-        branch="agent/afde-6-19-test",
-        runtime_task_id="task-afde-6-19",
-        runtime_session_id="session-afde-6-19",
-        stage="qa",
-        revision=1,
-        preconditions={},
-        expected_result={},
-        metadata={},
     )
     startup, target = _startup(tmp_path, action=action)
     result = ProductionPlannerRuntimeOrchestrator(
@@ -274,8 +272,67 @@ def test_controlled_execution_denies_workspace_escape_through_orchestrator(
         authority_provider=BindingAuthorityProvider(),
     ).orchestrate(_request())
 
-    assert result.status is ProductionOrchestrationStatus.COMPLETED
+    assert result.status is ProductionOrchestrationStatus.REJECTED
+    assert result.runtime_execution_result is None
     assert target.last_execution_result.status == "DENIED"
+
+
+def test_waiting_approval_fails_closed_through_orchestrator(tmp_path):
+    target_path = tmp_path / "existing.py"
+    target_path.write_text("print('existing')", encoding="utf-8")
+    action = _action(
+        tmp_path,
+        action_type=ToolActionType.FILE_WRITE,
+        purpose="Prove governed approval remains pending",
+        target=target_path.name,
+        arguments={"content": "print('replacement')"},
+    )
+    startup, target = _startup(tmp_path, action=action)
+
+    result = ProductionPlannerRuntimeOrchestrator(
+        startup_composition=startup,
+        authority_provider=BindingAuthorityProvider(),
+    ).orchestrate(_request())
+
+    assert result.status is ProductionOrchestrationStatus.REJECTED
+    assert result.runtime_execution_result is None
+    assert target.last_execution_result.status == "WAITING_APPROVAL"
+
+
+def test_failed_controlled_execution_fails_closed_through_orchestrator(
+    tmp_path,
+):
+    def runner(argv, **kwargs):
+        return SimpleNamespace(returncode=1, stdout="", stderr="safe failure")
+
+    startup, target = _startup(tmp_path, runner=runner)
+    result = ProductionPlannerRuntimeOrchestrator(
+        startup_composition=startup,
+        authority_provider=BindingAuthorityProvider(),
+    ).orchestrate(_request())
+
+    assert result.status is ProductionOrchestrationStatus.REJECTED
+    assert result.runtime_execution_result is None
+    assert target.last_execution_result.status == "FAILED"
+
+
+def test_duplicate_controlled_action_fails_closed_through_orchestrator(
+    tmp_path,
+):
+    action = _action(tmp_path)
+    claim = tmp_path / "data" / "tool_action_evidence" / f"{action.action_id}.claim"
+    claim.parent.mkdir(parents=True)
+    claim.write_text(action.fingerprint, encoding="utf-8")
+    startup, target = _startup(tmp_path, action=action)
+
+    result = ProductionPlannerRuntimeOrchestrator(
+        startup_composition=startup,
+        authority_provider=BindingAuthorityProvider(),
+    ).orchestrate(_request())
+
+    assert result.status is ProductionOrchestrationStatus.REJECTED
+    assert result.runtime_execution_result is None
+    assert target.last_execution_result.status == "DUPLICATE"
 
 
 @pytest.mark.parametrize("evidence", [None, False])

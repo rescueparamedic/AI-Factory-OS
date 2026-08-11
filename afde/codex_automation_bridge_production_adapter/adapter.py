@@ -24,6 +24,10 @@ from real_worker_runtime.tool_actions import ToolAction, ToolExecutionResult
 CODEX_AUTOMATION_BRIDGE_ADAPTER_ID = "adapter.codex_automation_bridge"
 
 
+class ControlledActionNotSuccessfulError(RuntimeError):
+    """Raised when governed execution does not report canonical success."""
+
+
 class CodexAutomationBridgeProductionFactory:
     """Create the existing bridge at the authorized creation boundary."""
 
@@ -163,6 +167,10 @@ class CodexAutomationBridgeProductionInvocationTarget:
         )
         result = bridge.execute(self._action, self._approval_context)
         self._last_execution_result = result
+        if result.status != "SUCCEEDED":
+            raise ControlledActionNotSuccessfulError(
+                f"controlled action did not succeed: {result.status}"
+            )
         result_reference = (
             "INVOCATION-RESULT-REFERENCE-CODEX-"
             f"{result.action_fingerprint[:16].upper()}"
