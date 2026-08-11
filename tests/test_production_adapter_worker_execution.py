@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from uuid import uuid4
 
@@ -268,6 +268,26 @@ def test_worker_registry_is_not_used_to_complete_identity(monkeypatch):
     assert len(target.requests) == 1
 
 
+def test_legacy_service_keeps_existing_non_identity_field_semantics():
+    request, _, target = _request()
+    legacy_input = replace(
+        request.worker_input,
+        plan_id="",
+        task_id="",
+        provider="",
+        model="",
+        execution_mode="",
+    )
+    legacy_request = replace(request, worker_input=legacy_input)
+
+    result = ProductionAdapterWorkerExecutionService().execute(legacy_request)
+
+    assert result.worker_result.plan_id == ""
+    assert result.worker_result.task_id == ""
+    assert result.worker_result.provider == ""
+    assert len(target.requests) == 1
+
+
 def test_existing_runtime_execution_error_propagates_unchanged():
     request, factory, target = _request()
     ProductionAdapterRuntimeExecutionService().execute(
@@ -316,4 +336,5 @@ def test_public_contract_is_additive_and_package_scoped():
         "ProductionAdapterWorkerExecutionRequest",
         "ProductionAdapterWorkerExecutionResult",
         "ProductionAdapterWorkerExecutionService",
+        "ProductionAdapterWorkerResultProjector",
     ]

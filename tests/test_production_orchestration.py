@@ -183,6 +183,7 @@ def test_principal_request_runs_actual_planner_to_concrete_runtime_execution(
     assert result.projection_id.startswith("RUNTIMEPROJ-")
     assert result.binding_id.startswith("ADAPTERBIND-")
     assert result.runtime_execution_result is not None
+    assert result.plan_id == service._planner.create_plan(_request().goal).plan_id
     assert result.runtime_allowed is False
     assert result.execution_allowed is False
     assert not hasattr(result, "authority")

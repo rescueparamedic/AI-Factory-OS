@@ -82,6 +82,7 @@ class ProductionPlannerRuntimeOrchestrator:
         trace: list[str] = []
         composition = self._startup.production_composition
         identities: dict[str, str | None] = {
+            "plan_id": None,
             "capability_id": request.capability_id,
             "adapter_id": None,
             "path_id": None,
@@ -91,6 +92,7 @@ class ProductionPlannerRuntimeOrchestrator:
 
         try:
             plan = self._planner.create_plan(request.goal)
+            identities["plan_id"] = plan.plan_id
             trace.append(f"01.planner.completed:{plan.plan_id}")
         except Exception as exc:
             return self._stopped(

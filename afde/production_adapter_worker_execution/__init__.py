@@ -10,7 +10,10 @@ from .models import (
     ProductionAdapterWorkerExecutionRequest,
     ProductionAdapterWorkerExecutionResult,
 )
-from .service import ProductionAdapterWorkerExecutionService
+from .service import (
+    ProductionAdapterWorkerExecutionService,
+    ProductionAdapterWorkerResultProjector,
+)
 
 __all__ = [
     "InvalidProductionAdapterWorkerExecutionRequestError",
@@ -20,4 +23,5 @@ __all__ = [
     "ProductionAdapterWorkerExecutionRequest",
     "ProductionAdapterWorkerExecutionResult",
     "ProductionAdapterWorkerExecutionService",
+    "ProductionAdapterWorkerResultProjector",
 ]
