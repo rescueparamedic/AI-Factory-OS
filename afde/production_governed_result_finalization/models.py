@@ -93,7 +93,6 @@ class ProductionGovernedOperationalResult:
     binding_id: str | None
     execution_outcome: str
     history_record: Mapping[str, Any] | None
-    history_summary: Mapping[str, Any] | None
     evidence: ProductionGovernedEvidenceSnapshot | None
     finalization_error: str | None = None
     runtime_allowed: bool = False
@@ -109,7 +108,6 @@ class ProductionGovernedOperationalResult:
                 self.dispatch_result is None
                 or self.evidence is None
                 or self.history_record is None
-                or self.history_summary is None
                 or self.finalization_error is not None
             ):
                 raise ValueError("completed final result requires all governed evidence")
@@ -117,8 +115,6 @@ class ProductionGovernedOperationalResult:
             raise ValueError("non-completed final result cannot expose completed evidence")
         if self.history_record is not None:
             object.__setattr__(self, "history_record", _freeze(self.history_record))
-        if self.history_summary is not None:
-            object.__setattr__(self, "history_summary", _freeze(self.history_summary))
 
 
 def _freeze(value: Any) -> Any:

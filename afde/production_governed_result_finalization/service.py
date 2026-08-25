@@ -45,8 +45,12 @@ def _observation_id() -> str:
     return f"RUNTIME-OBSERVATION-{uuid4().hex.upper()}"
 
 
-def _event_id() -> str:
-    return f"PRODUCTION-FINALIZATION-EVENT-{uuid4().hex.upper()}"
+def _production_event_id() -> str:
+    return f"PRODUCTION-RUNTIME-EVENT-{uuid4().hex.upper()}"
+
+
+def _history_event_id() -> str:
+    return f"PRODUCTION-FINALIZATION-HISTORY-{uuid4().hex.upper()}"
 
 
 def _timestamp() -> str:
@@ -66,7 +70,8 @@ class ProductionGovernedResultFinalizer:
         stream_service: ProductionAdapterRuntimeEventStreamService | None = None,
         session_id_provider: Callable[[], str] = _session_id,
         observation_id_provider: Callable[[], str] = _observation_id,
-        event_id_provider: Callable[[], str] = _event_id,
+        production_event_id_provider: Callable[[], str] = _production_event_id,
+        history_event_id_provider: Callable[[], str] = _history_event_id,
         timestamp_provider: Callable[[], str] = _timestamp,
     ) -> None:
         if not isinstance(dispatcher, ProductionPlannerWorkerDispatcher):
@@ -80,7 +85,8 @@ class ProductionGovernedResultFinalizer:
         self._stream = stream_service or ProductionAdapterRuntimeEventStreamService()
         self._session_id_provider = session_id_provider
         self._observation_id_provider = observation_id_provider
-        self._event_id_provider = event_id_provider
+        self._production_event_id_provider = production_event_id_provider
+        self._history_event_id_provider = history_event_id_provider
         self._timestamp_provider = timestamp_provider
 
     def finalize(
@@ -95,9 +101,24 @@ class ProductionGovernedResultFinalizer:
         # Validate all caller-injectable generated values before Runtime execution.
         session_id = self._session_id_provider()
         observation_id = self._observation_id_provider()
-        event_id = self._event_id_provider()
+        production_event_id = self._production_event_id_provider()
+        history_event_id = self._history_event_id_provider()
         timestamp = self._timestamp_provider()
-        self._validate_generated(session_id, observation_id, event_id, timestamp)
+        self._validate_generated(
+            session_id,
+            observation_id,
+            production_event_id,
+            history_event_id,
+            timestamp,
+        )
+
+        preflight_error = self._history_preflight(session_id)
+        if preflight_error is not None:
+            return self._preflight_failed_result(
+                request=request,
+                session_id=session_id,
+                failure_type=preflight_error,
+            )
 
         dispatch = self._dispatcher.dispatch(request.dispatch_request)
         orchestration = dispatch.orchestration_result
@@ -116,7 +137,7 @@ class ProductionGovernedResultFinalizer:
             return self._stopped_result(
                 session_id=session_id,
                 timestamp=timestamp,
-                event_id=event_id,
+                history_event_id=history_event_id,
                 dispatch=dispatch,
                 identities=identities,
             )
@@ -151,7 +172,7 @@ class ProductionGovernedResultFinalizer:
                 "execution_status": observation.execution_status,
             }
             event = ProductionAdapterRuntimeEvent(
-                event_id=event_id,
+                event_id=production_event_id,
                 adapter_id=observation.identity.adapter_id,
                 event_type="production.runtime.execution.completed",
                 occurred_at=timestamp,
@@ -168,7 +189,7 @@ class ProductionGovernedResultFinalizer:
                 )
             )
             history_value = {
-                "event_id": event.event_id,
+                "event_id": history_event_id,
                 "session_id": session_id,
                 "timestamp": timestamp,
                 "event_type": "PRODUCTION_GOVERNED_RESULT_FINALIZED",
@@ -176,52 +197,71 @@ class ProductionGovernedResultFinalizer:
                 "status": "completed",
                 "worker_id": worker.worker_id,
                 "task_id": worker.worker_result.task_id,
-                "metadata": dict(event.payload),
+                "metadata": {
+                    "production_event_id": event.event_id,
+                    "observation_id": observation.identity.observation_id,
+                    "plan_id": worker.worker_result.plan_id,
+                    "capability_id": observation.identity.capability_id,
+                    "adapter_id": observation.identity.adapter_id,
+                    "path_id": observation.identity.path_id,
+                    "projection_id": observation.identity.projection_id,
+                    "binding_id": observation.identity.binding_id,
+                    "execution_status": observation.execution_status,
+                },
             }
-            history_record = self._history.append(history_value)
-            history_summary = self._history.summary(session_id)
-            persisted = history_summary.get("events", ())
-            if (
-                history_summary.get("event_count") != 1
-                or not isinstance(persisted, (list, tuple))
-                or len(persisted) != 1
-                or persisted[0].get("event_id") != event.event_id
-                or persisted[0].get("session_id") != session_id
-            ):
-                raise RuntimeError("durable history summary did not re-query the record")
             evidence = ProductionGovernedEvidenceSnapshot(
                 worker_execution_result=worker,
                 observation_result=observation,
                 collection_result=collection,
                 stream_result=stream,
-                history_record=history_record,
-            )
-            return ProductionGovernedOperationalResult(
-                session_id=session_id,
-                status=ProductionGovernedResultStatus.COMPLETED,
-                dispatch_result=dispatch,
-                execution_outcome=observation.execution_status,
-                history_record=history_record,
-                history_summary=history_summary,
-                evidence=evidence,
-                **identities,
+                history_record=history_value,
             )
         except Exception as exc:
             return self._failed_result(
                 session_id=session_id,
                 timestamp=timestamp,
-                event_id=event_id,
+                history_event_id=history_event_id,
                 dispatch=dispatch,
                 identities=identities,
                 failure_type=type(exc).__name__,
             )
 
-    def _stopped_result(self, *, session_id, timestamp, event_id, dispatch, identities):
+        # append() returning is the durable commit boundary. Nothing after this
+        # point may reinterpret the committed status or append compensation.
+        try:
+            history_record = self._history.append(history_value)
+        except Exception as exc:
+            return self._append_failed_result(
+                session_id=session_id,
+                dispatch=dispatch,
+                identities=identities,
+                failure_type=type(exc).__name__,
+            )
+        evidence = ProductionGovernedEvidenceSnapshot(
+            worker_execution_result=worker,
+            observation_result=observation,
+            collection_result=collection,
+            stream_result=stream,
+            history_record=history_record,
+        )
+        return ProductionGovernedOperationalResult(
+            session_id=session_id,
+            status=ProductionGovernedResultStatus.COMPLETED,
+            dispatch_result=dispatch,
+            execution_outcome=observation.execution_status,
+            history_record=history_record,
+            evidence=evidence,
+            **identities,
+        )
+
+    def _stopped_result(
+        self, *, session_id, timestamp, history_event_id, dispatch, identities
+    ):
         status = ProductionGovernedResultStatus(dispatch.status.value)
         return self._persist_non_success(
             session_id=session_id,
             timestamp=timestamp,
-            event_id=event_id,
+            history_event_id=history_event_id,
             dispatch=dispatch,
             identities=identities,
             status=status,
@@ -229,11 +269,14 @@ class ProductionGovernedResultFinalizer:
             failure_type=None,
         )
 
-    def _failed_result(self, *, session_id, timestamp, event_id, dispatch, identities, failure_type):
+    def _failed_result(
+        self, *, session_id, timestamp, history_event_id, dispatch, identities,
+        failure_type,
+    ):
         return self._persist_non_success(
             session_id=session_id,
             timestamp=timestamp,
-            event_id=event_id,
+            history_event_id=history_event_id,
             dispatch=dispatch,
             identities=identities,
             status=ProductionGovernedResultStatus.FINALIZATION_FAILED,
@@ -242,7 +285,7 @@ class ProductionGovernedResultFinalizer:
         )
 
     def _persist_non_success(
-        self, *, session_id, timestamp, event_id, dispatch, identities,
+        self, *, session_id, timestamp, history_event_id, dispatch, identities,
         status, outcome, failure_type,
     ):
         metadata = {
@@ -253,7 +296,7 @@ class ProductionGovernedResultFinalizer:
         if failure_type:
             metadata["failure_type"] = failure_type
         value = {
-            "event_id": event_id,
+            "event_id": history_event_id,
             "session_id": session_id,
             "timestamp": timestamp,
             "event_type": "PRODUCTION_GOVERNED_FINALIZATION_STOPPED",
@@ -267,10 +310,8 @@ class ProductionGovernedResultFinalizer:
             value["worker_id"] = identities["worker_id"]
         try:
             record = self._history.append(value)
-            summary = self._history.summary(session_id)
         except Exception as persistence_error:
             record = None
-            summary = None
             status = ProductionGovernedResultStatus.FINALIZATION_FAILED
             outcome = "finalization_failed"
             failure_type = type(persistence_error).__name__
@@ -280,7 +321,6 @@ class ProductionGovernedResultFinalizer:
             dispatch_result=dispatch,
             execution_outcome=outcome,
             history_record=record,
-            history_summary=summary,
             evidence=None,
             finalization_error=(
                 f"finalization failed safely: {failure_type}"
@@ -289,15 +329,65 @@ class ProductionGovernedResultFinalizer:
             **identities,
         )
 
+    def _history_preflight(self, session_id: str) -> str | None:
+        try:
+            self._history.summary(session_id)
+        except FileNotFoundError:
+            return None
+        except Exception as exc:
+            return type(exc).__name__
+        return "SessionIdCollision"
+
     @staticmethod
-    def _validate_generated(session_id, observation_id, event_id, timestamp):
+    def _preflight_failed_result(*, request, session_id, failure_type):
+        return ProductionGovernedOperationalResult(
+            session_id=session_id,
+            status=ProductionGovernedResultStatus.FINALIZATION_FAILED,
+            dispatch_result=None,
+            plan_id=None,
+            task_id=request.dispatch_request.task_id,
+            worker_id=None,
+            capability_id=None,
+            adapter_id=None,
+            path_id=None,
+            projection_id=None,
+            binding_id=None,
+            execution_outcome="finalization_failed",
+            history_record=None,
+            evidence=None,
+            finalization_error=f"finalization failed safely: {failure_type}",
+        )
+
+    @staticmethod
+    def _append_failed_result(*, session_id, dispatch, identities, failure_type):
+        return ProductionGovernedOperationalResult(
+            session_id=session_id,
+            status=ProductionGovernedResultStatus.FINALIZATION_FAILED,
+            dispatch_result=dispatch,
+            execution_outcome="finalization_failed",
+            history_record=None,
+            evidence=None,
+            finalization_error=f"finalization failed safely: {failure_type}",
+            **identities,
+        )
+
+    @staticmethod
+    def _validate_generated(
+        session_id, observation_id, production_event_id, history_event_id, timestamp
+    ):
         error = InvalidProductionGovernedResultFinalizationRequestError
         if not isinstance(session_id, str) or not _SESSION_ID.fullmatch(session_id):
             raise error("generated session_id is invalid")
         if not isinstance(observation_id, str) or not _OBSERVATION_ID.fullmatch(observation_id):
             raise error("generated observation_id is invalid")
-        if not isinstance(event_id, str) or not event_id or event_id != event_id.strip():
-            raise error("generated event_id is invalid")
+        for name, value in (
+            ("production_event_id", production_event_id),
+            ("history_event_id", history_event_id),
+        ):
+            if not isinstance(value, str) or not value or value != value.strip():
+                raise error(f"generated {name} is invalid")
+        if production_event_id == history_event_id:
+            raise error("generated event identities must be distinct")
         if not isinstance(timestamp, str) or not timestamp or timestamp != timestamp.strip():
             raise error("generated timestamp is invalid")
         try:

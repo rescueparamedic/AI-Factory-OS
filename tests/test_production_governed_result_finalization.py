@@ -31,11 +31,12 @@ from test_production_planner_worker_dispatch import (
 
 SESSION_ID = "production-finalization-AFDE-6-21-001"
 OBSERVATION_ID = "RUNTIME-OBSERVATION-AFDE-6.21-001"
-EVENT_ID = "PRODUCTION-FINALIZATION-EVENT-AFDE-6.21-001"
+PRODUCTION_EVENT_ID = "PRODUCTION-RUNTIME-EVENT-AFDE-6.21-001"
+HISTORY_EVENT_ID = "PRODUCTION-FINALIZATION-HISTORY-AFDE-6.21-001"
 TIMESTAMP = "2026-08-11T12:00:00+09:00"
 
 
-def _finalizer(tmp_path, *, startup=None, history_store=None):
+def _finalizer(tmp_path, *, startup=None, history_store=None, **providers):
     adapter_calls = []
 
     def runner(argv, **kwargs):
@@ -58,8 +59,10 @@ def _finalizer(tmp_path, *, startup=None, history_store=None):
         history_store=history_store or RuntimeHistoryStore(tmp_path),
         session_id_provider=lambda: SESSION_ID,
         observation_id_provider=lambda: OBSERVATION_ID,
-        event_id_provider=lambda: EVENT_ID,
+        production_event_id_provider=lambda: PRODUCTION_EVENT_ID,
+        history_event_id_provider=lambda: HISTORY_EVENT_ID,
         timestamp_provider=lambda: TIMESTAMP,
+        **providers,
     )
     return finalizer, planner, runtime_execution, adapter_calls, target
 
@@ -115,7 +118,10 @@ def test_full_operational_path_finalizes_once_and_survives_durable_requery(tmp_p
     fresh_summary = RuntimeHistoryStore(tmp_path).summary(result.session_id)
     assert fresh_summary["event_count"] == 1
     record = fresh_summary["events"][0]
-    assert record["event_id"] == EVENT_ID
+    assert event.event_id == PRODUCTION_EVENT_ID
+    assert record["event_id"] == HISTORY_EVENT_ID
+    assert record["event_id"] != event.event_id
+    assert record["metadata"]["production_event_id"] == event.event_id
     assert record["session_id"] == SESSION_ID
     assert record["task_id"] == result.task_id
     assert record["worker_id"] == result.worker_id
@@ -147,17 +153,24 @@ def test_actual_denied_path_persists_truthful_status_without_fake_evidence(tmp_p
     assert result.worker_id is None
     assert result.evidence is None
     assert result.history_record is not None
-    assert result.history_summary["event_count"] == 1
     assert result.history_record["status"] == "rejected"
     assert result.history_record["worker_id"] is None
     assert "observation_id" not in result.history_record["metadata"]
     assert len(runtime_execution.requests) == 1
     assert adapter_calls == []
     assert target.last_execution_result.status == "DENIED"
+    summary = RuntimeHistoryStore(tmp_path).summary(result.session_id)
+    assert summary["event_count"] == 1
+    assert summary["events"][0]["status"] == "rejected"
 
 
 class FailingHistoryStore(RuntimeHistoryStore):
+    def __init__(self, root):
+        super().__init__(root)
+        self.append_calls = 0
+
     def append(self, event):
+        self.append_calls += 1
         raise OSError("private filesystem detail")
 
 
@@ -172,8 +185,9 @@ def test_persistence_failure_fails_closed_without_second_execution(tmp_path):
     assert result.status is ProductionGovernedResultStatus.FINALIZATION_FAILED
     assert result.evidence is None
     assert result.history_record is None
-    assert result.history_summary is None
     assert result.finalization_error == "finalization failed safely: OSError"
+    assert "private filesystem detail" not in result.finalization_error
+    assert store.append_calls == 1
     assert len(runtime_execution.requests) == 1
     assert len(adapter_calls) == 1
 
@@ -183,7 +197,8 @@ def test_persistence_failure_fails_closed_without_second_execution(tmp_path):
     [
         ("session_id_provider", "unsafe/session", "session_id"),
         ("observation_id_provider", "unsafe", "observation_id"),
-        ("event_id_provider", " event", "event_id"),
+        ("production_event_id_provider", " event", "production_event_id"),
+        ("history_event_id_provider", " event", "history_event_id"),
         ("timestamp_provider", "2026-08-11T00:00:00", "timestamp"),
     ],
 )
@@ -200,6 +215,157 @@ def test_invalid_generated_values_fail_before_runtime(
 
     assert runtime_execution.requests == []
     assert adapter_calls == []
+
+
+def test_equal_production_and_history_event_ids_fail_before_runtime(tmp_path):
+    finalizer, _, runtime_execution, adapter_calls, _ = _finalizer(tmp_path)
+    finalizer._history_event_id_provider = lambda: PRODUCTION_EVENT_ID
+
+    with pytest.raises(
+        InvalidProductionGovernedResultFinalizationRequestError, match="distinct"
+    ):
+        _finalize(finalizer)
+
+    assert runtime_execution.requests == []
+    assert adapter_calls == []
+
+
+class PostAppendSummaryTrapStore(RuntimeHistoryStore):
+    def __init__(self, root):
+        super().__init__(root)
+        self.summary_calls = 0
+        self.append_calls = 0
+
+    def summary(self, session_id, **filters):
+        self.summary_calls += 1
+        if self.summary_calls > 1:
+            raise OSError("post-commit readback must not occur")
+        return super().summary(session_id, **filters)
+
+    def append(self, event):
+        self.append_calls += 1
+        return super().append(event)
+
+
+def test_post_append_summary_failure_cannot_create_second_terminal_record(tmp_path):
+    store = PostAppendSummaryTrapStore(tmp_path)
+    finalizer, _, runtime_execution, adapter_calls, _ = _finalizer(
+        tmp_path, history_store=store
+    )
+
+    result = _finalize(finalizer)
+
+    assert result.status is ProductionGovernedResultStatus.COMPLETED
+    assert len(runtime_execution.requests) == 1
+    assert len(adapter_calls) == 1
+    assert store.summary_calls == 1
+    assert store.append_calls == 1
+    summary = RuntimeHistoryStore(tmp_path).summary(SESSION_ID)
+    assert summary["event_count"] == 1
+    assert summary["events"][0]["event_id"] == HISTORY_EVENT_ID
+    assert summary["events"][0]["status"] == "completed"
+
+
+class PostAppendSummaryMismatchStore(PostAppendSummaryTrapStore):
+    def summary(self, session_id, **filters):
+        self.summary_calls += 1
+        if self.summary_calls > 1:
+            return {"session_id": session_id, "event_count": 0, "events": []}
+        return RuntimeHistoryStore.summary(self, session_id, **filters)
+
+
+def test_post_append_summary_mismatch_cannot_create_second_terminal_record(tmp_path):
+    store = PostAppendSummaryMismatchStore(tmp_path)
+    finalizer, _, _, _, _ = _finalizer(tmp_path, history_store=store)
+
+    result = _finalize(finalizer)
+
+    assert result.status is ProductionGovernedResultStatus.COMPLETED
+    assert store.summary_calls == 1
+    assert store.append_calls == 1
+    summary = RuntimeHistoryStore(tmp_path).summary(SESSION_ID)
+    assert summary["event_count"] == 1
+    assert summary["events"][0]["status"] == "completed"
+
+
+class CountingHistoryStore(RuntimeHistoryStore):
+    def __init__(self, root):
+        super().__init__(root)
+        self.append_calls = 0
+
+    def append(self, event):
+        self.append_calls += 1
+        return super().append(event)
+
+
+def _existing_history_event():
+    return {
+        "event_id": "PRE-EXISTING-HISTORY-EVENT",
+        "session_id": SESSION_ID,
+        "timestamp": TIMESTAMP,
+        "event_type": "SESSION_STARTED",
+        "actor": "existing-owner",
+        "status": "running",
+        "metadata": {},
+    }
+
+
+def test_session_collision_fails_closed_before_runtime_or_append(tmp_path):
+    RuntimeHistoryStore(tmp_path).append(_existing_history_event())
+    store = CountingHistoryStore(tmp_path)
+    finalizer, _, runtime_execution, adapter_calls, _ = _finalizer(
+        tmp_path, history_store=store
+    )
+
+    result = _finalize(finalizer)
+
+    assert result.status is ProductionGovernedResultStatus.FINALIZATION_FAILED
+    assert result.dispatch_result is None
+    assert result.evidence is None
+    assert result.history_record is None
+    assert result.finalization_error == "finalization failed safely: SessionIdCollision"
+    assert runtime_execution.requests == []
+    assert adapter_calls == []
+    assert store.append_calls == 0
+    assert RuntimeHistoryStore(tmp_path).summary(SESSION_ID)["event_count"] == 1
+
+
+def test_reserved_zero_event_session_collision_fails_before_runtime(tmp_path):
+    directory = Path(tmp_path) / "data" / "runtime_sessions" / SESSION_ID
+    directory.mkdir(parents=True)
+    (directory / "session.json").write_text("{}", encoding="utf-8")
+    store = CountingHistoryStore(tmp_path)
+    finalizer, _, runtime_execution, adapter_calls, _ = _finalizer(
+        tmp_path, history_store=store
+    )
+
+    result = _finalize(finalizer)
+
+    assert result.status is ProductionGovernedResultStatus.FINALIZATION_FAILED
+    assert runtime_execution.requests == []
+    assert adapter_calls == []
+    assert store.append_calls == 0
+
+
+class PreflightFailingHistoryStore(CountingHistoryStore):
+    def summary(self, session_id, **filters):
+        raise PermissionError("private history path")
+
+
+def test_history_preflight_error_fails_closed_before_runtime(tmp_path):
+    store = PreflightFailingHistoryStore(tmp_path)
+    finalizer, _, runtime_execution, adapter_calls, _ = _finalizer(
+        tmp_path, history_store=store
+    )
+
+    result = _finalize(finalizer)
+
+    assert result.status is ProductionGovernedResultStatus.FINALIZATION_FAILED
+    assert result.finalization_error == "finalization failed safely: PermissionError"
+    assert "private history path" not in result.finalization_error
+    assert runtime_execution.requests == []
+    assert adapter_calls == []
+    assert store.append_calls == 0
 
 
 def test_wrong_top_level_request_type_is_rejected_without_runtime(tmp_path):
