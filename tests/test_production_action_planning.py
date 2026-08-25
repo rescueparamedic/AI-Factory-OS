@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import FrozenInstanceError, fields
+from dataclasses import FrozenInstanceError, fields, replace
 import json
 from pathlib import Path
 import subprocess
+from types import SimpleNamespace
 
 import pytest
 
@@ -15,6 +16,7 @@ from afde.production_action_planning import (
     WORKER_ID,
     InvalidProductionActionPlanningRequestError,
     InvalidProductionActionProposalError,
+    ProductionActionPlan,
     ProductionActionPlanner,
     ProductionActionPlanningGitContextError,
     ProductionActionPlanningProviderConfigurationError,
@@ -25,12 +27,14 @@ from afde.production_action_planning import (
     UnsupportedProductionActionTypeError,
     build_openai_production_action_planner,
 )
-from afde.knowledge import KnowledgeFoundationProvider
 from afde.providers import (
     AIProvider,
+    DEFAULT_OPENAI_MODEL,
     ProviderRequestError,
     ProviderResponse,
 )
+from afde.knowledge import KnowledgeFoundationProvider
+from afde.production_action_planning.models import _build_production_action_plan
 from real_worker_runtime.tool_actions import ToolAction, ToolActionType
 
 
@@ -203,6 +207,9 @@ def test_prohibited_actions_fail_closed_after_one_call(tmp_path, action_type):
     '{"action_type":"UNKNOWN","purpose":"x","target":""}',
     '{"action_type":"GIT_STATUS","purpose":false,"target":""}',
     '{"action_type":"GIT_STATUS","purpose":"x","target":"README.md"}',
+    '{"action_type":"FILE_WRITE","action_type":"GIT_STATUS","purpose":"x","target":""}',
+    '{"action_type":"GIT_STATUS","purpose":"first","purpose":"x","target":""}',
+    '{"action_type":"GIT_STATUS","purpose":"x","target":"README.md","target":""}',
 ])
 def test_malformed_provider_output_has_no_repair_or_retry(tmp_path, content):
     workspace = _git_workspace(tmp_path)
@@ -230,6 +237,46 @@ def test_unsafe_file_targets_fail_closed_without_content_leak(tmp_path, target):
         )
     assert len(provider.calls) == 1
     assert "TOP-SECRET-CONTENT" not in str(caught.value)
+
+
+@pytest.mark.parametrize("target", ["id_rsa", "id_ed25519"])
+def test_ssh_credential_targets_fail_closed(tmp_path, target):
+    workspace = _git_workspace(tmp_path)
+    (workspace / target).write_text("TOP-SECRET-CONTENT")
+    provider = FakeProvider(_proposal(target=target))
+    with pytest.raises(UnsafeProductionFileReadTargetError):
+        _planner(provider).plan(
+            ProductionActionPlanningRequest(workspace, "Read requested file")
+        )
+    assert len(provider.calls) == 1
+
+
+def test_directory_file_read_target_fails_closed(tmp_path):
+    workspace = _git_workspace(tmp_path)
+    (workspace / "documentation").mkdir()
+    provider = FakeProvider(_proposal(target="documentation"))
+    with pytest.raises(UnsafeProductionFileReadTargetError):
+        _planner(provider).plan(
+            ProductionActionPlanningRequest(workspace, "Read directory")
+        )
+    assert len(provider.calls) == 1
+
+
+def test_symlink_escape_fails_closed_when_supported(tmp_path):
+    workspace = _git_workspace(tmp_path)
+    outside = tmp_path / "outside.txt"
+    outside.write_text("outside workspace")
+    link = workspace / "linked.txt"
+    try:
+        link.symlink_to(outside)
+    except OSError as exc:
+        pytest.skip(f"host cannot create test symlink: {type(exc).__name__}")
+    provider = FakeProvider(_proposal(target="linked.txt"))
+    with pytest.raises(UnsafeProductionFileReadTargetError):
+        _planner(provider).plan(
+            ProductionActionPlanningRequest(workspace, "Read linked file")
+        )
+    assert len(provider.calls) == 1
 
 
 def test_oversized_file_fails_closed(tmp_path):
@@ -331,6 +378,185 @@ def test_openai_builder_preserves_explicit_live_opt_in(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "test-placeholder")
     with pytest.raises(ProductionActionPlanningProviderConfigurationError):
         build_openai_production_action_planner()
+
+
+def test_openai_builder_reuses_existing_default_model_without_network(
+    monkeypatch, tmp_path,
+):
+    workspace = _git_workspace(tmp_path)
+
+    class FakeResponses:
+        def __init__(self) -> None:
+            self.calls = []
+
+        def create(self, **kwargs):
+            self.calls.append(kwargs)
+            return SimpleNamespace(
+                output_text=_proposal(),
+                model=None,
+                id="response-test",
+                usage=None,
+            )
+
+    responses = FakeResponses()
+    client = SimpleNamespace(responses=responses)
+    monkeypatch.setenv("OPENAI_API_KEY", "test-placeholder")
+    planner = build_openai_production_action_planner(
+        allow_live_api=True,
+        client=client,
+        task_id_factory=lambda: "TASK-PRODACTION-openai-test",
+        action_id_factory=lambda: "PROD-ACTION-openai-test",
+        session_id_factory=lambda: "production-action-openai-test",
+    )
+
+    plan = planner.plan(
+        ProductionActionPlanningRequest(workspace, "Inspect README")
+    )
+
+    assert len(responses.calls) == 1
+    assert responses.calls[0]["model"] == DEFAULT_OPENAI_MODEL
+    assert plan.planning_provider == "openai"
+    assert plan.planning_model == DEFAULT_OPENAI_MODEL
+
+
+def _rebuild_plan(workspace, action):
+    return _build_production_action_plan(
+        workspace=workspace,
+        trusted_branch="planning-test",
+        task_id="TASK-PRODACTION-test",
+        runtime_session_id="production-action-test",
+        planning_provider="fake-planning-provider",
+        planning_model="deterministic-test-model",
+        tool_action=action,
+    )
+
+
+def test_public_plan_constructor_always_rejects_direct_forgery(tmp_path):
+    workspace = _git_workspace(tmp_path)
+    valid = _planner(FakeProvider(_proposal())).plan(
+        ProductionActionPlanningRequest(workspace, "Inspect README")
+    )
+    forged = {
+        item.name: getattr(valid, item.name)
+        for item in fields(ProductionActionPlan)
+    }
+    for overrides in (
+        {},
+        {"runtime_allowed": True},
+        {"execution_allowed": True},
+        {"runtime_allowed": True, "execution_allowed": True},
+    ):
+        with pytest.raises(
+            InvalidProductionActionProposalError,
+            match="result-only contract",
+        ):
+            ProductionActionPlan(**(forged | overrides))
+    with pytest.raises(InvalidProductionActionProposalError):
+        ProductionActionPlan()
+
+
+@pytest.mark.parametrize(("field_name", "unsafe_value"), [
+    ("cwd", "C:/outside"),
+    ("repository", "C:/outside"),
+    ("branch", "caller-branch"),
+    ("action_id", "CALLER-ACTION-1"),
+    ("stage", "runtime"),
+    ("revision", 999),
+    ("runtime_task_id", "TASK-PRODACTION-other"),
+    ("runtime_session_id", "production-action-other"),
+    ("source_worker", "caller_worker"),
+    ("arguments", {"argv": ["whoami"]}),
+    ("preconditions", {"caller": True}),
+    ("expected_result", {"caller": True}),
+    ("metadata", {
+        "capability_id": CAPABILITY_ID,
+        "planning_provider": "fake-planning-provider",
+        "planning_model": "deterministic-test-model",
+        "unexpected": "caller-controlled",
+    }),
+    ("action_type", ToolActionType.FILE_WRITE),
+])
+def test_trusted_builder_rejects_each_forged_tool_action_context(
+    tmp_path, field_name, unsafe_value,
+):
+    workspace = _git_workspace(tmp_path)
+    valid = _planner(FakeProvider(_proposal())).plan(
+        ProductionActionPlanningRequest(workspace, "Inspect README")
+    )
+    forged = replace(valid.tool_action, **{field_name: unsafe_value})
+    with pytest.raises(InvalidProductionActionProposalError):
+        _rebuild_plan(workspace, forged)
+
+
+@pytest.mark.parametrize("unsafe_target", ["../outside.txt", ".env"])
+def test_trusted_builder_independently_revalidates_final_file_target(
+    tmp_path, unsafe_target,
+):
+    workspace = _git_workspace(tmp_path)
+    (tmp_path / "outside.txt").write_text("outside")
+    (workspace / ".env").write_text("secret")
+    valid = _planner(FakeProvider(_proposal())).plan(
+        ProductionActionPlanningRequest(workspace, "Inspect README")
+    )
+    forged = replace(valid.tool_action, target=unsafe_target)
+    with pytest.raises(UnsafeProductionFileReadTargetError):
+        _rebuild_plan(workspace, forged)
+
+
+def test_returned_tool_action_context_mappings_are_immutable(tmp_path):
+    workspace = _git_workspace(tmp_path)
+    plan = _planner(FakeProvider(_proposal())).plan(
+        ProductionActionPlanningRequest(workspace, "Inspect README")
+    )
+    for mapping in (
+        plan.tool_action.arguments,
+        plan.tool_action.preconditions,
+        plan.tool_action.expected_result,
+        plan.tool_action.metadata,
+    ):
+        with pytest.raises(TypeError, match="immutable"):
+            mapping["caller"] = "forged"
+
+
+def test_planning_calls_no_runtime_boundary_and_persists_no_action_evidence(
+    monkeypatch, tmp_path,
+):
+    from afde.production_governed_result_finalization import (
+        ProductionGovernedResultFinalizer,
+    )
+    from afde.production_orchestration import ProductionPlannerRuntimeOrchestrator
+    from afde.production_planner_worker_dispatch import (
+        ProductionPlannerWorkerDispatcher,
+    )
+    from real_worker_runtime.automation_bridge import CodexAutomationBridge
+    from real_worker_runtime.controlled_execution import ControlledExecutor
+
+    calls = []
+
+    def forbidden(*args, **kwargs):
+        calls.append((args, kwargs))
+        raise AssertionError("execution boundary called during planning")
+
+    for owner, method_name in (
+        (ControlledExecutor, "execute"),
+        (CodexAutomationBridge, "execute"),
+        (ProductionGovernedResultFinalizer, "finalize"),
+        (ProductionPlannerWorkerDispatcher, "dispatch"),
+        (ProductionPlannerRuntimeOrchestrator, "orchestrate"),
+    ):
+        monkeypatch.setattr(owner, method_name, forbidden)
+
+    workspace = _git_workspace(tmp_path)
+    plan = _planner(FakeProvider(_proposal())).plan(
+        ProductionActionPlanningRequest(workspace, "Inspect README")
+    )
+
+    assert plan.tool_action.action_type is ToolActionType.FILE_READ
+    assert calls == []
+    evidence = workspace / "data" / "tool_action_evidence"
+    assert not evidence.exists()
+    assert not list(workspace.rglob("*.claim"))
+    assert not list(workspace.rglob("ledger.jsonl"))
 
 
 def test_contracts_have_no_credentials_or_execution_dependencies(tmp_path):

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 import json
-from pathlib import Path, PureWindowsPath
+from pathlib import Path
 import re
 from typing import Any
 from uuid import uuid4
@@ -31,26 +31,21 @@ from .errors import (
     ProductionActionPlanningProviderConfigurationError,
     ProductionActionPlanningProviderRequestError,
     ProductionToolActionValidationError,
-    UnsafeProductionFileReadTargetError,
     UnsupportedProductionActionTypeError,
 )
-from .models import ProductionActionPlan, ProductionActionPlanningRequest
+from .models import (
+    CAPABILITY_ID,
+    PLANNING_STAGE,
+    WORKER_ID,
+    ProductionActionPlan,
+    ProductionActionPlanningRequest,
+    _build_production_action_plan,
+    _validate_file_read_target,
+)
 
-
-CAPABILITY_ID = "CAP-TOOLADAPTER-CONTRACT-0001"
-WORKER_ID = "development_worker"
-RUNTIME_PROVIDER = "codex_automation_bridge"
-RUNTIME_MODEL = "controlled-runtime"
-EXECUTION_MODE = "production_adapter_runtime"
-PLANNING_STAGE = "production_action_planning"
-MAX_FILE_READ_BYTES = 65536
 
 _ALLOWED_ACTION_TYPES = frozenset({"FILE_READ", "GIT_STATUS", "GIT_DIFF"})
 _PROPOSAL_KEYS = frozenset({"action_type", "purpose", "target"})
-_CREDENTIAL_NAMES = frozenset({
-    ".env", "credentials.json", "id_rsa", "id_ed25519",
-})
-_CREDENTIAL_SUFFIXES = frozenset({".pem", ".key", ".pfx", ".p12"})
 
 
 class ProductionActionPlanner:
@@ -127,19 +122,14 @@ class ProductionActionPlanner:
             raise ProductionToolActionValidationError(
                 "system-hydrated ToolAction failed canonical validation"
             ) from None
-        return ProductionActionPlan(
-            capability_id=CAPABILITY_ID,
+        return _build_production_action_plan(
+            workspace=workspace,
+            trusted_branch=branch,
             task_id=task_id,
-            worker_id=WORKER_ID,
             runtime_session_id=session_id,
-            runtime_provider=RUNTIME_PROVIDER,
-            runtime_model=RUNTIME_MODEL,
-            execution_mode=EXECUTION_MODE,
             planning_provider=response.provider,
             planning_model=response.model,
             tool_action=tool_action,
-            runtime_allowed=False,
-            execution_allowed=False,
         )
 
     @staticmethod
@@ -264,8 +254,8 @@ def _parse_proposal(content: object) -> dict[str, str]:
             "provider content must be strict JSON text"
         )
     try:
-        value = json.loads(content)
-    except (json.JSONDecodeError, TypeError):
+        value = json.loads(content, object_pairs_hook=_unique_object)
+    except (json.JSONDecodeError, TypeError, _DuplicateJSONKeyError):
         raise InvalidProductionActionProposalError(
             "provider content must be one strict JSON object"
         ) from None
@@ -302,50 +292,20 @@ def _parse_proposal(content: object) -> dict[str, str]:
 def _trusted_target(workspace: Path, proposal: dict[str, str]) -> str:
     if proposal["action_type"] != ToolActionType.FILE_READ.value:
         return ""
-    raw = proposal["target"]
-    candidate = Path(raw)
-    windows_candidate = PureWindowsPath(raw)
-    if (
-        not raw
-        or raw != raw.strip()
-        or candidate.is_absolute()
-        or windows_candidate.is_absolute()
-        or ".." in candidate.parts
-        or ".." in windows_candidate.parts
-    ):
-        raise UnsafeProductionFileReadTargetError(
-            "FILE_READ target must be a safe relative workspace path"
-        )
-    try:
-        target = (workspace / candidate).resolve(strict=True)
-        relative = target.relative_to(workspace)
-    except (OSError, ValueError):
-        raise UnsafeProductionFileReadTargetError(
-            "FILE_READ target is missing or outside the governed workspace"
-        ) from None
-    lowered_parts = {part.lower() for part in relative.parts}
-    if ".git" in lowered_parts:
-        raise UnsafeProductionFileReadTargetError(
-            "FILE_READ cannot target Git metadata"
-        )
-    if (
-        target.name.lower() in _CREDENTIAL_NAMES
-        or target.suffix.lower() in _CREDENTIAL_SUFFIXES
-    ):
-        raise UnsafeProductionFileReadTargetError(
-            "FILE_READ cannot target credential-like files"
-        )
-    try:
-        valid_file = target.is_file()
-        size = target.stat().st_size
-    except OSError:
-        valid_file = False
-        size = 0
-    if not valid_file or size > MAX_FILE_READ_BYTES:
-        raise UnsafeProductionFileReadTargetError(
-            "FILE_READ target must be a regular file within the 64 KiB bound"
-        )
-    return relative.as_posix()
+    return _validate_file_read_target(workspace, proposal["target"])
+
+
+class _DuplicateJSONKeyError(ValueError):
+    pass
+
+
+def _unique_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    value: dict[str, object] = {}
+    for key, item in pairs:
+        if key in value:
+            raise _DuplicateJSONKeyError
+        value[key] = item
+    return value
 
 
 def _task_id() -> str:
